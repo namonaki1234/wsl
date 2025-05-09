@@ -1,6 +1,5 @@
 ! hw2_5
 program mac_method
-
   implicit none
   double precision, parameter :: dh = 0.01
   double precision, parameter :: dt = 0.005
@@ -147,10 +146,15 @@ contains
     u_y = (us(i, j + 1) - us(i, j - 1))/(2*dh)
     v_x = (vs(i + 1, j) - vs(i - 1, j))/(2*dh)
     v_y = (vs(i, j + 1) - vs(i, j - 1))/(2*dh)
-    ps = p(i, j)
+    ps(i, j) = p(i, j)
     p(i, j) = (ps(i + 1, j) + p(i - 1, j) + ps(i, j + 1) + p(i, j - 1))/4.0 + &
               (dh**2)/4.0*((u_x**2 + v_y**2 + 2*v_x*u_y) - (u_x + v_y)/dt)
-    ddp = abs((p(i, j) - ps(i, j))/ps(i, j))
+
+    if (abs(ps(i, j)) > 1.0e-12) then
+      ddp = abs((p(i, j) - ps(i, j)) / max(abs(ps(i, j)), 1.0e-12))
+    else
+    ddp = 0.0
+    endif
     if (ddp .gt. dp) dp = ddp
   end subroutine cal_p
 
@@ -167,14 +171,23 @@ contains
     v_u_y = vs(i, j)*u_y - (abs(vs(i, j))/2)*(us(i, j + 1) - 2*us(i, j) + us(i, j - 1))/dh
     u_v_x = us(i, j)*v_x - (abs(us(i, j))/2)*(vs(i + 1, j) - 2*vs(i, j) + vs(i - 1, j))/dh
     v_v_y = vs(i, j)*v_y - (abs(vs(i, j))/2)*(vs(i, j + 1) - 2*vs(i, j) + vs(i, j - 1))/dh
-    us = u(i, j)
+
+    us(i, j) = u(i, j)  ! 修正: 単一要素への代入
+    if (abs(us(i, j)) > 1.0e-12) then
+      ddu = abs((-(u_u_x + v_u_y + p_x)*dt + dt/Re*lap_u)/us(i, j))
+    else
+      ddu = 0.0
+    endif
     u(i, j) = -(u_u_x + v_u_y + p_x)*dt + dt/Re*lap_u + us(i, j)
-    ddu = abs((u(i, j) - us(i, j))/us(i, j))
     if (ddu .gt. du) du = ddu
 
     vs(i, j) = v(i, j)
+    if (abs(vs(i, j)) > 1.0e-12) then
+      ddv = abs((-(u_v_x + v_v_y + p_y)*dt + dt/Re*lap_v)/vs(i, j))
+    else
+      ddv = 0.0
+    endif
     v(i, j) = -(u_v_x + v_v_y + p_y)*dt + dt/Re*lap_v + vs(i, j)
-    ddv = abs((v(i, j) - vs(i, j))/vs(i, j))
     if (ddv .gt. dv) dv = ddv
   end subroutine cal_uv
 

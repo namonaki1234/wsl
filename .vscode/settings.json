@@ -58,7 +58,7 @@
   "fortran.formatting.formatter": "fprettify", // フォーマッタを設定
   "fortran.formatting.fprettifyArgs": [
     "--indent",
-    "4", // インデントの幅
+    "2", // インデントの幅
     "--strict-indent", // インデントを厳密にチェックする
     "--disable-indent-mod", // モジュールのインデントを無効にする
     "--whitespace",
