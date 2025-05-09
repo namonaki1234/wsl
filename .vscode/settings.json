@@ -1,0 +1,167 @@
+{
+  // メモ
+  // CodeRunnerのショートカット: Ctrl+Opt+N(Windowsの場合はCtrl+Alt+N)で実行
+  // デバッグ開始/終了のショートカット:F5
+  // fortranのファイル入出力のunitは標準入力は5，標準出力は6，標準エラー出力は0
+
+  // フォントの設定
+  "editor.fontFamily": "PlemolJP35, Source Sans Code JP", // フォントの種類
+  "editor.fontSize": 15, // フォントサイズ
+  "terminal.integrated.fontFamily": "PlemolJP35 Console, Source Sans Code JP",
+  "terminal.integrated.fontSize": 13, // ターミナルのフォントサイズ
+
+  // ターミナルの設定
+  "terminal.integrated.cursorStyle": "line", // カーソルのスタイル
+  "terminal.integrated.smoothScrolling": true, // スクロールのスムーズ化
+  "terminal.integrated.scrollback": 1000000, // スクロールバックの行数
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.profiles.windows": {
+    "PowerShell": {
+      "source": "PowerShell",
+      "args": [
+        "-NoExit", // コマンドプロンプトを終了しないようにする
+        "-Command", // コマンドプロンプトの起動時に実行するコマンドを指定
+        "chcp 65001" // コマンドプロンプトの文字コードをUTF-8に設定
+      ]
+    }
+  },
+
+  // Code Runnerの設定
+  "code-runner.runInTerminal": true,
+  "code-runner.executorMap": {
+    "FortranFreeForm": "cd $dir && gfortran $fileName -Wall -Werror -ffpe-trap=invalid -fmax-errors=0 -O2 -o a && ./a", // GNU Fortran Compiler用
+    // "FortranFreeForm": "cd $dir && ifx $fileName -O2 -xHost -o a && ./a", // Intel Fortran Compiler用
+    "cpp": "cd $dir && g++ $fileName -O2 -o a && ./a",
+    "python": "cd $dir && python -u $fileName"
+  },
+  "code-runner.ignoreSelection": true,
+
+  // 言語関係
+  "[javascript][json][jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnType": false, // タイプ時にフォーマットを実行する
+    "editor.formatOnPaste": true, // ペースト時にフォーマットを実行する
+    "editor.formatOnSave": true // フォーマットを保存時に実行する
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnType": true // タイプ時にフォーマットを実行する
+  },
+  "black-formatter.args": [], // black-formatterの引数を指定
+  "[FortranFreeForm][FortranFixedForm]": {
+    "editor.formatOnType": false, // タイプ時にフォーマットを実行する
+    "editor.formatOnPaste": true, // ペースト時にフォーマットを実行する
+    "editor.formatOnSave": true // フォーマットを保存時に実行する
+  },
+  "fortran.fortls.disabled": false, // Fortran Language Serverを無効にする
+  "fortran.linter.compiler": "gfortran", // コンパイラを設定
+  "fortran.formatting.formatter": "fprettify", // フォーマッタを設定
+  "fortran.formatting.fprettifyArgs": [
+    "--indent",
+    "4", // インデントの幅
+    "--strict-indent", // インデントを厳密にチェックする
+    "--disable-indent-mod", // モジュールのインデントを無効にする
+    "--whitespace",
+    "1", // 空白の制御, プリセット番号
+    "--whitespace-assignment",
+    "true", // 代入演算子=の前後の空白
+    "--whitespace-relational",
+    "false", // 関係演算子>等の前後の空白
+    "--whitespace-logical",
+    "true", // 論理演算子and,or等の前後の空白
+    "--whitespace-plusminus",
+    "false", // +-の演算子の前後の空白
+    "--whitespace-multdiv",
+    "false", // 乗算除算の演算子の前後の空白
+    "--enable-decl",
+    "--whitespace-decl",
+    "true", // 変数宣言の::の前後の空白
+    "--whitespace-comma",
+    "false", // カンマの前後の空白
+    "--whitespace-print",
+    "false", // print,read文のカンマの前後の空白
+    "--whitespace-type",
+    "false", // 型の前後の空白
+    "--whitespace-intrinsics",
+    "true", // 内部関数if,end,write,open等のカンマの前後の空白
+    "--enable-replacements",
+    "--c-relations", // クラシカルな関係演算子をモダンな関係演算子に置き換え
+    "--case",
+    "1",
+    "1",
+    "1",
+    "1", // 大文字小文字の変換
+    "--strip-comments" // コメント前のスペース
+  ], // fprettifyの引数を指定
+
+  // debug関係
+  "debug.inlineValues": "on",
+  "debug.showVariableTypes": true,
+
+  // 見た目の設定
+  "workbench.colorTheme": "Default Dark Modern", // テーマの色
+  "workbench.colorCustomizations": {
+    "editor.foreground": "#ffffff", // エディタのテキストの色
+    "editor.background": "#000000", // エディタの背景色
+    "editorGroup.border": "#363845", // 複数のエディタを横に並べた時の境界線の色
+    "editor.lineHighlightBackground": "#0078d46e", // カーソルがある行の背景色
+    "list.activeSelectionBackground": "#0078d46e", // リストのアクティブな選択項目の背景色
+    "list.inactiveSelectionBackground": "#0078d46e", // リストの非アクティブな選択項目の背景色
+
+    "scrollbar.shadow": "#0078d4", // スクロールバーの影の色
+    "scrollbarSlider.background": "#0078d4", // スクロールバーのスライダーの背景色
+    "scrollbarSlider.hoverBackground": "#0078d4", // スクロールバーのスライダーのホバー時の背景色
+    "scrollbarSlider.activeBackground": "#0078d4", // スクロールバーのスライダーのアクティブ時の背景色
+
+    "tab.activeBackground": "#0078d46e" // アクティブなタブの背景色
+  },
+
+  // workbenchの設定
+  "workbench.panel.defaultLocation": "bottom", // パネルのデフォルトの位置
+  "workbench.editor.pinnedTabsOnSeparateRow": true, // ピン留めされたタブを別の行に表示する
+  "workbench.editor.tabSizing": "fit", // タブのサイズを縮小する
+  "workbench.editor.wrapTabs": true, // タブを折り返す
+  "workbench.view.alwaysShowHeaderActions": true, // ビューのヘッダーアクションを常に表示する
+
+  // ファイルの設定
+  "files.encoding": "utf8", // ファイルのエンコーディング
+  "files.trimTrailingWhitespace": true, // 末尾の空白を削除する
+  "files.autoGuessEncoding": true, // エンコーディングを自動判別する
+  "files.candidateGuessEncodings": ["utf8", "shiftjis"], // エンコーディングの候補
+  "files.trimFinalNewlines": true, // 最終行の改行を削除する
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/a": true,
+    "**/a.exe": true
+  }, // 除外するファイル
+
+  // エクスプローラーの設定
+  "explorer.sortOrder": "type", // エクスプローラーのソート順
+  "explorer.compactFolders": false, // フォルダを折りたたむ
+  "explorer.fileNesting.enabled": true, // ファイルのネスト
+  "explorer.fileNesting.expand": false, // ファイルのネストを展開する
+  "extensions.ignoreRecommendations": true, // 拡張機能の推奨を無視する
+
+  // エディタの設定
+  "editor.defaultFormatter": null, // デフォルトのフォーマッタをnullに設定
+  "editor.formatOnSave": false, // 保存時にフォーマットを実行しない
+  "editor.smoothScrolling": true, // スクロールのスムーズ化
+  "editor.scrollbar.vertical": "visible", // スクロールバーの表示
+  "editor.minimap.enabled": true, // マイナーマップを表示する
+  "editor.minimap.maxColumn": 80, // マイナーマップの最大幅
+  "editor.minimap.showSlider": "always", // マイナーマップのスライダーを表示する
+  "editor.renderControlCharacters": true, // 制御文字を表示する
+  "editor.renderWhitespace": "all", // 空白文字を表示する
+  "editor.renderLineHighlight": "all", // 選択行の行番号をハイライトする
+  "editor.renderLineHighlightOnlyWhenFocus": true,
+  "editor.bracketPairColorization.enabled": true, // 括弧の対応を色付ける
+  "editor.dragAndDrop": false, // テキストをドラッグ＆ドロップ
+  "editor.guides.bracketPairs": true, //  括弧の対応をガイドする
+  "editor.showFoldingControls": "always", // フォールディングを表示する
+  "editor.wordWrap": "on", // 折り返し
+  "editor.wrappingIndent": "indent" // 折り返しのインデント
+}

@@ -1,0 +1,58 @@
+// .vscode/launch.json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "gcc (Linux)",
+      "type": "cppdbg", // GDB で Fortran を扱う場合
+      "request": "launch",
+      "program": "${fileDirname}/a",
+      "cwd": "${fileDirname}", // 実行ディレクトリ
+      "stopAtEntry": false,
+      "args": [],
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "externalConsole": false,
+      "preLaunchTask": "cpp_compile"
+    },
+    {
+      "name": "gfortran (Linux)",
+      "type": "cppdbg", // GDB で Fortran を扱う場合
+      "request": "launch",
+      "program": "${fileDirname}/a",
+      "cwd": "${fileDirname}", // 実行ディレクトリ
+      "stopAtEntry": false,
+      "args": [],
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "externalConsole": false,
+      "preLaunchTask": "gfortran_compile"
+    },
+    {
+      "name": "ifx (Linux)",
+      "type": "cppdbg", // GDB で Fortran を扱う場合
+      "request": "launch",
+      "program": "${fileDirname}/a",
+      "cwd": "${fileDirname}", // 実行ディレクトリ
+      "stopAtEntry": false,
+      "args": [],
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "externalConsole": false,
+      "preLaunchTask": "ifx_compile"
+    },
+    {
+      "name": "gfortran (Windows)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${fileDirname}\\a.exe",
+      "cwd": "${fileDirname}",
+      "stopAtEntry": false,
+      "args": [],
+      "MIMode": "gdb",
+      "miDebuggerPath": "C:\\MinGW\\bin\\gdb.exe", // GDB のパスは環境によって変更
+      "externalConsole": false,
+      "preLaunchTask": "gfortran_compile_windows"
+    }
+  ]
+}

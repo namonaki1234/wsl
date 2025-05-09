@@ -1,0 +1,77 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "cpp_compile",
+      "command": "g++",
+      "args": [
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-Wshadow",
+        "-Wfloat-equal",
+        "-Wno-char-subscripts",
+        "-ftrapv",
+        "-fsanitize=undefined",
+        "-O0",
+        "${file}"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      }
+    },
+    {
+      "type": "shell",
+      "label": "gfortran_compile",
+      "command": "gfortran",
+      "args": [
+        "-g",
+        "-fbackslash",
+        "-Wall",
+        "-Wextra",
+        "-Wshadow",
+        " -Werror",
+        "-fbacktrace",
+        "-ftrapv",
+        "-fsanitize=undefined",
+        "-O0",
+        "${file}",
+        "-o",
+        "${fileDirname}/a"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      }
+    },
+    {
+      "type": "shell",
+      "label": "ifx_compile",
+      "command": "/opt/intel/oneapi/compiler/2025.1/bin/ifx",
+      "args": ["-g", "${file}", "-o", "${fileDirname}/a"],
+      "options": {
+        "cwd": "${fileDirname}"
+      }
+    },
+    {
+      "type": "process",
+      "label": "gfortran_compile_windows",
+      "command": "gfortran",
+      "args": [
+        "-g",
+        "-fbackslash",
+        "-Wall",
+        "-Wextra",
+        "-Wshadow",
+        "-Wconversion",
+        // "-ftrapv","-fsanitize=undefined","-O0",
+        "${file}",
+        "-o",
+        "${fileDirname}\\a.exe"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      }
+    }
+  ]
+}

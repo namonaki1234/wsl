@@ -1,0 +1,17 @@
+{
+  // See http://go.microsoft.com/fwlink/?LinkId=827846
+  // for the documentation about the extensions.json format
+  "recommendations": [
+    // Extension identifier format: ${publisher}.${name}. Example: vscode.csharp
+    "ms-python.python",
+    "ms-vscode.cpptools-extension-pack",
+    "fortran-lang.linter-gfortran",
+    "formulahendry.code-runner",
+    "github.copilot",
+    "vscode-icons-team.vscode-icons",
+    "ionutvmi.path-autocomplete",
+    "pdconsec.vscode-print",
+    "esbenp.prettier-vscode",
+    "ms-python.black-formatter"
+  ]
+}
