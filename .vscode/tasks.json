@@ -21,30 +21,29 @@
         "cwd": "${fileDirname}"
       }
     },
-    {
-      "type": "shell",
-      "label": "gfortran_compile",
-      "command": "gfortran",
-      "args": [
-        "-g",
-        "-fbackslash",
-        "-Wall",
-        "-Wextra",
-        "-Wshadow",
-        " -Werror",
-        "-fbacktrace",
-        "-ftrapv",
-        "-fsanitize=undefined",
-        "-O0",
-        "${file}",
-        "-o",
-        // "${fileDirname}/a"
-        "$fileNameWithoutExt && $dir$fileNameWithoutExt && rm $fileNameWithoutExt",
-      ],
-      "options": {
-        "cwd": "${fileDirname}"
-      }
-    },
+    // {
+    //   "type": "shell",
+    //   "label": "gfortran_compile",
+    //   "command": "gfortran",
+    //   "args": [
+    //     "-g",
+    //     "-fbackslash",
+    //     "-Wall",
+    //     "-Wextra",
+    //     "-Wshadow",
+    //     " -Werror",
+    //     "-fbacktrace",
+    //     "-ftrapv",
+    //     "-fsanitize=undefined",
+    //     "-O0",
+    //     "${file}",
+    //     "-o",
+    //     "${fileDirname}/a"
+    //   ],
+    //   "options": {
+    //     "cwd": "${fileDirname}"
+    //   }
+    // },
     {
       "type": "shell",
       "label": "ifx_compile",
@@ -73,6 +72,20 @@
       "options": {
         "cwd": "${fileDirname}"
       }
+    },
+    {
+      "label": "gfortran_compile",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "gfortran -g -fbackslash -Wall -Wextra -Wshadow -Werror -fbacktrace -ftrapv -fsanitize=undefined -O0 \"${file}\" -o \"${fileDirname}/a\" && \"${fileDirname}/a\" && rm \"${fileDirname}/a\""
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
     }
   ]
 }
