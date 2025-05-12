@@ -3,7 +3,11 @@
   // CodeRunnerのショートカット: Ctrl+Opt+N(Windowsの場合はCtrl+Alt+N)で実行
   // デバッグ開始/終了のショートカット:F5
   // fortranのファイル入出力のunitは標準入力は5，標準出力は6，標準エラー出力は0
-
+  
+  //neovimの設定
+  "vscode-neovim.neovimExecutablePaths.win32": "C:\\Program Files\\Neovim\\bin\\nvim.exe",
+  "vscode-neovim.neovimInitVimPaths.win32": "C:\\Users\\12358\\AppData\\Local\\nvim\\init.vim",
+ 
   // フォントの設定
   "editor.fontFamily": "PlemolJP35, Source Sans Code JP", // フォントの種類
   "editor.fontSize": 15, // フォントサイズ
