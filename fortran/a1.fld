@@ -7,6 +7,6 @@ veclen = 1
 data = double
 field = irregular
 label = 0
+variable 1 file=a1.dat filetype=ascii skip=0 offset=2 stride=3
 coord 1 file=a1.dat filetype=ascii skip=0 offset=0 stride=3
 coord 2 file=a1.dat filetype=ascii skip=0 offset=1 stride=3
-variable 1 file=a1.dat filetype=ascii skip=0 offset=2 stride=3
