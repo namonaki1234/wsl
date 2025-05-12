@@ -38,7 +38,8 @@
         "-O0",
         "${file}",
         "-o",
-        "${fileDirname}/a"
+        // "${fileDirname}/a"
+        "$fileNameWithoutExt && $dir$fileNameWithoutExt && rm $fileNameWithoutExt",
       ],
       "options": {
         "cwd": "${fileDirname}"
