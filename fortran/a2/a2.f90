@@ -1,19 +1,21 @@
 program a2
   implicit none
-
+  ! ==========================
+  ! パラメータ設定
   !格子条件
   double precision, parameter::H = 10.0d0
   integer, parameter::IM = 30, JM = 30 !格子数
   double precision, parameter::dx = 3.0d0*H/dble(IM), dy = H/dble(JM) !x,y方向の格子幅
 
-  !流れ場初期条件
+  !流れ場の初期条件
   double precision, dimension(0:IM, 0:JM)::M = 2.9d0, T = 293.0d0, R = 287.1d0, k = 1.4d0, rho = 1.2d0, dt = 1.0d-6 !マッハ数,温度,ガス定数,比熱比,密度,時間刻み
 
-  !その他の条件
+  !変数宣言
   integer::i, j, n
   double precision, dimension(0:IM, 0:JM)::a, x, y, u, v, p, e, Q1, Q2, Q3, Q4, E1, E2, E3, E4, F1, F2, F3, F4, E_bar
 
-  !格子作成
+  ! ==========================
+  !等間隔格子作成
   do j = 0, JM
     do i = 0, IM
       x(i, j) = dx*dble(i)
@@ -21,19 +23,18 @@ program a2
     end do
   end do
 
-  !初期条件
+  ! ==========================
+  !流入の初期条件
   do j = 0, JM
     do i = 0, IM
       a(i, j) = sqrt(k(i, j)*R(i, j)*T(i, j)) !音速
-
-      !流入条件
       u(0, j) = M(0, j)*a(0, j) !u=Ma
       u(1, j) = u(0, j) !一次外挿
       v(i, j) = 0.0
     end do
   end do
 
-  !初期値以外の速度計算
+  !流入付近以外の速度計算
   do j = 0, JM
     do i = 2, IM
       u(i, j) = M(i, j)*a(i, j) 
@@ -48,7 +49,8 @@ program a2
     end do
   end do
 
-  !式(5.26)の要素計算
+  ! ==========================
+  !メインループ 式(5.26)の計算
   do n = 1, 10000
     do j = 0, JM
       do i = 0, IM
@@ -80,7 +82,8 @@ program a2
       end do
     end do
 
-    !境界の計算（一次外挿）
+    ! ==========================
+    !境界条件の設定（一次外挿）
     !上壁
     do i = 1, IM
       Q1(i, JM) = Q1(i, JM - 2) + (y(i, JM) - y(i, JM - 2))/(y(i, JM - 2) - y(i, JM - 1))*(Q1(i, JM - 2) - Q1(i, JM - 1))
@@ -97,7 +100,7 @@ program a2
       Q4(i, 0) = Q4(i, 2) + (y(i, 0) - y(i, 2))/(y(i, 2) - y(i, 1))*(Q4(i, 2) - Q4(i, 1))
     end do
 
-    !流出
+    !流出境界
     do j = i, JM - 1
       Q1(IM, j) = Q1(IM - 2, j) + (x(IM, j) - x(IM - 2, j))/(x(IM - 2, j) - x(IM - 1, j))*(Q1(IM - 2, j) - Q1(IM - 1, j))
       Q2(IM, j) = Q2(IM - 2, j) + (x(IM, j) - x(IM - 2, j))/(x(IM - 2, j) - x(IM - 1, j))*(Q2(IM - 2, j) - Q2(IM - 1, j))
@@ -105,7 +108,7 @@ program a2
       Q4(IM, j) = Q4(IM - 2, j) + (x(IM, j) - x(IM - 2, j))/(x(IM - 2, j) - x(IM - 1, j))*(Q4(IM - 2, j) - Q4(IM - 1, j))
     end do
 
-    !更新
+    !変数の更新
     do j = 0, JM
       do i = 0, IM
         rho(i, j) = Q1(i, j)
