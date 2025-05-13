@@ -124,7 +124,7 @@ program a2
   open (10, file='a2.dat', status='replace')
   do j = 0, JM
     do i = 0, IM
-      write (10, '(3F15.8)') x(i, j), y(i, j), u(i, j), v(i, j)
+      write (10, *) x(i, j), y(i, j), u(i, j), v(i, j)
     end do
   end do
   close (10)
@@ -138,10 +138,10 @@ program a2
   write (11, '(A)') 'nspace = 2'
   write (11, '(A)') 'veclen = 2'
   write (11, '(A)') 'data = double'
-  write (11, '(A)') 'field = uniform'
+  write (11, '(A)') 'field = irregular'
   write (11, '(A)') 'label = u v'
   write (11, '(A)') 'variable 1 file=a2.dat filetype=ascii skip=0 offset=2 stride=4'
-  write (11, '(A)') 'variable 1 file=a2.dat filetype=ascii skip=0 offset=3 stride=4'
+  write (11, '(A)') 'variable 2 file=a2.dat filetype=ascii skip=0 offset=3 stride=4'
   write (11, '(A)') 'coord 1 file=a2.dat filetype=ascii skip=0 offset=0 stride=4'
   write (11, '(A)') 'coord 2 file=a2.dat filetype=ascii skip=0 offset=1 stride=4'
   close (11)
