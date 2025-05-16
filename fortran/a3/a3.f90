@@ -1,10 +1,10 @@
-program assyuku3
+program a3
 implicit none
 !格子条件
 double precision,parameter::H=10.0d0
 integer,parameter::IM=30,JM=30 !格子数
 double precision,parameter::dx=3.0*H/30.0 !x方向の格子幅
-double precision,parameter::b=1.2d0 !公比b
+double precision,parameter::r_y=1.1d0 !yの公比
 double precision::a,ix
 
 !流れ場初期条件
@@ -12,23 +12,21 @@ double precision,dimension(0:IM,0:JM)::M=2.9d0,T=293.0d0,R=287.1d0,g=1.4d0,rho=1
 
 !その他の条件
 integer::i,j,n
-double precision,dimension(0:IM,0:JM)::c,x,y,u,v,p,e,Q1,Q2,Q3,Q4,E1,E2,E3,E4,F1,F2,F3,F4,Ebar&
-                           &,xh,yh,xe,ye,Jac,xix,xiy,ex,ey,uu,vv
+double precision,dimension(0:IM,0:JM)::c,x,y,u,v,p,e,Q1,Q2,Q3,Q4,E1,E2,E3,E4,F1,F2,F3,F4,E_bar&
+,xh,yh,xe,ye,Jn,xix,xiy,ex,ey,uu,vv
 
-!格子生成
-do i=0,IM
- do j=0,JM
- x(i,j)=dx*real(i) !x方向（等間隔格子）
-end do
+  ! === 格子生成 ===
+do i = 0, IM
+  do j = 0, JM
+    x(i,j) = dx * dble(i)
+  end do
 end do
 
-do j=0,JM
- do i=0,IM !式(4.9)
- a=(b+1)/(b-1)
- ix=dble(j)/JM
- y(i,j)=H*(a**ix-1)/(a-1) !y方向（不等間隔格子）
- !print *,b**dble(a)
-end do
+do j = 0, JM
+  a = H * (r_y - 1.0d0) / (r_y**dble(JM) - 1.0d0)
+  do i = 0, IM
+    y(i,j) = a * (r_y**dble(j) - 1.0d0) / (r_y - 1.0d0)
+  end do
 end do
 
 !流入条件設定
@@ -90,11 +88,11 @@ end do
 !ヤコビアン計算
 do i=0,IM
  do j=0,JM
-Jac(i,j)=1.0d0/(xe(i,j)*yh(i,j)-ye(i,j)*xh(i,j))
-xix(i,j)=Jac(i,j)*yh(i,j)
-xiy(i,j)=Jac(i,j)*xh(i,j)
-ex(i,j)=-Jac(i,j)*ye(i,j)
-ey(i,j)=Jac(i,j)*xe(i,j)
+Jn(i,j)=1.0d0/(xe(i,j)*yh(i,j)-ye(i,j)*xh(i,j))
+xix(i,j)=Jn(i,j)*yh(i,j)
+xiy(i,j)=Jn(i,j)*xh(i,j)
+ex(i,j)=-Jn(i,j)*ye(i,j)
+ey(i,j)=Jn(i,j)*xe(i,j)
  end do
 end do
 
@@ -104,18 +102,18 @@ do n=1,10000
   do j=0,JM
    uu(i,j)=xix(i,j)*u(i,j)+xiy(i,j)*v(i,j) !反変速度
    vv(i,j)=ex(i,j)*u(i,j)+ey(i,j)*v(i,j)
-   Q1(i,j)=rho(i,j)/Jac(i,j) !保存変数ベクトル
-   Q2(i,j)=(rho(i,j)*u(i,j))/Jac(i,j)
-   Q3(i,j)=(rho(i,j)*v(i,j))/Jac(i,j)
-   Q4(i,j)=e(i,j)/Jac(i,j)
-   E1(i,j)=(rho(i,j)*uu(i,j))/Jac(i,j) !x方向流束ベクトル
-   E2(i,j)=(rho(i,j)*u(i,j)*uu(i,j)+xix(i,j)*p(i,j))/Jac(i,j)
-   E3(i,j)=(rho(i,j)*v(i,j)*uu(i,j)+xiy(i,j)*p(i,j))/Jac(i,j)
-   E4(i,j)=(e(i,j)+p(i,j))*uu(i,j)/Jac(i,j)
-   F1(i,j)=rho(i,j)*vv(i,j)/Jac(i,j) !y方向流束ベクトル
-   F2(i,j)=(rho(i,j)*u(i,j)*vv(i,j)+ex(i,j)*p(i,j))/Jac(i,j)
-   F3(i,j)=(rho(i,j)*v(i,j)*vv(i,j)+ey(i,j)*p(i,j))/Jac(i,j)
-   F4(i,j)=(e(i,j)+p(i,j))*vv(i,j)/Jac(i,j)
+   Q1(i,j)=rho(i,j)/Jn(i,j) !保存変数ベクトル
+   Q2(i,j)=(rho(i,j)*u(i,j))/Jn(i,j)
+   Q3(i,j)=(rho(i,j)*v(i,j))/Jn(i,j)
+   Q4(i,j)=e(i,j)/Jn(i,j)
+   E1(i,j)=(rho(i,j)*uu(i,j))/Jn(i,j) !x方向流束ベクトル
+   E2(i,j)=(rho(i,j)*u(i,j)*uu(i,j)+xix(i,j)*p(i,j))/Jn(i,j)
+   E3(i,j)=(rho(i,j)*v(i,j)*uu(i,j)+xiy(i,j)*p(i,j))/Jn(i,j)
+   E4(i,j)=(e(i,j)+p(i,j))*uu(i,j)/Jn(i,j)
+   F1(i,j)=rho(i,j)*vv(i,j)/Jn(i,j) !y方向流束ベクトル
+   F2(i,j)=(rho(i,j)*u(i,j)*vv(i,j)+ex(i,j)*p(i,j))/Jn(i,j)
+   F3(i,j)=(rho(i,j)*v(i,j)*vv(i,j)+ey(i,j)*p(i,j))/Jn(i,j)
+   F4(i,j)=(e(i,j)+p(i,j))*vv(i,j)/Jn(i,j)
   end do
  end do
 
@@ -131,14 +129,14 @@ do n=1,10000
 
  do j=1,JM-1
   do i=1,IM-1
-   rho(i,j)=Q1(i,j)*Jac(i,j)
-   u(i,j)=Q2(i,j)*Jac(i,j)/rho(i,j)
-   v(i,j)=Q3(i,j)*Jac(i,j)/rho(i,j)
-   e(i,j)=Q4(i,j)*Jac(i,j)
+   rho(i,j)=Q1(i,j)*Jn(i,j)
+   u(i,j)=Q2(i,j)*Jn(i,j)/rho(i,j)
+   v(i,j)=Q3(i,j)*Jn(i,j)/rho(i,j)
+   e(i,j)=Q4(i,j)*Jn(i,j)
   end do
  end do
 
-!境界の計算	
+!境界の計算
 do i=1,IM-1
 !上壁
   rho(i,JM)=rho(i,JM-1)+(y(i,JM)-y(i,JM-1))/(y(i,JM-1)-y(i,JM-2))*(rho(i,JM-1)-rho(i,JM-2))
@@ -166,21 +164,42 @@ end do
 !更新
  do j=0,JM
   do i=0,IM
-   T(i,j)=Ebar(i,j)*(g(i,j)-1.0d0)/r(i,j)
-   Ebar(i,j)=e(i,j)/rho(i,j)-(u(i,j)**2.0+v(i,j)**2.0)/2.0d0 !式(5.7)
-   p(i,j)=(g(i,j)-1.0d0)*rho(i,j)*Ebar(i,j) !式(5.10)
+   T(i,j)=E_bar(i,j)*(g(i,j)-1.0d0)/r(i,j)
+   E_bar(i,j)=e(i,j)/rho(i,j)-(u(i,j)**2.0+v(i,j)**2.0)/2.0d0 !式(5.7)
+   p(i,j)=(g(i,j)-1.0d0)*rho(i,j)*E_bar(i,j) !式(5.10)
   end do
  end do
  !print*,n
 end do
 
-!グラフ作成
-open(1,file='assyuku3.dat',status='replace')
+! === データ出力（MicroAVS用 DAT）===
+open(10,file='a3.dat',status='replace')
 do j=0,JM
  do i=0,IM
   write(1,*) x(i,j),y(i,j),u(i,j),v(i,j)
  end do
 end do
-close(1)
+close(10)
 
-end program assyuku3
+
+  ! === MicroAVSのFLDヘッダ出力 ===
+open (11, file='a3.fld', status='replace')
+write (11, '(A)') '# AVS field file'
+write (11, '(A)') 'ndim = 2'
+write (11, '(A,I5)') 'dim1 =', IM + 1
+write (11, '(A,I5)') 'dim2 =', JM + 1
+write (11, '(A)') 'nspace = 2'
+write (11, '(A)') 'veclen = 2'
+write (11, '(A)') 'data = double'
+write (11, '(A)') 'field = irregular'
+write (11, '(A)') 'label = u v'
+write (11, '(A)') 'variable 1 file=a3.dat filetype=ascii skip=0 offset=2 stride=4'
+write (11, '(A)') 'variable 2 file=a3.dat filetype=ascii skip=0 offset=3 stride=4'
+write (11, '(A)') 'coord 1 file=a3.dat filetype=ascii skip=0 offset=0 stride=4'
+write (11, '(A)') 'coord 2 file=a3.dat filetype=ascii skip=0 offset=1 stride=4'
+close (11)
+
+print *, "→ MicroAVS用の .dat および .fld を出力しました。"
+
+
+end program a3
