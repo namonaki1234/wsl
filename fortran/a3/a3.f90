@@ -5,7 +5,7 @@ double precision,parameter::H=10.0d0
 integer,parameter::IM=30,JM=30 !格子数
 double precision,parameter::dx=3.0*H/30.0 !x方向の格子幅
 double precision,parameter::r_y=1.1d0 !yの公比
-double precision::a,ix
+double precision::a
 
 !流れ場初期条件
 double precision,dimension(0:IM,0:JM)::M=2.9d0,T=293.0d0,R=287.1d0,g=1.4d0,rho=1.2d0,dt=1.0d-6 !マッハ数,温度,ガス定数,比熱比,密度,時間刻み
