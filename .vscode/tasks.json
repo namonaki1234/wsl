@@ -6,6 +6,7 @@
       "label": "cpp_compile",
       "command": "g++",
       "args": [
+        "-std=c++20",
         "-g",
         "-Wall",
         "-Wextra",
@@ -15,11 +16,14 @@
         "-ftrapv",
         "-fsanitize=undefined",
         "-O0",
-        "${file}"
+        "${file}",
+        "-o",
+        "${fileBasenameNoExtension}"
       ],
       "options": {
         "cwd": "${fileDirname}"
-      }
+      },
+      "problemMatcher": ["$gcc"]
     },
     // {
     //   "type": "shell",
