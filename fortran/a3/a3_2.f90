@@ -23,23 +23,17 @@ double precision :: u_init,v_init,p_init,energy_init,c_sound_init
 dx = 3.0d0*H/dble(IM)
 r_y = 1.1d0
 
-if (abs(r_y-1.0d0)<1.0d-12) then
-  print*,"Error: r_y (公比) が1.0です。この格子生成式では使用できません。"
-  stop
-end if
+! === 格子生成 ===
 do i = 0,IM
   do j = 0,JM
     x(i,j) = dx*dble(i)
   end do
 end do
+
 do j = 0,JM
   a = H*(r_y-1.0d0)/(r_y**dble(JM)-1.0d0)
   do i = 0,IM
-    if (j==0) then
-      y(i,j) = 0.0d0
-    else
-      y(i,j) = a*(r_y**dble(j)-1.0d0)/(r_y-1.0d0)
-    end if
+    y(i,j) = a*(r_y**dble(j)-1.0d0)/(r_y-1.0d0)
   end do
 end do
 
@@ -87,11 +81,11 @@ end do
 
 do i = 0,IM
   do j = 0,JM
-    Jac_inv(i,j) = x_xi(i,j)*y_eta(i,j) - y_xi(i,j)*x_eta(i,j)
-    if (abs(Jac_inv(i,j)) < 1.0d-12) then
-        print*, "エラー：ヤコビアンがゼロ i=",i," j=",j," → jac_inv=", Jac_inv(i,j)
-        stop
-      endif
+    Jac_inv(i,j) = x_xi(i,j)*y_eta(i,j)-y_xi(i,j)*x_eta(i,j)
+    if (abs(Jac_inv(i,j))<1.0d-12) then
+      print*,"エラー：ヤコビアンがゼロ i=",i," j=",j," → jac_inv=",Jac_inv(i,j)
+      stop
+    end if
     Jac(i,j) = 1.0d0/(x_xi(i,j)*y_eta(i,j)-y_xi(i,j)*x_eta(i,j))
     xi_x(i,j) = Jac(i,j)*y_eta(i,j)
     xi_y(i,j) = -Jac(i,j)*x_eta(i,j)
@@ -107,8 +101,8 @@ do n_step = 1,10000
     do j = 1,JM-1
       do i = 1,IM-1
         Q(i,j,vec_index) = Q(i,j,vec_index)-dt*( &
-                       (E(i+1,j,vec_index)-E(i-1,j,vec_index))/(2.0d0)+ &
-                       (F(i,j+1,vec_index)-F(i,j-1,vec_index))/(2.0d0))
+                           (E(i+1,j,vec_index)-E(i-1,j,vec_index))/(2.0d0)+ &
+                           (F(i,j+1,vec_index)-F(i,j-1,vec_index))/(2.0d0))
       end do
     end do
   end do
