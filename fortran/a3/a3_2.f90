@@ -14,7 +14,7 @@ double precision,dimension(0:IM,0:JM) :: rho,u,v,p,energy,T,E_bar
 
 double precision,dimension(0:IM,0:JM,4) :: Q,E,F
 
-double precision,dimension(0:IM,0:JM) :: x_xi,y_xi,x_eta,y_eta,Jac
+double precision,dimension(0:IM,0:JM) :: x_xi,y_xi,x_eta,y_eta,Jac,Jac_inv
 double precision,dimension(0:IM,0:JM) :: xi_x,xi_y,eta_x,eta_y
 double precision,dimension(0:IM,0:JM) :: U_cvc,V_cvc
 
@@ -60,13 +60,13 @@ do j = 0,JM
   end do
 end do
 
-do i = 1,IM-1
+do i = 0,IM
   do j = 1,JM-1
     x_eta(i,j) = (x(i,j+1)-x(i,j-1))/2.0d0
     y_eta(i,j) = (y(i,j+1)-y(i,j-1))/2.0d0
   end do
 end do
-do j = 1,JM-1
+do j = 0,JM
   do i = 1,IM-1
     x_xi(i,j) = (x(i+1,j)-x(i-1,j))/2.0d0
     y_xi(i,j) = (y(i+1,j)-y(i-1,j))/2.0d0
@@ -87,6 +87,11 @@ end do
 
 do i = 0,IM
   do j = 0,JM
+    Jac_inv(i,j) = x_xi(i,j)*y_eta(i,j) - y_xi(i,j)*x_eta(i,j)
+    if (abs(Jac_inv(i,j)) < 1.0d-12) then
+        print*, "エラー：ヤコビアンがゼロ i=",i," j=",j," → jac_inv=", Jac_inv(i,j)
+        stop
+      endif
     Jac(i,j) = 1.0d0/(x_xi(i,j)*y_eta(i,j)-y_xi(i,j)*x_eta(i,j))
     xi_x(i,j) = Jac(i,j)*y_eta(i,j)
     xi_y(i,j) = -Jac(i,j)*x_eta(i,j)
@@ -177,7 +182,7 @@ end do
 open (10,file='a3.dat',status='replace')
 do j = 0,JM
   do i = 0,IM
-    write (1,*) x(i,j),y(i,j),u(i,j),v(i,j)
+    write (10,*) x(i,j),y(i,j),u(i,j),v(i,j)
   end do
 end do
 close (10)
