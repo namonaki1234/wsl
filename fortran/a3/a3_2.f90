@@ -101,8 +101,8 @@ do n_step = 1,10000
     do j = 1,JM-1
       do i = 1,IM-1
         Q(i,j,vec_index) = Q(i,j,vec_index)-dt*( &
-                           (E(i+1,j,vec_index)-E(i-1,j,vec_index))/(2.0d0)+ &
-                           (F(i,j+1,vec_index)-F(i,j-1,vec_index))/(2.0d0))
+                           0.5d0*(E(i+1,j,vec_index)-E(i-1,j,vec_index))+ &
+                           0.5d0*(F(i,j+1,vec_index)-F(i,j-1,vec_index)))
       end do
     end do
   end do
