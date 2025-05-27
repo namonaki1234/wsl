@@ -18,7 +18,7 @@ double precision,dimension(0:IM,0:JM) :: x_xi,y_xi,x_eta,y_eta,Jac,Jac_inv
 double precision,dimension(0:IM,0:JM) :: xi_x,xi_y,eta_x,eta_y
 double precision,dimension(0:IM,0:JM) :: U_cvc,V_cvc
 
-double precision :: u_init,v_init,p_init,energy_init,c_sound_init
+double precision :: u_init,v_init,p_init,energy_init,c_sound_init,slope
 
 dx = 3.0d0*H/dble(IM)
 r_y = 1.1d0
@@ -161,26 +161,29 @@ do n_step = 1,10000
   !境界の計算
   do i = 1,IM-1
     !上壁
-    rho(i,JM) = rho(i,JM-1)+(y(i,JM)-y(i,JM-1))/(y(i,JM-1)-y(i,JM-2))*(rho(i,JM-1)-rho(i,JM-2))
-    u(i,JM) = u(i,JM-1)+(y(i,JM)-y(i,JM-1))/(y(i,JM-1)-y(i,JM-2))*(u(i,JM-1)-u(i,JM-2))
-    v(i,JM) = v(i,JM-1)+(y(i,JM)-y(i,JM-1))/(y(i,JM-1)-y(i,JM-2))*(v(i,JM-1)-v(i,JM-2))
-    energy(i,JM) = energy(i,JM-1)+(y(i,JM)-y(i,JM-1))/(y(i,JM-1)-y(i,JM-2))*(energy(i,JM-1)-energy(i,JM-2))
-    p(i,JM) = p(i,JM-1)+(y(i,JM)-y(i,JM-1))/(y(i,JM-1)-y(i,JM-2))*(p(i,JM-1)-p(i,JM-2))
+    slope=(y(i,JM)-y(i,JM-1))/(y(i,JM-1)-y(i,JM-2))
+    rho(i,JM) = rho(i,JM-1)+slope*(rho(i,JM-1)-rho(i,JM-2))
+    u(i,JM) = u(i,JM-1)+slope*(u(i,JM-1)-u(i,JM-2))
+    v(i,JM) = v(i,JM-1)+slope*(v(i,JM-1)-v(i,JM-2))
+    energy(i,JM) = energy(i,JM-1)+slope*(energy(i,JM-1)-energy(i,JM-2))
+    p(i,JM) = p(i,JM-1)+slope*(p(i,JM-1)-p(i,JM-2))
     !下壁
-    rho(i,0) = rho(i,1)-(y(i,1)-y(i,0))/(y(i,2)-y(i,1))*(rho(i,2)-rho(i,1))
-    u(i,0) = u(i,1)-(y(i,1)-y(i,0))/(y(i,2)-y(i,1))*(u(i,2)-u(i,1))
-    v(i,0) = v(i,1)-(y(i,1)-y(i,0))/(y(i,2)-y(i,1))*(v(i,2)-v(i,1))
-    energy(i,0) = energy(i,1)-(y(i,1)-y(i,0))/(y(i,2)-y(i,1))*(energy(i,2)-energy(i,1))
-    p(i,0) = p(i,1)-(y(i,1)-y(i,0))/(y(i,2)-y(i,1))*(p(i,2)-p(i,1))
+    slope=(y(i,0)-y(i,1))/(y(i,2)-y(i,1))
+    rho(i,0) = rho(i,1)+slope*(rho(i,2)-rho(i,1))
+    u(i,0) = u(i,1)+slope*(u(i,2)-u(i,1))
+    v(i,0) = v(i,1)+slope*(v(i,2)-v(i,1))
+    energy(i,0) = energy(i,1)+slope*(energy(i,2)-energy(i,1))
+    p(i,0) = p(i,1)+slope*(p(i,2)-p(i,1))
   end do
 
   do j = 0,JM
     !流出
-    rho(IM,j) = rho(IM-1,j)+(x(IM,j)-x(IM-1,j))/(x(IM-1,j)-x(IM-2,j))*(rho(IM-1,j)-rho(IM-2,j))
-    u(IM,j) = u(IM-1,j)+(x(IM,j)-x(IM-1,j))/(x(IM-1,j)-x(IM-2,j))*(u(IM-1,j)-u(IM-2,j))
-    v(IM,j) = v(IM-1,j)+(x(IM,j)-x(IM-1,j))/(x(IM-1,j)-x(IM-2,j))*(v(IM-1,j)-v(IM-2,j))
-    energy(IM,j) = energy(IM-1,j)+(x(IM,j)-x(IM-1,j))/(x(IM-1,j)-x(IM-2,j))*(energy(IM-1,j)-energy(IM-2,j))
-    p(IM,j) = p(IM-1,j)+(x(IM,j)-x(IM-1,j))/(x(IM-1,j)-x(IM-2,j))*(p(IM-1,j)-p(IM-2,j))
+    slope=(x(IM,j)-x(IM-1,j))/(x(IM-2,j)-x(IM-1,j))
+    rho(IM,j) = rho(IM-1,j)+slope*(rho(IM-1,j)-rho(IM-2,j))
+    u(IM,j) = u(IM-1,j)+slope*(u(IM-1,j)-u(IM-2,j))
+    v(IM,j) = v(IM-1,j)+slope*(v(IM-1,j)-v(IM-2,j))
+    energy(IM,j) = energy(IM-1,j)+slope*(energy(IM-1,j)-energy(IM-2,j))
+    p(IM,j) = p(IM-1,j)+slope*(p(IM-1,j)-p(IM-2,j))
   end do
 
 !   状態方程式の再計算
