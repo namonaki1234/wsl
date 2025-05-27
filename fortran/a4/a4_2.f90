@@ -1,4 +1,4 @@
-program a3
+program a4
 implicit none
 
 double precision,parameter :: H = 10.0d0
@@ -105,7 +105,7 @@ end do
 close (10)
 
 ! === MicroAVSのFLDヘッダ出力 ===
-open (11,file='a3.fld',status='replace')
+open (11,file='a4.fld',status='replace')
 write (11,'(A)') '# AVS field file'
 write (11,'(A)') 'ndim = 2'
 write (11,'(A,I5)') 'dim1 =',IM+1
@@ -115,12 +115,12 @@ write (11,'(A)') 'veclen = 2'
 write (11,'(A)') 'data = double'
 write (11,'(A)') 'field = irregular'
 write (11,'(A)') 'label = u v'
-write (11,'(A)') 'variable 1 file=a3.dat filetype=ascii skip=0 offset=2 stride=4'
-write (11,'(A)') 'variable 2 file=a3.dat filetype=ascii skip=0 offset=3 stride=4'
-write (11,'(A)') 'coord 1 file=a3.dat filetype=ascii skip=0 offset=0 stride=4'
-write (11,'(A)') 'coord 2 file=a3.dat filetype=ascii skip=0 offset=1 stride=4'
+write (11,'(A)') 'variable 1 file=a4.dat filetype=ascii skip=0 offset=2 stride=4'
+write (11,'(A)') 'variable 2 file=a4.dat filetype=ascii skip=0 offset=3 stride=4'
+write (11,'(A)') 'coord 1 file=a4.dat filetype=ascii skip=0 offset=0 stride=4'
+write (11,'(A)') 'coord 2 file=a4.dat filetype=ascii skip=0 offset=1 stride=4'
 close (11)
 
 print*,"→ MicroAVS用の .dat および .fld を出力しました。"
 
-end program a3
+end program a4
