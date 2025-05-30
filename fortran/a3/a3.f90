@@ -176,7 +176,7 @@ end do
 open(10,file='a3.dat',status='replace')
 do j=0,JM
  do i=0,IM
-  write(1,*) x(i,j),y(i,j),u(i,j),v(i,j)
+  write(10,*) x(i,j),y(i,j),u(i,j),v(i,j)
  end do
 end do
 close(10)

@@ -33,10 +33,10 @@
   // Code Runnerの設定
   "code-runner.runInTerminal": true,
   "code-runner.executorMap": {
-    "FortranFreeForm": "cd $dir && gfortran $fileName -Wall -Werror -ffpe-trap=invalid -fmax-errors=0 -O2 -o a && ./a", // GNU Fortran Compiler用
+    "FortranFreeForm": "cd $dir && gfortran $fileName -Wall -Werror -ffpe-trap=invalid -fmax-errors=0 -O2 -o a && ./a && rm a", // GNU Fortran Compiler用
     // "FortranFreeForm": "cd $dir && ifx $fileName -O2 -xHost -o a && ./a", // Intel Fortran Compiler用
     "cpp": "cd $dir && g++ -std=c++20 $fileName -O2 -o a && ./a",
-    "python": "cd $dir && python -u $fileName"
+    "python": "cd $dir && python -u $fileName",
   },
   "code-runner.ignoreSelection": true,
 
