@@ -1,48 +1,47 @@
 program kadai4
 implicit none
 
-!--------------Šiq‹óŠÔEŒvZ‹óŠÔğŒ--------------
-double precision,parameter :: H = 10.0d0 !Šiq”
-double precision,parameter :: XM = 3.0d0*H !’·‚³_x•ûŒü
-double precision,parameter :: YM = H !’·‚³_y•ûŒü
+!--------------ï¿½iï¿½qï¿½ï¿½ÔEï¿½vï¿½Zï¿½ï¿½Ôï¿½ï¿½ï¿½--------------
+double precision,parameter :: H = 10.0d0 !ï¿½iï¿½qï¿½ï¿½
+double precision,parameter :: XM = 3.0d0*H !ï¿½ï¿½ï¿½ï¿½_xï¿½ï¿½ï¿½ï¿½
+double precision,parameter :: YM = H !ï¿½ï¿½ï¿½ï¿½_yï¿½ï¿½ï¿½ï¿½
 
-integer,parameter :: IM = 30 !I“__x•ûŒü
-integer,parameter :: JM = 30 !I“__y•ûŒü
-integer,parameter :: IL = 0 !n“__x•ûŒü
-integer,parameter :: JL = 0 !n“__y•ûŒü
+integer,parameter :: IM = 30 !ï¿½Iï¿½__xï¿½ï¿½ï¿½ï¿½
+integer,parameter :: JM = 30 !ï¿½Iï¿½__yï¿½ï¿½ï¿½ï¿½
+integer,parameter :: IL = 0 !ï¿½nï¿½__xï¿½ï¿½ï¿½ï¿½
+integer,parameter :: JL = 0 !ï¿½nï¿½__yï¿½ï¿½ï¿½ï¿½
 
-double precision,dimension(IL-1:IM+1,JL-1:JM+1) :: x = 0.0d0 !“™ŠÔŠuÀ•W_x
-double precision,dimension(IL-1:IM+1,JL-1:JM+1) :: y = 0.0d0 !•s“™ŠÔŠuÀ•W_y
-double precision jy !b‚Ì‚×‚«æ”
-double precision,parameter :: a = 1.2d0 !ŠiqŠÔŠu_n“_‹ß–T
-double precision,parameter :: b = (a+1.0d0)/(a-1.0d0) !ŠiqŠÔŠu_n“_‹ß–T
-integer :: i,j !À•W_x•ûŒü,y•ûŒü
+double precision,dimension(IL-1:IM+1,JL-1:JM+1) :: x = 0.0d0 !ï¿½ï¿½ï¿½ÔŠuï¿½ï¿½ï¿½W_x
+double precision,dimension(IL-1:IM+1,JL-1:JM+1) :: y = 0.0d0 !ï¿½sï¿½ï¿½ï¿½ÔŠuï¿½ï¿½ï¿½W_y
+double precision jy !bï¿½Ì‚×‚ï¿½ï¿½æ”
+double precision,parameter :: a = 1.2d0 !ï¿½iï¿½qï¿½ÔŠu_ï¿½nï¿½_ï¿½ß–T
+double precision,parameter :: b = (a+1.0d0)/(a-1.0d0) !ï¿½iï¿½qï¿½ÔŠu_ï¿½nï¿½_ï¿½ß–T
+integer :: i,j !ï¿½ï¿½ï¿½W_xï¿½ï¿½ï¿½ï¿½,yï¿½ï¿½ï¿½ï¿½
 
-double precision,parameter :: dx = XM/dble(IM) !”÷¬’·‚³_x•ûŒü
-double precision :: dy !”÷¬’·‚³_y•ûŒü
+double precision,parameter :: dx = XM/dble(IM) !ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½_xï¿½ï¿½ï¿½ï¿½
+double precision :: dy !ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½_yï¿½ï¿½ï¿½ï¿½
 
-!--------------—¬‚êê‚Ì‰ŠúğŒ--------------
-double precision,parameter :: R = 287.1d0 !ƒKƒX’è”
-double precision,parameter :: GAMMA = 1.4d0 !”ä”M”ä
-double precision,parameter :: pi = dacos(-1.0d0) !‰~ü—¦ƒÎ
-double precision,parameter :: beta = 30.0d0/180.0d0*pi !ÕŒ‚”gŠp
+!--------------ï¿½ï¿½ï¿½ï¿½ï¿½Ìï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½--------------
+double precision,parameter :: R = 287.1d0 !ï¿½Kï¿½Xï¿½è”
+double precision,parameter :: GAMMA = 1.4d0 !ï¿½ï¿½Mï¿½ï¿½
+double precision,parameter :: pi = dacos(-1.0d0) !ï¿½~ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+double precision,parameter :: beta = 30.0d0/180.0d0*pi !ï¿½ÕŒï¿½ï¿½gï¿½p
 
-!--------------”z—ñ’è‹`--------------
-double precision,dimension(IL:IM,JL:JM) :: u = 0.0d0 !‘¬“x_x•ûŒü
-double precision,dimension(IL:IM,JL:JM) :: v = 0.0d0 !‘¬“x_y•ûŒü
-double precision,dimension(IL:IM,JL:JM) :: p = 0.0d0 !ˆ³—Í
-double precision,dimension(IL:IM,JL:JM) :: T = 0.0d0 !â‘Î‰·“x
-double precision,dimension(IL:IM,JL:JM) :: RHO = 0.0d0 !–§“x
-double precision,dimension(IL:IM,JL:JM) :: RHO2 = 0.0d0 !–§“x2
-double precision,dimension(IL:IM,JL:JM) :: M = 0.0d0 !ƒ}ƒbƒn”
-double precision,dimension(IL:IM,JL:JM) :: VELO = 0.0d0 !‘¬“xƒxƒN
-double precision,dimension(IL:IM,JL:JM) :: VELOn = 0.0d0 !‘¬“xƒxƒN_‚’¼
-double precision,dimension(IL:IM,JL:JM) :: VELOt = 0.0d0 !‘¬“xƒxƒN_•½s
-double precision,dimension(IL:IM,JL:JM) :: theta = 0.0d0 !•ÎŠpƒÆ
-double precision,dimension(IL:IM,JL:JM) :: c = 0.0d0 !‰¹‘¬c
-double precision,dimension(IL:IM,JL:JM) :: c_s = 0.0d0 !—ÕŠE‰¹‘¬c*
+!--------------ï¿½zï¿½ï¿½ï¿½`--------------
+double precision,dimension(IL:IM,JL:JM) :: u = 0.0d0 !ï¿½ï¿½ï¿½x_xï¿½ï¿½ï¿½ï¿½
+double precision,dimension(IL:IM,JL:JM) :: v = 0.0d0 !ï¿½ï¿½ï¿½x_yï¿½ï¿½ï¿½ï¿½
+double precision,dimension(IL:IM,JL:JM) :: p = 0.0d0 !ï¿½ï¿½ï¿½ï¿½
+double precision,dimension(IL:IM,JL:JM) :: T = 0.0d0 !ï¿½ï¿½Î‰ï¿½ï¿½x
+double precision,dimension(IL:IM,JL:JM) :: RHO = 0.0d0 !ï¿½ï¿½ï¿½x
+double precision,dimension(IL:IM,JL:JM) :: RHO2 = 0.0d0 !ï¿½ï¿½ï¿½x2
+double precision,dimension(IL:IM,JL:JM) :: M = 0.0d0 !ï¿½}ï¿½bï¿½nï¿½ï¿½
+double precision,dimension(IL:IM,JL:JM) :: VELO = 0.0d0 !ï¿½ï¿½ï¿½xï¿½xï¿½N
+double precision,dimension(IL:IM,JL:JM) :: VELOn = 0.0d0 !ï¿½ï¿½ï¿½xï¿½xï¿½N_ï¿½ï¿½ï¿½ï¿½
+double precision,dimension(IL:IM,JL:JM) :: VELOt = 0.0d0 !ï¿½ï¿½ï¿½xï¿½xï¿½N_ï¿½ï¿½ï¿½s
+double precision,dimension(IL:IM,JL:JM) :: theta = 0.0d0 !ï¿½ÎŠpï¿½ï¿½
+double precision,dimension(IL:IM,JL:JM) :: c = 0.0d0 !ï¿½ï¿½ï¿½ï¿½c
 
-!--------------•s“™ŠÔŠuŠiq‚Ì¶¬Eƒtƒ@ƒCƒ‹o—Í--------------
+!--------------ï¿½sï¿½ï¿½ï¿½ÔŠuï¿½iï¿½qï¿½Ìï¿½ï¿½ï¿½ï¿½Eï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½oï¿½ï¿½--------------
 do i = JL,JM
   do j = IL,IM
     x(i,j) = XM/dble(IM)*dble(i)
@@ -66,7 +65,7 @@ do j = JL,JM
 end do
 close (12)
 
-!--------------‰ŠúğŒİ’è--------------
+!--------------ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ’ï¿½--------------
 do j = JL,JM
   do i = IL,IM
     M(i,j) = 2.9d0
@@ -82,7 +81,7 @@ do j = JL,JM
   end do
 end do
 
-!--------------ÕŒ‚”gğŒiÕŒ‚”g’Ê‰ßŒã‚Ì•Ï‰»j--------------
+!--------------ï¿½ÕŒï¿½ï¿½gï¿½ï¿½ï¿½ï¿½ï¿½iï¿½ÕŒï¿½ï¿½gï¿½Ê‰ßŒï¿½Ì•Ï‰ï¿½ï¿½j--------------
 do j = JL,JM
   do i = IL,IM
     if (y(i,j)<y(i,JM-2) .and. x(i,j)<=sqrt(3.d0)*(y(i,JM-2)-y(i,j))) then
@@ -111,7 +110,7 @@ do j = JL,JM
   end do
 end do
 
-!--------------ƒtƒ@ƒCƒ‹‘‚«o‚µ--------------
+!--------------ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½oï¿½ï¿½--------------
 open (11,file='kadai4.dat',status='replace')
 
 do j = JL,JM

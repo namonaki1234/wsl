@@ -39,10 +39,10 @@ do j = 0,JM
     v(i,j) = 0.d0
     V_abs(i,j) = sqrt((u(i,j)**2)+(v(i,j)**2))
     V_n(i,j) = V_abs(i,j)*sin(beta)
-    V_t(i,j) = V_n(i,j)*cos(beta)
+    V_t(i,j) = V_abs(i,j)*cos(beta)
   end do
-
 end do
+
 do j = 0, JM
   do i = 0, IM
     if (y(i,j) <= y(i,JM-2) .and. x(i,j) <= sqrt(3.d0)*(y(i,JM-2) - y(i,j))) cycle
