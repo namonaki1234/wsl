@@ -25,9 +25,9 @@ program a5
   double precision,dimension(0:IM,0:JM) :: x = 0.0d0,y = 0.0d0,x_xi = 0.0d0,x_eta = 0.0d0,y_xi = 0.0d0,y_eta = 0.0d0
   double precision,dimension(0:IM,0:JM) :: xi_x,xi_y,eta_x,eta_y,Jac,Jac_inv,U_cvc,V_cvc
   integer,parameter :: NMAX = 100000
+  double precision, parameter::EPS = 1.0d-6
 
   !********************不等間隔格子の生成・ファイル出力********************
-
   do i = 0,IM
     do j = 0,JM
       x(i,j) = dx*dble(i)
@@ -150,6 +150,7 @@ program a5
     if (mod(n,1000)==0) then
       print*,"n du dv",n,du,dv
     end if
+    if (du <= EPS .and. dv <= EPS) exit
   end do
   call Save_data
 
@@ -463,33 +464,21 @@ program a5
       us = u(i,j)
       vs = v(i,j)
       rho1(i,j) = Q(i,j,1)*Jac(i,j)
-      ! if (rho1(i,j) <= 1.0d-12) then
-      !   print *, "警告: 初期rho1ゼロ！", i, j, rho1(i,j)
-      !   rho1(i,j) = 1.0d-6
-      ! end if
       u(i,j) = Q(i,j,2)*Jac(i,j)/rho1(i,j)
       v(i,j) = Q(i,j,3)*Jac(i,j)/rho1(i,j)
-
-      if (abs(us)>1.0d-10) then
-        ddu = abs(u(i,j)-us)/us
-      else
-        ddu = 0.0d0
-      end if
-
-      if (abs(vs)>1.0d-10) then
-        ddv = abs(v(i,j)-vs)/vs
-      else
-        ddv = 0.0d0
-      end if
-
-      if (ddu>du) du = ddu
-      if (ddv>dv) dv = ddv
-
       U_cvc(i,j) = xi_x(i,j)*u(i,j)+xi_y(i,j)*v(i,j)
       V_cvc(i,j) = eta_x(i,j)*u(i,j)+eta_y(i,j)*v(i,j)
       energy(i,j) = Q(i,j,4)*Jac(i,j)
       T(i,j) = (gam-1.0d0)*(energy(i,j)/rho1(i,j)-(u(i,j)**2+v(i,j)**2)/2.0d0)/R
       p(i,j) = rho1(i,j)*R*T(i,j)
+
+        ddu = abs(u(i,j)-us)/us
+        ddv = abs(v(i,j)-vs)/vs
+
+      if (ddu>du) du = ddu
+      if (ddv>dv) dv = ddv
+
+
 
     end do
   end do

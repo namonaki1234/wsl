@@ -6,7 +6,7 @@ nspace=2
 veclen=4
 data=float
 field=irregular
-label=u,v,p,T
+label=u,v,p,t
 variable 1 file=a5.dat filetype=ascii skip=0 offset=2 stride=6
 variable 2 file=a5.dat filetype=ascii skip=0 offset=3 stride=6
 variable 3 file=a5.dat filetype=ascii skip=0 offset=4 stride=6
