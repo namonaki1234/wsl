@@ -1,7 +1,6 @@
 program a5
 
 implicit none
-
 integer :: i,j,k,k_runge_kutta,n
 double precision :: a
 double precision :: rho1,rho2,u1,u2,v1,v2,p1,p2,T1,T2,M,V_abs1,V_abs2,V_n1,V_n2,V_t,theta,energy1,energy2
@@ -184,43 +183,6 @@ subroutine boundary_condition
     end do
   end do
 
-
-  ! do j = 0,JM
-  !   rho(IM,j) = rho(IM-1,j)+(rho(IM-1,j)-rho(IM-2,j))/dx*dx
-  !   u(IM,j) = u(IM-1,j)+(u(IM-1,j)-u(IM-2,j))/dx*dx
-  !   v(IM,j) = v(IM-1,j)+(v(IM-1,j)-v(IM-2,j))/dx*dx
-  !   energy(IM,j) = energy(IM-1,j)+(energy(IM-1,j)-energy(IM-2,j))/dx*dx
-  !   T(IM,j) = T(IM-1,j)+(T(IM-1,j)-T(IM-2,j))/dx*dx
-  !   p(IM,j) = p(IM-1,j)+(p(IM-1,j)-p(IM-2,j))/dx*dx
-  !   Q(IM,j,1) = rho(IM,j)/Jac(IM,j)
-  !   Q(IM,j,2) = rho(IM,j)*u(IM,j)/Jac(IM,j)
-  !   Q(IM,j,3) = rho(IM,j)*v(IM,j)/Jac(IM,j)
-  !   Q(IM,j,4) = energy(IM,j)/Jac(IM,j)
-  ! end do
-
-  ! do i = 1,IM-1
-  !   rho(i,JM) = rho(i,JM-1)
-  !   u(i,0) = u(i,1)
-  !   u(i,JM) = u(i,JM-1)
-  !   v(i,0) = 0.0d0
-  !   v(i,JM) = v(i,JM-1)
-  !   energy(i,0) = energy(i,1)
-  !   energy(i,JM) = energy(i,JM-1)
-  !   T(i,0) = T(i,1)
-  !   T(i,JM) = T(i,JM-1)
-  !   p(i,0) = p(i,1)
-  !   p(i,JM) = p(i,JM-1)
-  !   Q(i,0,1) = rho(i,0)/Jac(i,0)
-  !   Q(i,0,2) = rho(i,0)*u(i,0)/Jac(i,0)
-  !   Q(i,0,3) = rho(i,0)*v(i,0)/Jac(i,0)
-  !   Q(i,0,4) = energy(i,0)/Jac(i,0)
-  !   Q(i,JM,1) = rho(i,JM)/Jac(i,JM)
-  !   Q(i,JM,2) = rho(i,JM)*u(i,JM)/Jac(i,JM)
-  !   Q(i,JM,3) = rho(i,JM)*v(i,JM)/Jac(i,JM)
-  !   Q(i,JM,4) = energy(i,JM)/Jac(i,JM)
-  ! end do
-
-
   do i = 0,IM !上下壁
     slope = (y(i,0)-y(i,2))/(y(i,2)-y(i,1))
     rho(i,0) = rho(i,2)+slope*(rho(i,2)-rho(i,1))
@@ -248,17 +210,6 @@ subroutine boundary_condition
     energy(IM,j) = p(im,j)/(gam-1.0d0)+rho(im,j)*((u(im,j)**2.0)+(v(im,j)**2.0))/2.0d0
     T(IM,j) = T(IM-2,j)+slope*(T(IM-2,j)-T(IM-1,j))
   end do
-
-  ! do j = 0,JM
-  !   do i = 0,IM
-  !     if (i==IM .or. j==0 .or. j==JM) then
-  !       Q(1,i,j) = rho(i,j)/Jac(i,j)
-  !       Q(2,i,j) = rho(i,j)*u(i,j)/Jac(i,j)
-  !       Q(3,i,j) = rho(i,j)*v(i,j)/Jac(i,j)
-  !       Q(4,i,j) = energy(i,j)/Jac(i,j)
-  !     end if
-  !   end do
-  ! end do
 end subroutine boundary_condition
 
 !********************ファンクション　FPSI制限関数の定義********************
@@ -273,7 +224,7 @@ double precision function FPSI(Z,DELTA)
 end function FPSI
 
 !********************サブルーチン②　TVDスキーム_ξ方向********************
-!*****energyを求める*****
+!*****Eを求める*****
 subroutine tvd_xi
   double precision RWL,RWR,AKX,AKY,AJACM,UM,VM,DUM,CM
   double precision PHI,BETA,AKXT,AKYT,THIT
@@ -392,7 +343,7 @@ subroutine tvd_xi
 end subroutine tvd_xi
 
 !********************サブルーチン③　TVDスキーム_η方向********************
-!*****FFが求まる*****
+!*****Fを求める*****
 subroutine tvd_eta
   double precision RWL,RWR,AKX,AKY,AJACM,UM,VM,DUM,CM
   double precision PHI,BETA,AKXT,AKYT,THIT
