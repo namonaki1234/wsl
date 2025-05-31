@@ -19,7 +19,7 @@ double precision,parameter :: beta = pi/6.0d0
 !-------衝撃波-------
 double precision,dimension(0:IM,0:JM) :: energy = 0.0d0
 double precision,dimension(0:IM,0:JM) :: rho1,rho2,u,v,p,T,M,V_abs,V_n,V_t,theta
-double precision,dimension(0:IM,0:JM,4) :: Q,E,F
+double precision,dimension(0:IM,0:JM,4) :: Q,Q1,E,F
 
 !-------ヤコビアンJa-------
 double precision,dimension(0:IM,0:JM) :: x = 0.0d0,y = 0.0d0,x_xi = 0.0d0,x_eta = 0.0d0,y_xi = 0.0d0,y_eta = 0.0d0
@@ -95,36 +95,37 @@ do j = 0,JM
     V_abs(i,j) = sqrt((u(i,j)**2)+(v(i,j)**2))
     V_n(i,j) = V_abs(i,j)*sin(beta)
     V_t(i,j) = V_abs(i,j)*cos(beta)
-    energy(i, j) = rho1(i, j)*((r*t(i, j)/(gam - 1.0d0)) + ((u(i, j)**2.0) + v(i, j)**2.0)/2.0d0)
+    energy(i,j) = rho1(i,j)*((r*t(i,j)/(gam-1.0d0))+((u(i,j)**2.0)+v(i,j)**2.0)/2.0d0)
   end do
 end do
 
 !********************衝撃波条件（衝撃波通過後の変化）********************
 do j = 0,JM
   do i = 0,IM
-    if (y(i,j)<=y(i,JM-2) .and. x(i,j)<=sqrt(3.d0)*(y(i,JM-2)-y(i,j))) cycle
+    if (y(i,j)>=y(i,JM-2) .and. x(i,j)>=sqrt(3.d0)*(y(i,JM-2)-y(i,j))) then
 
-    T(i,j) = T(i,j)*(2.d0*gam*(M(i,j)**2)*(sin(beta)**2)-(gam-1.d0)) &
-             *((gam-1.0d0)*(M(i,j)**2)*(sin(beta)**2)+2.d0) &
-             /(((gam+1.0d0)**2)*(M(i,j)**2)*(sin(beta)**2))
+      T(i,j) = T(i,j)*(2.d0*gam*(M(i,j)**2)*(sin(beta)**2)-(gam-1.d0)) &
+               *((gam-1.0d0)*(M(i,j)**2)*(sin(beta)**2)+2.d0) &
+               /(((gam+1.0d0)**2)*(M(i,j)**2)*(sin(beta)**2))
 
-    p(i,j) = p(i,j)*(2.d0*gam*(M(i,j)**2)*(sin(beta)**2)-(gam-1.d0)) &
-             /(gam+1.0d0)
+      p(i,j) = p(i,j)*(2.d0*gam*(M(i,j)**2)*(sin(beta)**2)-(gam-1.d0)) &
+               /(gam+1.0d0)
 
-    rho2(i,j) = rho1(i,j)*(gam+1.d0)*(M(i,j)**2)*(sin(beta)**2) &
-                /((gam-1.0d0)*(M(i,j)**2)*(sin(beta)**2)+2.d0)
+      rho2(i,j) = rho1(i,j)*(gam+1.d0)*(M(i,j)**2)*(sin(beta)**2) &
+                  /((gam-1.0d0)*(M(i,j)**2)*(sin(beta)**2)+2.d0)
 
-    V_n(i,j) = rho1(i,j)*V_n(i,j)/rho2(i,j)
+      V_n(i,j) = rho1(i,j)*V_n(i,j)/rho2(i,j)
 
-    V_abs(i,j) = sqrt((V_n(i,j)**2)+(V_t(i,j)**2))
+      V_abs(i,j) = sqrt((V_n(i,j)**2)+(V_t(i,j)**2))
 
-    theta(i,j) = beta-atan(V_n(i,j)/V_t(i,j))
-    u(i,j) = V_abs(i,j)*cos(-theta(i,j))
-    v(i,j) = V_abs(i,j)*sin(-theta(i,j))
+      theta(i,j) = beta-atan(V_n(i,j)/V_t(i,j))
+      u(i,j) = V_abs(i,j)*cos(-theta(i,j))
+      v(i,j) = V_abs(i,j)*sin(-theta(i,j))
 
+      energy(i,j) = rho1(i,j)*((r*t(i,j)/(gam-1.0d0))+((u(i,j)**2.0)+v(i,j)**2.0)/2.0d0)
+    end if
     U_cvc(i,j) = xi_x(i,j)*u(i,j)+xi_y(i,j)*v(i,j)
     V_cvc(i,j) = eta_x(i,j)*u(i,j)+eta_y(i,j)*v(i,j)
-    energy(i, j) = rho1(i, j)*((r*t(i, j)/(gam - 1.0d0)) + ((u(i, j)**2.0) + v(i, j)**2.0)/2.0d0)
   end do
 end do
 
@@ -140,8 +141,14 @@ end do
 
 !********************ルンゲクッタ法／メイン計算********************
 do n = 1,NMAX
+  do k = 1,4
+    do j = 0,JM
+      do i = 0,IM
+        Q1(i,j,k) = Q(i,j,k)
+      end do
+    end do
+  end do
   do k_runge_kutta = 1,4
-
     call tvd_xi
     call tvd_eta
     call runge_kutta(1,IM-1,1,JM-1)
@@ -209,8 +216,7 @@ end function FPSI
 subroutine tvd_xi
   double precision RWL,RWR,AKX,AKY,AJACM,UM,VM,DUM,CM
   double precision PHI,BETA,AKXT,AKYT,THIT
-  double precision,dimension(1:4,1:4,0:IM) :: RR = 0.0d0
-  double precision,dimension(1:4,1:4,0:IM) :: RI = 0.0d0
+  double precision,dimension(1:4,1:4,0:IM) :: RR = 0.0d0,RI = 0.0d0
   double precision,dimension(1:4,0:IM) :: EIGM,GG,PHIM,EH
 !   double precision,dimension(1:4,0:IM) :: EIG
   double precision,dimension(1:4) :: D
@@ -447,7 +453,6 @@ end subroutine tvd_eta
 
 !********************サブルーチン④　ルンゲクッタ********************
 subroutine runge_kutta(is,ie,js,je)
-  use, intrinsic :: ieee_arithmetic
   integer is,ie,js,je
   double precision us,ddu,vs,ddv
 
@@ -456,39 +461,38 @@ subroutine runge_kutta(is,ie,js,je)
   do j = js,je
     do i = is,ie
       do k = 1,4
+        Q(i,j,k) = Q1(i,j,k)-1.0d0/(5.0d0-dble(k_runge_kutta))*dt*((E(i,j,k) &
+                                                                   -E(i-1,j,k))+(F(i,j,k)-F(i,j-1,k)))
+      end do
+      us = u(i,j)
+      vs = v(i,j)
+      rho1(i,j) = Q(i,j,1)*Jac(i,j)
+      u(i,j) = Q(i,j,2)*Jac(i,j)/rho1(i,j)
+      v(i,j) = Q(i,j,3)*Jac(i,j)/rho1(i,j)
 
-      Q(i,j,k) = Q(i,j,k)-1.0d0/(5.0d0-dble(k_runge_kutta))*dt*((E(i,j,k) &
-                                                                 -E(i-1,j,k))+(F(i,j,k)-F(i,j-1,k)))
+      if (abs(us)>1.0d-10) then
+        ddu = abs(u(i,j)-us)/us
+      else
+        ddu = 0.0d0
+      end if
+
+      if (abs(vs)>1.0d-10) then
+        ddv = abs(v(i,j)-vs)/vs
+      else
+        ddv = 0.0d0
+      end if
+
+      if (ddu>du) du = ddu
+      if (ddv>dv) dv = ddv
+
+      U_cvc(i,j) = xi_x(i,j)*u(i,j)+xi_y(i,j)*v(i,j)
+      V_cvc(i,j) = eta_x(i,j)*u(i,j)+eta_y(i,j)*v(i,j)
+      energy(i,j) = Q(i,j,4)*Jac(i,j)
+      T(i,j) = (gam-1.0d0)*(energy(i,j)/rho1(i,j)-(u(i,j)**2+v(i,j)**2)/2.0d0)/R
+      p(i,j) = rho1(i,j)*R*T(i,j)
+
     end do
-    us = u(i,j)
-    vs = v(i,j)
-    rho1(i,j) = Q(i,j,1)*Jac(i,j)
-    u(i,j) = Q(i,j,2)*Jac(i,j)/rho1(i,j)
-    v(i,j) = Q(i,j,3)*Jac(i,j)/rho1(i,j)
-
-    if (abs(us)>1.0d-10) then
-      ddu = abs(u(i,j)-us)/us
-    else
-      ddu = 0.0d0
-    end if
-
-    if (abs(vs)>1.0d-10) then
-      ddv = abs(v(i,j)-vs)/vs
-    else
-      ddv = 0.0d0
-    end if
-
-    if (ddu>du) du = ddu
-    if (ddv>dv) dv = ddv
-
-    U_cvc(i,j) = xi_x(i,j)*u(i,j)+xi_y(i,j)*v(i,j)
-    V_cvc(i,j) = eta_x(i,j)*u(i,j)+eta_y(i,j)*v(i,j)
-    energy(i,j) = Q(i,j,4)*Jac(i,j)
-    T(i,j) = (gam-1.0d0)*(energy(i,j)/rho1(i,j)-(u(i,j)**2+v(i,j)**2)/2.0d0)/R
-    p(i,j) = rho1(i,j)*R*T(i,j)
-
   end do
-end do
 end subroutine runge_kutta
 
 !出力
