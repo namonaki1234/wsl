@@ -132,7 +132,6 @@ program a5
   do j = 0,JM
     do i = 0,IM
       Q(i,j,1) = rho1(i,j)/Jac(i,j)
-      ! Q(i,j,1) = max(rho1(i,j)/Jac(i,j), 1.0d-6)
       Q(i,j,2) = rho1(i,j)*u(i,j)/Jac(i,j)
       Q(i,j,3) = rho1(i,j)*v(i,j)/Jac(i,j)
       Q(i,j,4) = energy(i,j)/Jac(i,j)
@@ -148,7 +147,9 @@ program a5
       call runge_kutta(1,IM-1,1,JM-1)
       call boundary_condition
     end do
-    print*,n,du,dv
+    if (mod(n,1000)==0) then
+      print*,"n du dv",n,du,dv
+    end if
   end do
   call Save_data
 
@@ -163,8 +164,8 @@ program a5
       energy(IM,j) = energy(IM-1,j)+(energy(IM-1,j)-energy(IM-2,j))/dx*dx
       T(IM,j) = T(IM-1,j)+(T(IM-1,j)-T(IM-2,j))/dx*dx
       p(IM,j) = p(IM-1,j)+(p(IM-1,j)-p(IM-2,j))/dx*dx
-      ! Q(IM,j,1) = rho1(IM,j)/Jac(IM,j)
-      Q(i,j,1) = max(rho1(i,j) / Jac(i,j), 1.0d-6)
+      Q(IM,j,1) = rho1(IM,j)/Jac(IM,j)
+      ! Q(i,j,1) = max(rho1(i,j) / Jac(i,j), 1.0d-6)
       Q(IM,j,2) = rho1(IM,j)*u(IM,j)/Jac(IM,j)
       Q(IM,j,3) = rho1(IM,j)*v(IM,j)/Jac(IM,j)
       Q(IM,j,4) = energy(IM,j)/Jac(IM,j)
@@ -447,7 +448,6 @@ program a5
 
   !********************サブルーチン④　ルンゲクッタ********************
   subroutine runge_kutta(is,ie,js,je)
-    use, intrinsic :: ieee_arithmetic
     integer is,ie,js,je
     double precision us,ddu,vs,ddv
 
@@ -463,10 +463,10 @@ program a5
       us = u(i,j)
       vs = v(i,j)
       rho1(i,j) = Q(i,j,1)*Jac(i,j)
-      if (rho1(i,j) <= 1.0d-12) then
-        print *, "警告: 初期rho1ゼロ！", i, j, rho1(i,j)
-        rho1(i,j) = 1.0d-6
-      end if
+      ! if (rho1(i,j) <= 1.0d-12) then
+      !   print *, "警告: 初期rho1ゼロ！", i, j, rho1(i,j)
+      !   rho1(i,j) = 1.0d-6
+      ! end if
       u(i,j) = Q(i,j,2)*Jac(i,j)/rho1(i,j)
       v(i,j) = Q(i,j,3)*Jac(i,j)/rho1(i,j)
 
