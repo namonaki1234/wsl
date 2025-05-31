@@ -102,7 +102,7 @@ end do
 !********************衝撃波条件（衝撃波通過後の変化）********************
 do j = 0,JM
   do i = 0,IM
-    if (y(i,j)>=1.0d0/(-dsqrt(3.0d0))*x(i,j)+y(0,JM-2)) then
+    if (y(i,j)>=y(i,JM-2) .and. x(i,j)>=sqrt(3.d0)*(y(i,JM-2)-y(i,j))) then
 
       T(i,j) = T(i,j)*(2.d0*gam*(M(i,j)**2)*(sin(beta)**2)-(gam-1.d0)) &
                *((gam-1.0d0)*(M(i,j)**2)*(sin(beta)**2)+2.d0) &
@@ -161,7 +161,6 @@ end do
 call Save_data
 
 contains
-
 !********************サブルーチン①　境界条件********************
 subroutine boundary_condition
   do j = 0,JM
@@ -455,7 +454,6 @@ end subroutine tvd_eta
 subroutine runge_kutta(is,ie,js,je)
   integer is,ie,js,je
   double precision us,ddu,vs,ddv
-
   du = 0.d0
   dv = 0.d0
   do j = js,je
@@ -469,28 +467,19 @@ subroutine runge_kutta(is,ie,js,je)
       rho1(i,j) = Q(i,j,1)*Jac(i,j)
       u(i,j) = Q(i,j,2)*Jac(i,j)/rho1(i,j)
       v(i,j) = Q(i,j,3)*Jac(i,j)/rho1(i,j)
-
-      if (abs(us)>1.0d-10) then
-        ddu = abs(u(i,j)-us)/us
-      else
-        ddu = 0.0d0
-      end if
-
-      if (abs(vs)>1.0d-10) then
-        ddv = abs(v(i,j)-vs)/vs
-      else
-        ddv = 0.0d0
-      end if
-
-      if (ddu>du) du = ddu
-      if (ddv>dv) dv = ddv
-
       U_cvc(i,j) = xi_x(i,j)*u(i,j)+xi_y(i,j)*v(i,j)
       V_cvc(i,j) = eta_x(i,j)*u(i,j)+eta_y(i,j)*v(i,j)
       energy(i,j) = Q(i,j,4)*Jac(i,j)
       T(i,j) = (gam-1.0d0)*(energy(i,j)/rho1(i,j)-(u(i,j)**2+v(i,j)**2)/2.0d0)/R
       p(i,j) = rho1(i,j)*R*T(i,j)
 
+      if (ddu > du) then
+        ddu = abs(u(i,j)-us)/us
+      end if
+
+      if (ddv > dv) then
+        ddv = abs(v(i,j)-vs)/vs
+      end if
     end do
   end do
 end subroutine runge_kutta
