@@ -288,13 +288,6 @@ subroutine xi_TVD
 !
     do I = 0,IM
       DUM = dSQRT(gam*R*T(I,J)*(xi_x(I,J)**2+xi_y(I,J)**2))
-      ! EIG(1,I) = xi_x(I,J)*U(I,EIG(1,I) = xi_x(I,J)*U(I,J)+xi_y(I,J)*J)
-      ! EIG(2,I) = EIG(1,I)
-      ! ! EIG(
-      ! EIG(3,I) = EIG(1,I)+DUM
-      ! ! EIG(EIG(1,I)
-      ! EIG(4,I) = EIG(1,I)-DUM
-      ! EIG(EIG(1,I)
     end do
 !
 !       CAL LIMITER FUNCTION gam
