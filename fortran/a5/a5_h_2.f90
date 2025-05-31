@@ -19,7 +19,7 @@ double precision,parameter :: beta = pi/6.0d0
 !-------衝撃波-------
 double precision,dimension(0:IM,0:JM) :: energy = 0.0d0
 double precision,dimension(0:IM,0:JM) :: rho1,rho2,u,v,p,T,M,V_abs,V_n1,V_n2,V_t,theta
-double precision,dimension(0:IM,0:JM,4) :: Q,E,F
+double precision,dimension(0:IM,0:JM,4) :: Q,Q1,E,F
 
 !-------ヤコビアンJa-------
 double precision,dimension(0:IM,0:JM) :: x = 0.0d0,y = 0.0d0,x_xi = 0.0d0,x_eta = 0.0d0,y_xi = 0.0d0,y_eta = 0.0d0
@@ -92,7 +92,7 @@ do j = 0,JM
     p(i,j) = rho1(i,j)*R*T(i,j)
     u(i,j) = M(i,j)*dsqrt(gam*R*T(i,j))
     v(i,j) = 0.0d0
-    energy(i,j) = rho1(i,j)*((r*t(i,j)/(gam-1.0d0))+((u(i,j)**2.0)+v(i,j)**2.0)/2.0d0)
+    energy(i,j) = rho1(i,j)*((R*T(i,j)/(gam-1.0d0))+(u(i,j)**2.0+v(i,j)**2.0)/2.0d0)
   end do
 end do
 
@@ -115,11 +115,11 @@ do j = 0,JM
       ! V_abs(i,j) = dsqrt((u(i,j)**2)+(v(i,j)**2))
       V_abs(i,j) = dsqrt((V_n2(i,j)**2)+(V_t(i,j)**2))
 
-      theta(i,j) = beta-atan(V_n2(i,j)/V_t(i,j))
+      theta(i,j) = beta-datan(V_n2(i,j)/V_t(i,j))
       u(i,j) = V_abs(i,j)*dcos(theta(i,j))
       v(i,j) = V_abs(i,j)*dsin(-theta(i,j))
 
-      energy(i,j) = rho1(i,j)*((r*t(i,j)/(gam-1.0d0))+((u(i,j)**2.0)+v(i,j)**2.0)/2.0d0)
+      energy(i,j) = rho2(i,j)*((R*T(i,j)/(gam-1.0d0))+((u(i,j)**2.0)+v(i,j)**2.0)/2.0d0)
     end if
     U_cvc(i,j) = xi_x(i,j)*u(i,j)+xi_y(i,j)*v(i,j)
     V_cvc(i,j) = eta_x(i,j)*u(i,j)+eta_y(i,j)*v(i,j)
@@ -138,8 +138,14 @@ do j = 0,JM
 
 !********************ルンゲクッタ法／メイン計算********************
   do n = 1,NMAX
+    do k = 1, 4
+      do j = 0, JM
+         do i = 0, IM
+            Q1(i, j, k) = Q(i, j, k)
+         end do
+      end do
+   end do
     do k_runge_kutta = 1,4
-
       call tvd_xi
       call tvd_eta
       call runge_kutta(1,IM-1,1,JM-1)
@@ -153,7 +159,6 @@ do j = 0,JM
   call Save_data
 
   contains
-
 !********************サブルーチン①　境界条件********************
   subroutine boundary_condition
     do j = 0,JM
@@ -164,7 +169,6 @@ do j = 0,JM
       T(IM,j) = T(IM-1,j)+(T(IM-1,j)-T(IM-2,j))/dx*dx
       p(IM,j) = p(IM-1,j)+(p(IM-1,j)-p(IM-2,j))/dx*dx
       Q(IM,j,1) = rho1(IM,j)/Jac(IM,j)
-      ! Q(i,j,1) = max(rho1(i,j) / Jac(i,j), 1.0d-6)
       Q(IM,j,2) = rho1(IM,j)*u(IM,j)/Jac(IM,j)
       Q(IM,j,3) = rho1(IM,j)*v(IM,j)/Jac(IM,j)
       Q(IM,j,4) = energy(IM,j)/Jac(IM,j)
@@ -209,10 +213,8 @@ do j = 0,JM
   subroutine tvd_xi
     double precision RWL,RWR,AKX,AKY,AJACM,UM,VM,DUM,CM
     double precision PHI,BETA,AKXT,AKYT,THIT
-    double precision,dimension(1:4,1:4,0:IM) :: RR = 0.0d0
-    double precision,dimension(1:4,1:4,0:IM) :: RI = 0.0d0
+    double precision,dimension(1:4,1:4,0:IM) :: RR = 0.0d0, RI = 0.0d0
     double precision,dimension(1:4,0:IM) :: EIGM,GG,PHIM,EH
-    !   double precision,dimension(1:4,0:IM) :: EIG
     double precision,dimension(1:4) :: D
     double precision,dimension(1:4,-1:IM) :: ALPHA
     double precision S,DELTA,GAMMA,UCONT
@@ -455,8 +457,7 @@ do j = 0,JM
     do j = js,je
       do i = is,ie
         do k = 1,4
-
-          Q(i,j,k) = Q(i,j,k)-1.0d0/(5.0d0-dble(k_runge_kutta))*dt*((E(i,j,k) &
+          Q(i,j,k) = Q1(i,j,k)-1.0d0/(5.0d0-dble(k_runge_kutta))*dt*((E(i,j,k) &
                                                                      -E(i-1,j,k))+(F(i,j,k)-F(i,j-1,k)))
         end do
         us = u(i,j)
@@ -490,7 +491,7 @@ do j = 0,JM
         write (10,'(f13.6,$)') u(i,j)
         write (10,'(f13.6,$)') v(i,j)
         write (10,'(f13.3,$)') p(i,j)
-        write (10,'(f13.6)') t(i,j)
+        write (10,'(f13.6)') T(i,j)
       end do
     end do
     close (10)
@@ -504,7 +505,7 @@ do j = 0,JM
     write (11,'(a)') 'veclen=4'
     write (11,'(a)') 'data=float'
     write (11,'(a)') 'field=irregular'
-    write (11,'(a)') 'label=u,v,p,t'
+    write (11,'(a)') 'label=u,v,p,T'
     write (11,'(a)') 'variable 1 file=a5.dat filetype=ascii skip=0 offset=2 stride=6'
     write (11,'(a)') 'variable 2 file=a5.dat filetype=ascii skip=0 offset=3 stride=6'
     write (11,'(a)') 'variable 3 file=a5.dat filetype=ascii skip=0 offset=4 stride=6'
