@@ -112,13 +112,12 @@ do j = 0,JM
       V_n1(i,j) = u(i,j)*dsin(beta)
       V_t(i,j) = u(i,j)*dcos(beta)
       V_n2(i,j) = rho1(i,j)*V_n1(i,j)/rho2(i,j)
-      ! V_abs(i,j) = dsqrt((u(i,j)**2)+(v(i,j)**2))
-      V_abs(i,j) = dsqrt((V_n2(i,j)**2)+(V_t(i,j)**2))
+      V_abs(i,j) = dsqrt((u(i,j)**2)+(v(i,j)**2))
+      ! V_abs(i,j) = dsqrt((V_n2(i,j)**2)+(V_t(i,j)**2))
 
       theta(i,j) = beta-datan(V_n2(i,j)/V_t(i,j))
-      u(i,j) = V_abs(i,j)*dcos(theta(i,j))
+      u(i,j) = V_abs(i,j)*dcos(-theta(i,j))
       v(i,j) = V_abs(i,j)*dsin(-theta(i,j))
-
       energy(i,j) = rho2(i,j)*((R*T(i,j)/(gam-1.0d0))+((u(i,j)**2.0)+v(i,j)**2.0)/2.0d0)
     end if
     U_cvc(i,j) = xi_x(i,j)*u(i,j)+xi_y(i,j)*v(i,j)
