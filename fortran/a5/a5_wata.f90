@@ -13,7 +13,6 @@ integer :: i,j,n,k,rk
 double precision :: M1,rho1,rho2,T1,T2,p1,p2,u1,u2,v1,v2,ene1,ene2,vt,theta,vv1,vv2,vn1,vn2
 double precision,dimension(0:IM,0:JM) :: xh,yh,xe,ye
 double precision,dimension(0:IM,0:JM) :: xix,xiy,ex,ey,Jac
-double precision,dimension(0:IM,0:JM) :: M,M2
 double precision,dimension(0:IM,0:JM) :: p = 0.0d0
 double precision,dimension(0:IM,0:JM) :: ene = 0.0d0,enebar
 double precision,dimension(0:IM,0:JM) :: T
@@ -180,7 +179,7 @@ end subroutine conditions
 subroutine tvd_xi
   double precision :: RWL,RWR,AKX,AKY,AJACM,UM,VM,CM,PHI,BETA,AKXT,AKYT,THIT
   double precision,dimension(1:4,1:4,0:IM) :: RR,RI
-  double precision,dimension(1:4,0:IM) :: EIGM,EIG,GG,PHIM,EH
+  double precision,dimension(1:4,0:IM) :: EIGM,EIG,GG,PHIM
   double precision,dimension(0:IM,0:JM) :: DUM
   double precision,dimension(1:4,0:IM) :: E
   double precision,dimension(1:4) :: D

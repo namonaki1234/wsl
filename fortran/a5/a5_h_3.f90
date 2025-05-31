@@ -7,7 +7,8 @@ double precision :: a
 double precision :: rho1,rho2,u1,u2,v1,v2,p1,p2,T1,T2,M,V_abs1,V_abs2,V_n1,V_n2,V_t,theta,energy1,energy2
 !********************格子空間・計算条件・初期条件********************
 double precision,parameter :: H = 10.0d0
-double precision :: du,dv,slope
+double precision :: du,dv
+double precision :: slope
 integer,parameter :: IM = 30,JM = 30
 double precision,parameter :: r_y = 1.1d0,dx = 3.0d0*H/dble(IM)
 double precision,parameter :: dt = 1.0d-6
@@ -18,13 +19,14 @@ double precision,parameter :: beta = pi/6.0d0
 
 !********************配列定義********************
 !-------衝撃波-------
-double precision,dimension(0:IM,0:JM) :: energy = 0.0d0
+double precision,dimension(0:IM,0:JM) :: energy = 0.0d0,E_bar = 0.0d0
 double precision,dimension(0:IM,0:JM) :: rho,u,v,p,T
 double precision,dimension(0:IM,0:JM,4) :: Q,Q1,E,F
 
 !-------ヤコビアンJa-------
 double precision,dimension(0:IM,0:JM) :: x = 0.0d0,y = 0.0d0,x_xi = 0.0d0,x_eta = 0.0d0,y_xi = 0.0d0,y_eta = 0.0d0
 double precision,dimension(0:IM,0:JM) :: xi_x,xi_y,eta_x,eta_y,Jac,Jac_inv,U_cvc,V_cvc
+! double precision,dimension(0:IM,0:JM) :: U_cvc,V_cvc
 integer,parameter :: NMAX = 100000
 double precision,parameter :: EPS = 1.0d-6
 
@@ -153,8 +155,9 @@ do j = 0,JM
     theta = beta-datan(V_n2/V_t)
     u2 = V_abs2*dcos(theta)
     v2 = V_abs2*dsin(-theta)
-    T2 = T1*((2.0d0*gam*(M**2)*(dsin(beta))**2)-(gam-1.0d0))*(((gam-1.0d0)*(M**2)*(dsin(beta))**2)+2.0d0)/&
-           &(((gam+1.0d0)**2)*(M**2)*((dsin(beta))**2))
+    T2 = T1*(2.d0*gam*(M**2)*(sin(beta)**2)-(gam-1.d0)) &
+               *((gam-1.0d0)*(M**2)*(sin(beta)**2)+2.d0) &
+               /(((gam+1.0d0)**2)*(M**2)*(sin(beta)**2))
     rho2 = rho1*V_n1/V_n2
     p2 = p1*((2.0d0*gam*(M**2)*(dsin(beta))**2)-(gam-1.0d0))/(gam+1.0d0)
     energy2 = rho2*((R*T2/(gam-1.0d0))+((u2**2.0+v2**2.0)/2.0d0))
@@ -214,7 +217,7 @@ call Save_data
 contains
 !********************サブルーチン①　境界条件********************
 subroutine boundary_condition
-  !   一次外挿で流入を固定
+!   一次外挿で流入を固定
   do k = 1,4
     do i = 1,IM-1
       Q(i,JM,k) = 2.0d0*Q(i,JM-1,k)-Q(i,JM-2,k)
@@ -231,68 +234,70 @@ subroutine boundary_condition
     end do
   end do
 
-  do j = 0,JM
-    rho(IM,j) = rho(IM-1,j)+(rho(IM-1,j)-rho(IM-2,j))/dx*dx
-    u(IM,j) = u(IM-1,j)+(u(IM-1,j)-u(IM-2,j))/dx*dx
-    v(IM,j) = v(IM-1,j)+(v(IM-1,j)-v(IM-2,j))/dx*dx
-    energy(IM,j) = energy(IM-1,j)+(energy(IM-1,j)-energy(IM-2,j))/dx*dx
-    T(IM,j) = T(IM-1,j)+(T(IM-1,j)-T(IM-2,j))/dx*dx
-    p(IM,j) = p(IM-1,j)+(p(IM-1,j)-p(IM-2,j))/dx*dx
-    Q(IM,j,1) = rho(IM,j)/Jac(IM,j)
-    Q(IM,j,2) = rho(IM,j)*u(IM,j)/Jac(IM,j)
-    Q(IM,j,3) = rho(IM,j)*v(IM,j)/Jac(IM,j)
-    Q(IM,j,4) = energy(IM,j)/Jac(IM,j)
-  end do
 
-  do i = 1,IM-1
-    rho(i,JM) = rho(i,JM-1)
-    u(i,0) = u(i,1)
-    u(i,JM) = u(i,JM-1)
-    v(i,0) = 0.0d0
-    v(i,JM) = v(i,JM-1)
-    energy(i,0) = energy(i,1)
-    energy(i,JM) = energy(i,JM-1)
-    T(i,0) = T(i,1)
-    T(i,JM) = T(i,JM-1)
-    p(i,0) = p(i,1)
-    p(i,JM) = p(i,JM-1)
-    Q(i,0,1) = rho(i,0)/Jac(i,0)
-    Q(i,0,2) = rho(i,0)*u(i,0)/Jac(i,0)
-    Q(i,0,3) = rho(i,0)*v(i,0)/Jac(i,0)
-    Q(i,0,4) = energy(i,0)/Jac(i,0)
-    Q(i,JM,1) = rho(i,JM)/Jac(i,JM)
-    Q(i,JM,2) = rho(i,JM)*u(i,JM)/Jac(i,JM)
-    Q(i,JM,3) = rho(i,JM)*v(i,JM)/Jac(i,JM)
-    Q(i,JM,4) = energy(i,JM)/Jac(i,JM)
-  end do
+  ! do j = 0,JM
+  !   rho(IM,j) = rho(IM-1,j)+(rho(IM-1,j)-rho(IM-2,j))/dx*dx
+  !   u(IM,j) = u(IM-1,j)+(u(IM-1,j)-u(IM-2,j))/dx*dx
+  !   v(IM,j) = v(IM-1,j)+(v(IM-1,j)-v(IM-2,j))/dx*dx
+  !   energy(IM,j) = energy(IM-1,j)+(energy(IM-1,j)-energy(IM-2,j))/dx*dx
+  !   T(IM,j) = T(IM-1,j)+(T(IM-1,j)-T(IM-2,j))/dx*dx
+  !   p(IM,j) = p(IM-1,j)+(p(IM-1,j)-p(IM-2,j))/dx*dx
+  !   Q(IM,j,1) = rho(IM,j)/Jac(IM,j)
+  !   Q(IM,j,2) = rho(IM,j)*u(IM,j)/Jac(IM,j)
+  !   Q(IM,j,3) = rho(IM,j)*v(IM,j)/Jac(IM,j)
+  !   Q(IM,j,4) = energy(IM,j)/Jac(IM,j)
+  ! end do
 
-  ! do i = 0,IM !上下壁
-  !   slope = (y(i,0)-y(i,2))/(y(i,2)-y(i,1))
-  !   rho(i,0) = rho(i,2)+slope*(rho(i,2)-rho(i,1))
-  !   u(i,0) = u(i,2)+slope*(u(i,2)-u(i,1))
+  ! do i = 1,IM-1
+  !   rho(i,JM) = rho(i,JM-1)
+  !   u(i,0) = u(i,1)
+  !   u(i,JM) = u(i,JM-1)
   !   v(i,0) = 0.0d0
-  !   p(i,0) = p(i,2)+slope*(p(i,2)-p(i,1))
-  !   energy(i,0) = p(i,0)/(gam-1.0d0)+rho(i,0)*((u(i,0)**2.0+v(i,0)**2.0))/2.0d0
-  !   T(i,0) = T(i,2)+slope*(T(i,2)-T(i,1))
-
-  !   slope = (y(i,JM)-y(i,JM-2))/(y(i,JM-2)-y(i,JM-1))
-  !   rho(i,JM) = rho(i,JM-2)+slope*(rho(i,JM-2)-rho(i,JM-1))
-  !   u(i,JM) = u(i,JM-2)+slope*(u(i,JM-2)-u(i,JM-1))
-  !   v(i,JM) = v(i,JM-2)+slope*(v(i,JM-2)-v(i,JM-1))
-  !   p(i,JM) = p(i,JM-2)+slope*(p(i,JM-2)-p(i,JM-1))
-  !   energy(i,JM) = p(i,jm)/(gam-1.0d0)+rho(i,jm)*((u(i,jm)**2.0)+(v(i,jm)**2.0))/2.0d0
-  !   T(i,JM) = T(i,JM-2)+slope*(T(i,JM-2)-T(i,JM-1))
+  !   v(i,JM) = v(i,JM-1)
+  !   energy(i,0) = energy(i,1)
+  !   energy(i,JM) = energy(i,JM-1)
+  !   T(i,0) = T(i,1)
+  !   T(i,JM) = T(i,JM-1)
+  !   p(i,0) = p(i,1)
+  !   p(i,JM) = p(i,JM-1)
+  !   Q(i,0,1) = rho(i,0)/Jac(i,0)
+  !   Q(i,0,2) = rho(i,0)*u(i,0)/Jac(i,0)
+  !   Q(i,0,3) = rho(i,0)*v(i,0)/Jac(i,0)
+  !   Q(i,0,4) = energy(i,0)/Jac(i,0)
+  !   Q(i,JM,1) = rho(i,JM)/Jac(i,JM)
+  !   Q(i,JM,2) = rho(i,JM)*u(i,JM)/Jac(i,JM)
+  !   Q(i,JM,3) = rho(i,JM)*v(i,JM)/Jac(i,JM)
+  !   Q(i,JM,4) = energy(i,JM)/Jac(i,JM)
   ! end do
 
-  ! do j = 1,JM-1 !流出
-  !   slope = (x(IM,j)-x(IM-2,j))/(x(IM-2,j)-x(IM-1,j))
-  !   rho(IM,j) = rho(IM-2,j)+slope*(rho(IM-2,j)-rho(IM-1,j))
-  !   u(IM,j) = u(IM-2,j)+slope*(u(IM-2,j)-u(IM-1,j))
-  !   v(IM,j) = v(IM-2,j)+slope*(v(IM-2,j)-v(IM-1,j))
-  !   p(IM,j) = p(IM-2,j)+slope*(p(IM-2,j)-p(IM-1,j))
-  !   energy(IM,j) = p(im,j)/(gam-1.0d0)+rho(im,j)*((u(im,j)**2.0)+(v(im,j)**2.0))/2.0d0
-  !   T(IM,j) = T(IM-2,j)+slope*(T(IM-2,j)-T(IM-1,j))
-  ! end do
+
+  do i = 0,IM !上下壁
+    slope = (y(i,0)-y(i,2))/(y(i,2)-y(i,1))
+    rho(i,0) = rho(i,2)+slope*(rho(i,2)-rho(i,1))
+    u(i,0) = u(i,2)+slope*(u(i,2)-u(i,1))
+    v(i,0) = 0.0d0
+    p(i,0) = p(i,2)+slope*(p(i,2)-p(i,1))
+    energy(i,0) = p(i,0)/(gam-1.0d0)+rho(i,0)*((u(i,0)**2.0+v(i,0)**2.0))/2.0d0
+    T(i,0) = T(i,2)+slope*(T(i,2)-T(i,1))
+
+    slope = (y(i,JM)-y(i,JM-2))/(y(i,JM-2)-y(i,JM-1))
+    rho(i,JM) = rho(i,JM-2)+slope*(rho(i,JM-2)-rho(i,JM-1))
+    u(i,JM) = u(i,JM-2)+slope*(u(i,JM-2)-u(i,JM-1))
+    v(i,JM) = v(i,JM-2)+slope*(v(i,JM-2)-v(i,JM-1))
+    p(i,JM) = p(i,JM-2)+slope*(p(i,JM-2)-p(i,JM-1))
+    energy(i,JM) = p(i,jm)/(gam-1.0d0)+rho(i,jm)*((u(i,jm)**2.0)+(v(i,jm)**2.0))/2.0d0
+    T(i,JM) = T(i,JM-2)+slope*(T(i,JM-2)-T(i,JM-1))
+  end do
+
+  do j = 1,JM-1 !流出
+    slope = (x(IM,j)-x(IM-2,j))/(x(IM-2,j)-x(IM-1,j))
+    rho(IM,j) = rho(IM-2,j)+slope*(rho(IM-2,j)-rho(IM-1,j))
+    u(IM,j) = u(IM-2,j)+slope*(u(IM-2,j)-u(IM-1,j))
+    v(IM,j) = v(IM-2,j)+slope*(v(IM-2,j)-v(IM-1,j))
+    p(IM,j) = p(IM-2,j)+slope*(p(IM-2,j)-p(IM-1,j))
+    energy(IM,j) = p(im,j)/(gam-1.0d0)+rho(im,j)*((u(im,j)**2.0)+(v(im,j)**2.0))/2.0d0
+    T(IM,j) = T(IM-2,j)+slope*(T(IM-2,j)-T(IM-1,j))
+  end do
 
   ! do j = 0,JM
   !   do i = 0,IM
