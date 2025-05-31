@@ -92,7 +92,6 @@ do j = 0,JM
     p(i,j) = rho1(i,j)*R*T(i,j)
     u(i,j) = M(i,j)*dsqrt(gam*R*T(i,j))
     v(i,j) = 0.0d0
-
     energy(i,j) = rho1(i,j)*((r*t(i,j)/(gam-1.0d0))+((u(i,j)**2.0)+v(i,j)**2.0)/2.0d0)
   end do
 end do
@@ -110,10 +109,11 @@ do j = 0,JM
 
     rho2(i,j) = rho1(i,j)*(gam+1.d0)*(M(i,j)**2)*(dsin(beta)**2) &
                 /((gam-1.0d0)*(M(i,j)**2)*(dsin(beta)**2)+2.d0)
-    V_abs(i,j) = dsqrt((u(i,j)**2)+(v(i,j)**2))
-    V_n(i,j) = V_abs(i,j)*dsin(beta)
-    V_t(i,j) = V_abs(i,j)*dcos(beta)
+    V_n(i,j) = u(i,j)*dsin(beta)
+    V_t(i,j) = u(i,j)*dcos(beta)
     V_n(i,j) = rho1(i,j)*V_n(i,j)/rho2(i,j)
+    ! V_abs(i,j) = dsqrt((u(i,j)**2)+(v(i,j)**2))
+    V_abs(i,j) = dsqrt((V_n(i,j)**2)+(V_t(i,j)**2))
 
     theta(i,j) = beta-atan(V_n(i,j)/V_t(i,j))
     u(i,j) = V_abs(i,j)*dcos(-theta(i,j))
