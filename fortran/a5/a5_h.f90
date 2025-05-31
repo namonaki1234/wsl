@@ -86,9 +86,9 @@ end do
 !********************初期条件設定********************
 do j = 0,JM
   do i = 0,IM
-    M(i,j) = 2.9d0
     T(i,j) = 293.0d0
     rho1(i,j) = 1.2d0
+    M(i,j) = 2.9d0
     p(i,j) = rho1(i,j)*R*T(i,j)
     u(i,j) = M(i,j)*sqrt(gam*R*T(i,j))
     v(i,j) = 0.d0
@@ -102,7 +102,7 @@ end do
 !********************衝撃波条件（衝撃波通過後の変化）********************
 do j = 0,JM
   do i = 0,IM
-    if (y(i,j)>=y(i,JM-2) .and. x(i,j)>=sqrt(3.d0)*(y(i,JM-2)-y(i,j))) then
+    if (y(i,j)>=1.0d0/(-dsqrt(3.0d0))*x(i,j)+y(0,JM-2)) then
 
       T(i,j) = T(i,j)*(2.d0*gam*(M(i,j)**2)*(sin(beta)**2)-(gam-1.d0)) &
                *((gam-1.0d0)*(M(i,j)**2)*(sin(beta)**2)+2.d0) &
@@ -462,7 +462,7 @@ subroutine runge_kutta(is,ie,js,je)
     do i = is,ie
       do k = 1,4
         Q(i,j,k) = Q1(i,j,k)-1.0d0/(5.0d0-dble(k_runge_kutta))*dt*((E(i,j,k) &
-                                                                   -E(i-1,j,k))+(F(i,j,k)-F(i,j-1,k)))
+                                                                    -E(i-1,j,k))+(F(i,j,k)-F(i,j-1,k)))
       end do
       us = u(i,j)
       vs = v(i,j)
@@ -505,7 +505,7 @@ subroutine Save_data
       write (10,'(f13.6,$)') u(i,j)
       write (10,'(f13.6,$)') v(i,j)
       write (10,'(f13.3,$)') p(i,j)
-      write (10,'(f13.6)') t(i,j)
+      write (10,'(f13.6)') T(i,j)
     end do
   end do
   close (10)
@@ -519,7 +519,7 @@ subroutine Save_data
   write (11,'(a)') 'veclen=4'
   write (11,'(a)') 'data=float'
   write (11,'(a)') 'field=irregular'
-  write (11,'(a)') 'label=u,v,p,t'
+  write (11,'(a)') 'label=u,v,p,T'
   write (11,'(a)') 'variable 1 file=a5.dat filetype=ascii skip=0 offset=2 stride=6'
   write (11,'(a)') 'variable 2 file=a5.dat filetype=ascii skip=0 offset=3 stride=6'
   write (11,'(a)') 'variable 3 file=a5.dat filetype=ascii skip=0 offset=4 stride=6'
