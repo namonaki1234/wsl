@@ -6,10 +6,17 @@ from itertools import islice
 
 # 下記に標準入力を記載
 _InPUT = """\
-5 2
+5 10
+2 5
+1 5
 1 2
-3 4
-
+2 4
+2 2
+5 5
+2 4
+1 2
+2 2
+2 3
 
 """
 sys.stdin = io.StringIO(_InPUT)
@@ -19,19 +26,15 @@ n,m = map(int, input().split())
 LR = [list(map(int, input().split())) for _ in range(m)]
 # print(LR)
 
-LR_counter = Counter(i for i in range(1, n + 1))
-# print(LR_counter)
-
+canon = [0] * (n + 2)
 for l, r in LR:
-    for i in range(l, r + 1):
-        LR_counter[i] += 1
-        if LR_counter[i] == 1:
-          del  LR_counter[i]
-        if LR_counter[i] > 2:
-            del LR_counter[i]
-        # print(LR_counter)
-# print(LR_counter)
-LR_min = min(LR_counter.values())
-print(LR_min-1)
+  canon[l] += 1
+  canon[r+1] -= 1
 
-# print(LR_counter[0][1]-1)
+ans = 1e9
+for i in range(1, n + 1):
+  canon[i] += canon[i - 1]
+  ans = min(ans, canon[i])
+print(ans)
+
+# print(canon)
