@@ -5,24 +5,37 @@ import numpy as np
 
 # 下記に標準入力を記載
 _InPUT = """\
-10 3
-
-
+7
+1 6 2 10 2 3 2
 """
 sys.stdin = io.StringIO(_InPUT)
 # ここからコードを記載
 
-x,y = map(int, input().split())
+n = int(input())
+a = list(map(int, input().split()))
 
-a,b =[i for i in range(1, 7) ], [i for i in range(1, 7) ]
+a_sorted = sorted(a, reverse=True)
+# print(a_sorted)
 
-complementary_event_count = 0
-
-for i in a:
-    for j in b:
-        if (i+j) < x and abs(i-j) < y:
-            complementary_event_count += 1
-
-complementary_event_probability = complementary_event_count / (len(a) * len(b))
-# print(complementary_event_count)
-print(1-complementary_event_probability)
+ans = []
+for i in range(n):
+    # if a_sorted[i] <= i+1:
+    #     ans = a_sorted[i]
+    #     print(ans)
+    #     exit()
+# if len(ans) == 0:
+#     ans = 0
+#     print(ans)
+#     exit()
+    if (i+1)-a_sorted[i] == 0:
+        ans = a_sorted[i]
+        print(ans)
+        exit()
+    if (i+1)-a_sorted[i] == 1:
+        ans = a_sorted[i]
+        print(ans)
+        exit()
+    if (i+1)-a_sorted[i] >= 2:
+        ans = i
+        print(ans)
+        exit()

@@ -5,24 +5,21 @@ import numpy as np
 
 # 下記に標準入力を記載
 _InPUT = """\
-22 11
-
+10
+xoooxoxxxo
+ooxooooxoo
 
 """
 sys.stdin = io.StringIO(_InPUT)
 # ここからコードを記載
 
-a,b = map(int, input().split())
+n = int(input())
+t = input()
+a = input()
 
-standard = int((a/b))
-diff = abs(standard-a/b)
+for i in range(n):
+    if t[i] == 'o' and a[i] == 'o':
+        print('Yes')
+        exit()
 
-if diff >= 0.5:
-    print(int(standard + 1))
-elif diff < 0.5:
-    print(int(standard))
-elif a % b == 0:
-    if a < b:
-        print(b/a)
-    else:
-        print(a/b)
+print('No')
