@@ -13,13 +13,12 @@ sys.stdin = io.StringIO(_InPUT)
 
 n = int(input())
 a = list(map(int, input().split()))
+a.sort(reverse=True)
 
-# xが0からnまでの値を考え、各xに対してaの要素がx以上であるものの数を数える。
-for x in range(n, -1, -1):
-    cnt = 0
-    for a_i in a:
-        if a_i >= x:
-            cnt += 1
-    if cnt >= x:
+# xは1-indexdで考える
+for x in range(n, 0, -1):
+    if a[x - 1] >= x:
         print(x)
-        exit()
+        break
+else:
+    print(0)
