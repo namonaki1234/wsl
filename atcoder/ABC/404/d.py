@@ -25,6 +25,7 @@ for i in S:
         if S.count(0) == K:
             S.replace(0, 1)
         else:
+            pass
 
 
 
