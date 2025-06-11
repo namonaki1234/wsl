@@ -7,7 +7,7 @@ double precision :: rho1,rho2,u1,u2,v1,v2,p1,p2,T1,T2,M,V_abs1,V_abs2,V_n1,V_n2,
 !********************格子空間・計算条件・初期条件********************
 double precision,parameter :: H = 10.0d0
 double precision :: du,dv
-double precision :: slope
+! double precision :: slope
 integer,parameter :: IM = 30,JM = 30
 double precision,parameter :: r_y = 1.1d0,dx = 3.0d0*H/dble(IM)
 double precision,parameter :: dt = 1.0d-8
@@ -168,50 +168,55 @@ call Save_data
 contains
 !********************サブルーチン5　境界条件********************
 subroutine boundary_condition
-!   一次外挿で流入を固定
-  do k = 1,4
-    do i = 1,IM-1
-      Q(i,JM,k) = 2.0d0*Q(i,JM-1,k)-Q(i,JM-2,k)
-    end do
-  end do
-  do k = 1,4
-    do i = 1,IM-1
-      Q(i,0,k) = 2.0d0*Q(i,1,k)-Q(i,2,k)
-    end do
-  end do
-  do k = 1,4
-    do j = 0,JM
-      Q(IM,j,k) = 2.0d0*Q(IM-1,j,k)-Q(IM-2,j,k)
-    end do
-  end do
+  do j=0,JM
+    do i=0,IM
+     !境界条件の更新
+     if(i==IM)then !流出→ノイマン境界条件（境界法線方向差分0）
+      rho(IM,j)=rho(IM-1,j)
+      u(IM,j)=u(IM-1,j)
+      v(IM,j)=v(IM-1,j)
+      p(IM,j)=p(IM-1,j)
+      T(IM,j)=p(IM,j)/(rho(IM,j)*R)
+      energy(IM,j)=rho(IM,j)*(R*T(IM,j)/(gam-1.0d0)+(u(IM,j)**2.0+v(IM,j)**2.0)/2.0d0)
+     end if
+     if(j==JM)then !上端→ノイマン境界条件（境界法線方向差分0）
+      rho(i,JM)=rho(i,JM-1)
+      u(i,JM)=u(i,JM-1)
+      v(i,JM)=v(i,JM-1)
+      p(i,JM)=p(i,JM-1)
+      T(i,JM)=p(i,JM)/(rho(i,JM)*R)
+      energy(i,JM)=rho(i,JM)*(R*T(i,JM)/(gam-1.0d0)+(u(i,JM)**2.0+v(i,JM)**2.0)/2.0d0)
+     end if
+     if(j==0)then !下端（壁）→粘性を考慮するためu=0，他はノイマン境界条件（境界法線方向差分0）
+      rho(i,0)=rho(i,1)
+      u(i,0)=0.0d0
+      v(i,0)=0.0d0
+      p(i,0)=p(i,1)
+      T(i,0)=p(i,0)/(rho(i,0)*R)
+      energy(i,0)=rho(i,0)*(R*T(i,0)/(gam-1.0d0)+(u(i,0)**2.0+v(i,0)**2.0)/2.0d0)
+     end if
+     !流束ベクトルの更新
+     Q(i,j,1)=rho(i,j)
+     Q(i,j,2)=rho(i,j)*u(i,j)
+     Q(i,j,3)=rho(i,j)*v(i,j)
+     Q(i,j,4)=energy(i,j)
+     E(i,j,1)=rho(i,j)*u(i,j)
+     E(i,j,2)=p(i,j)+rho(i,j)*u(i,j)**2.0
+     E(i,j,3)=rho(i,j)*u(i,j)*v(i,j)
+     E(i,j,4)=(energy(i,j)+p(i,j))*u(i,j)
+     F(i,j,1)=rho(i,j)*v(i,j)
+     F(i,j,2)=rho(i,j)*u(i,j)*v(i,j)
+     F(i,j,3)=p(i,j)+rho(i,j)*v(i,j)**2.0
+     F(i,j,4)=(energy(i,j)+p(i,j))*v(i,j)
 
-  do i = 0,IM !上下壁
-    slope = (y(i,0)-y(i,2))/(y(i,2)-y(i,1))
-    rho(i,0) = rho(i,2)+slope*(rho(i,2)-rho(i,1))
-    u(i,0) = u(i,2)+slope*(u(i,2)-u(i,1))
-    v(i,0) = 0.0d0
-    p(i,0) = p(i,2)+slope*(p(i,2)-p(i,1))
-    energy(i,0) = p(i,0)/(gam-1.0d0)+rho(i,0)*((u(i,0)**2.0+v(i,0)**2.0))/2.0d0
-    T(i,0) = T(i,2)+slope*(T(i,2)-T(i,1))
-
-    slope = (y(i,JM)-y(i,JM-2))/(y(i,JM-2)-y(i,JM-1))
-    rho(i,JM) = rho(i,JM-2)+slope*(rho(i,JM-2)-rho(i,JM-1))
-    u(i,JM) = u(i,JM-2)+slope*(u(i,JM-2)-u(i,JM-1))
-    v(i,JM) = v(i,JM-2)+slope*(v(i,JM-2)-v(i,JM-1))
-    p(i,JM) = p(i,JM-2)+slope*(p(i,JM-2)-p(i,JM-1))
-    energy(i,JM) = p(i,jm)/(gam-1.0d0)+rho(i,jm)*((u(i,jm)**2.0)+(v(i,jm)**2.0))/2.0d0
-    T(i,JM) = T(i,JM-2)+slope*(T(i,JM-2)-T(i,JM-1))
-  end do
-
-  do j = 1,JM-1 !流出
-    slope = (x(IM,j)-x(IM-2,j))/(x(IM-2,j)-x(IM-1,j))
-    rho(IM,j) = rho(IM-2,j)+slope*(rho(IM-2,j)-rho(IM-1,j))
-    u(IM,j) = u(IM-2,j)+slope*(u(IM-2,j)-u(IM-1,j))
-    v(IM,j) = v(IM-2,j)+slope*(v(IM-2,j)-v(IM-1,j))
-    p(IM,j) = p(IM-2,j)+slope*(p(IM-2,j)-p(IM-1,j))
-    energy(IM,j) = p(im,j)/(gam-1.0d0)+rho(im,j)*((u(im,j)**2.0)+(v(im,j)**2.0))/2.0d0
-    T(IM,j) = T(IM-2,j)+slope*(T(IM-2,j)-T(IM-1,j))
-  end do
+     do k=1,4 !各流束を一般座標系に変換
+      Q(i,j,k)=Q(i,j,k)/Jac(i,j)
+      ! Eh=E(k,i,j)
+      E(i,j,k)=(xi_x(i,j)*E(i,j,k)+xi_y(i,j)*F(i,j,k))/Jac(i,j)
+      F(i,j,k)=(eta_x(i,j)*E(i,j,k)+eta_y(i,j)*F(i,j,k))/Jac(i,j)
+     end do
+    end do
+   end do
 end subroutine boundary_condition
 
 !********************ファンクション　FPSI制限関数の定義********************
