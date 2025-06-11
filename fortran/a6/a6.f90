@@ -29,7 +29,7 @@ double precision,dimension(0:IM,0:JM) :: xi_x,xi_y,eta_x,eta_y,Jac,Jac_inv,U_cvc
 integer,parameter :: NMAX = 100000
 double precision,parameter :: EPS = 1.0d-6
 double precision,dimension(1:4,0:IM,0:JM) :: Rv = 0.0d0,Sv = 0.0d0 !粘性項ベクトルR,S
-
+double precision::E_s !Eの値保持用
 
 !********************不等間隔格子の生成・ファイル出力********************
 do i = 0,IM
@@ -87,6 +87,7 @@ do i = 0,IM
   end do
 end do
 
+!初期条件***************************************************
 do j = 0,JM
   do i = 0,IM
     M = 2.9d0
@@ -131,17 +132,36 @@ do i = 0,IM
       p(i,j) = p2
       T(i,j) = T2
     end if
+    Q(i,j,1) = rho(i,j)
+    Q(i,j,2) = rho(i,j)*u(i,j)
+    Q(i,j,3) = rho(i,j)*v(i,j)
+    Q(i,j,4) = energy(i,j)
+    E(i,j,1) = rho(i,j)*u(i,j)
+    E(i,j,2) = p(i,j)+rho(i,j)*u(i,j)**2.0
+    E(i,j,3) = rho(i,j)*u(i,j)*v(i,j)
+    E(i,j,4) = (energy(i,j)+p(i,j))*u(i,j)
+    F(i,j,1) = rho(i,j)*v(i,j)
+    F(i,j,2) = rho(i,j)*u(i,j)*v(i,j)
+    F(i,j,3) = p(i,j)+rho(i,j)*v(i,j)**2.0
+    F(i,j,4) = (energy(i,j)+p(i,j))*v(i,j)
+
+    do k = 1,4 !各流束を一般座標系に変換
+      Q(i,j,k) = Q(i,j,k)/Jac(i,j)
+      E_s=E(i,j,k)
+      E(i,j,k) = (xi_x(i,j)*E(i,j,k)+xi_y(i,j)*F(i,j,k))/Jac(i,j)
+      F(i,j,k) = (eta_x(i,j)*E_s+eta_y(i,j)*F(i,j,k))/Jac(i,j)
+    end do
   end do
 end do
 !********************ベクトルQ　初期条件********************
-do j = 0,JM
-  do i = 0,IM
-    Q(i,j,1) = rho(i,j)/Jac(i,j)
-    Q(i,j,2) = rho(i,j)*u(i,j)/Jac(i,j)
-    Q(i,j,3) = rho(i,j)*v(i,j)/Jac(i,j)
-    Q(i,j,4) = energy(i,j)/Jac(i,j)
-  end do
-end do
+! do j = 0,JM
+!   do i = 0,IM
+!     Q(i,j,1) = rho(i,j)/Jac(i,j)
+!     Q(i,j,2) = rho(i,j)*u(i,j)/Jac(i,j)
+!     Q(i,j,3) = rho(i,j)*v(i,j)/Jac(i,j)
+!     Q(i,j,4) = energy(i,j)/Jac(i,j)
+!   end do
+! end do
 !********************ルンゲクッタ法／メイン計算********************
 do n = 1,NMAX
   do k = 1,4
@@ -168,55 +188,55 @@ call Save_data
 contains
 !********************サブルーチン5　境界条件********************
 subroutine boundary_condition
-  do j=0,JM
-    do i=0,IM
-     !境界条件の更新
-     if(i==IM)then !流出→ノイマン境界条件（境界法線方向差分0）
-      rho(IM,j)=rho(IM-1,j)
-      u(IM,j)=u(IM-1,j)
-      v(IM,j)=v(IM-1,j)
-      p(IM,j)=p(IM-1,j)
-      T(IM,j)=p(IM,j)/(rho(IM,j)*R)
-      energy(IM,j)=rho(IM,j)*(R*T(IM,j)/(gam-1.0d0)+(u(IM,j)**2.0+v(IM,j)**2.0)/2.0d0)
-     end if
-     if(j==JM)then !上端→ノイマン境界条件（境界法線方向差分0）
-      rho(i,JM)=rho(i,JM-1)
-      u(i,JM)=u(i,JM-1)
-      v(i,JM)=v(i,JM-1)
-      p(i,JM)=p(i,JM-1)
-      T(i,JM)=p(i,JM)/(rho(i,JM)*R)
-      energy(i,JM)=rho(i,JM)*(R*T(i,JM)/(gam-1.0d0)+(u(i,JM)**2.0+v(i,JM)**2.0)/2.0d0)
-     end if
-     if(j==0)then !下端（壁）→粘性を考慮するためu=0，他はノイマン境界条件（境界法線方向差分0）
-      rho(i,0)=rho(i,1)
-      u(i,0)=0.0d0
-      v(i,0)=0.0d0
-      p(i,0)=p(i,1)
-      T(i,0)=p(i,0)/(rho(i,0)*R)
-      energy(i,0)=rho(i,0)*(R*T(i,0)/(gam-1.0d0)+(u(i,0)**2.0+v(i,0)**2.0)/2.0d0)
-     end if
-     !流束ベクトルの更新
-     Q(i,j,1)=rho(i,j)
-     Q(i,j,2)=rho(i,j)*u(i,j)
-     Q(i,j,3)=rho(i,j)*v(i,j)
-     Q(i,j,4)=energy(i,j)
-     E(i,j,1)=rho(i,j)*u(i,j)
-     E(i,j,2)=p(i,j)+rho(i,j)*u(i,j)**2.0
-     E(i,j,3)=rho(i,j)*u(i,j)*v(i,j)
-     E(i,j,4)=(energy(i,j)+p(i,j))*u(i,j)
-     F(i,j,1)=rho(i,j)*v(i,j)
-     F(i,j,2)=rho(i,j)*u(i,j)*v(i,j)
-     F(i,j,3)=p(i,j)+rho(i,j)*v(i,j)**2.0
-     F(i,j,4)=(energy(i,j)+p(i,j))*v(i,j)
+  do j = 0,JM
+    do i = 0,IM
+      !境界条件の更新
+      if (i==IM) then !流出→ノイマン境界条件（境界法線方向差分0）
+        rho(IM,j) = rho(IM-1,j)
+        u(IM,j) = u(IM-1,j)
+        v(IM,j) = v(IM-1,j)
+        p(IM,j) = p(IM-1,j)
+        T(IM,j) = p(IM,j)/(rho(IM,j)*R)
+        energy(IM,j) = rho(IM,j)*(R*T(IM,j)/(gam-1.0d0)+(u(IM,j)**2.0+v(IM,j)**2.0)/2.0d0)
+      end if
+      if (j==JM) then !上端→ノイマン境界条件（境界法線方向差分0）
+        rho(i,JM) = rho(i,JM-1)
+        u(i,JM) = u(i,JM-1)
+        v(i,JM) = v(i,JM-1)
+        p(i,JM) = p(i,JM-1)
+        T(i,JM) = p(i,JM)/(rho(i,JM)*R)
+        energy(i,JM) = rho(i,JM)*(R*T(i,JM)/(gam-1.0d0)+(u(i,JM)**2.0+v(i,JM)**2.0)/2.0d0)
+      end if
+      if (j==0) then !下端（壁）→粘性を考慮するためu=0，他はノイマン境界条件（境界法線方向差分0）
+        rho(i,0) = rho(i,1)
+        u(i,0) = 0.0d0
+        v(i,0) = 0.0d0
+        p(i,0) = p(i,1)
+        T(i,0) = p(i,0)/(rho(i,0)*R)
+        energy(i,0) = rho(i,0)*(R*T(i,0)/(gam-1.0d0)+(u(i,0)**2.0+v(i,0)**2.0)/2.0d0)
+      end if
+      !流束ベクトルの更新
+      Q(i,j,1) = rho(i,j)
+      Q(i,j,2) = rho(i,j)*u(i,j)
+      Q(i,j,3) = rho(i,j)*v(i,j)
+      Q(i,j,4) = energy(i,j)
+      E(i,j,1) = rho(i,j)*u(i,j)
+      E(i,j,2) = p(i,j)+rho(i,j)*u(i,j)**2.0
+      E(i,j,3) = rho(i,j)*u(i,j)*v(i,j)
+      E(i,j,4) = (energy(i,j)+p(i,j))*u(i,j)
+      F(i,j,1) = rho(i,j)*v(i,j)
+      F(i,j,2) = rho(i,j)*u(i,j)*v(i,j)
+      F(i,j,3) = p(i,j)+rho(i,j)*v(i,j)**2.0
+      F(i,j,4) = (energy(i,j)+p(i,j))*v(i,j)
 
-     do k=1,4 !各流束を一般座標系に変換
-      Q(i,j,k)=Q(i,j,k)/Jac(i,j)
-      ! Eh=E(k,i,j)
-      E(i,j,k)=(xi_x(i,j)*E(i,j,k)+xi_y(i,j)*F(i,j,k))/Jac(i,j)
-      F(i,j,k)=(eta_x(i,j)*E(i,j,k)+eta_y(i,j)*F(i,j,k))/Jac(i,j)
-     end do
+      do k = 1,4 !各流束を一般座標系に変換
+        Q(i,j,k) = Q(i,j,k)/Jac(i,j)
+        E_s=E(i,j,k)
+        E(i,j,k) = (xi_x(i,j)*E(i,j,k)+xi_y(i,j)*F(i,j,k))/Jac(i,j)
+        F(i,j,k) = (eta_x(i,j)*E_s+eta_y(i,j)*F(i,j,k))/Jac(i,j)
+      end do
     end do
-   end do
+  end do
 end subroutine boundary_condition
 
 !********************ファンクション　FPSI制限関数の定義********************
@@ -475,7 +495,7 @@ subroutine viscosity_calc
   double precision :: mu0,T0,Sl
   double precision,dimension(0:IM,0:JM) :: u_xi,v_xi,T_xi,u_eta,v_eta,T_eta
   double precision,dimension(0:IM,0:JM) :: mu
-  ! double precision :: Rv_s !Rvの値保持用
+  double precision :: Rv_s !Rvの値保持用
   double precision,parameter :: Pr = 0.72d0 !定数
 
   mu0 = 1.0d-3 !粘性係数の基準値
@@ -533,9 +553,9 @@ subroutine viscosity_calc
       Sv(3,i,j) = tyy
       Sv(4,i,j) = txy*u(i,j)+tyy*v(i,j)+mu(i,j)*gam*R*(T_xi(i,j)*xi_y(i,j)+T_eta(i,j)*eta_y(i,j))/(Pr*(gam-1.0d0))
       do k = 1,4 !各流束を一般座標系に変換
-        ! Rv_s = Rv(k,i,j)
+        Rv_s = Rv(k,i,j)
         Rv(k,i,j) = (xi_x(i,j)*Rv(k,i,j)+xi_y(i,j)*Sv(k,i,j))/Jac(i,j)
-        Sv(k,i,j) = (eta_x(i,j)*Rv(k,i,j)+eta_y(i,j)*Sv(k,i,j))/Jac(i,j)
+        Sv(k,i,j) = (eta_x(i,j)*Rv_s+eta_y(i,j)*Sv(k,i,j))/Jac(i,j)
       end do
     end do
   end do
@@ -571,6 +591,17 @@ subroutine runge_kutta(is,ie,js,je)
       if (ddu>du) du = ddu
       if (ddv>dv) dv = ddv
 
+    end do
+  end do
+  !保存量ベクトルQ^から諸量を求める
+  do i = 1,IM-1
+    do j = 1,JM-1
+      rho(i,j) = Q(i,j,1)*Jac(i,j)
+      u(i,j) = Q(i,j,2)*Jac(i,j)/rho(i,j)
+      v(i,j) = Q(i,j,3)*Jac(i,j)/rho(i,j)
+      energy(i,j) = Q(i,j,4)*Jac(i,j)
+      p(i,j) = (gam-1.0d0)*(energy(i,j)-(u(i,j)**2.0+v(i,j)**2.0)*rho(i,j)/2.0d0)
+      T(i,j) = p(i,j)/(rho(i,j)*R)
     end do
   end do
 end subroutine runge_kutta
