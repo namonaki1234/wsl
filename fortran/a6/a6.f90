@@ -1,9 +1,9 @@
 program a6
 
 implicit none
-integer :: i,j,k,k_rungame_kutta,n
+integer :: i,j,k,k_runge_kutta,n
 double precision :: a
-double precision :: rho1,rho2,u1,u2,v1,v2,p1,p2,T1,T2,M,V_abs1,V_abs2,V_n1,V_n2,V_t,theta,energamy1,energamy2
+double precision :: rho1,rho2,u1,u2,v1,v2,p1,p2,T1,T2,M,V_abs1,V_abs2,V_n1,V_n2,V_t,theta,energy1,energy2
 !********************格子空間・計算条件・初期条件********************
 double precision,parameter :: H = 10.0d0
 double precision :: du,dv
@@ -18,7 +18,7 @@ double precision,parameter :: beta = pi/6.0d0
 
 !********************配列定義********************
 !-------衝撃波-------
-double precision,dimension(0:IM,0:JM) :: energamy = 0.0d0
+double precision,dimension(0:IM,0:JM) :: energy = 0.0d0
 ! double precision,dimension(0:IM,0:JM) :: E_bar = 0.0d0
 double precision,dimension(0:IM,0:JM) :: rho,u,v,p,T
 double precision,dimension(0:IM,0:JM,4) :: Q,Q1,E,F
@@ -98,7 +98,7 @@ do j = 0,JM
     V_n1 = u1*dsin(beta)
     V_t = V_n1/dtan(beta)
     p1 = rho1*R*T1
-    energamy1 = rho1*((R*T1/(gam-1.0d0))+((u1**2.0+v1**2.0)/2.0d0))
+    energy1 = rho1*((R*T1/(gam-1.0d0))+((u1**2.0+v1**2.0)/2.0d0))
 
     V_n2 = V_n1*(((gam-1.0d0)*(M**2)*(dsin(beta))**2)+2.0d0)/((gam+1.0d0)*(M**2)*(dsin(beta))**2)
     V_abs2 = dsqrt(V_n2**2.0+V_t**2.0)
@@ -110,7 +110,7 @@ do j = 0,JM
          /(((gam+1.0d0)**2)*(M**2)*(sin(beta)**2))
     rho2 = rho1*V_n1/V_n2
     p2 = p1*((2.0d0*gam*(M**2)*(dsin(beta))**2)-(gam-1.0d0))/(gam+1.0d0)
-    energamy2 = rho2*((R*T2/(gam-1.0d0))+((u2**2.0+v2**2.0)/2.0d0))
+    energy2 = rho2*((R*T2/(gam-1.0d0))+((u2**2.0+v2**2.0)/2.0d0))
   end do
 end do
 
@@ -120,14 +120,14 @@ do i = 0,IM
       rho(i,j) = rho1 !衝撃波前
       u(i,j) = u1
       v(i,j) = v1
-      energamy(i,j) = energamy1
+      energy(i,j) = energy1
       p(i,j) = p1
       T(i,j) = T1
     else
       rho(i,j) = rho2 !衝撃波後
       u(i,j) = u2
       v(i,j) = v2
-      energamy(i,j) = energamy2
+      energy(i,j) = energy2
       p(i,j) = p2
       T(i,j) = T2
     end if
@@ -139,7 +139,7 @@ do j = 0,JM
     Q(i,j,1) = rho(i,j)/Jac(i,j)
     Q(i,j,2) = rho(i,j)*u(i,j)/Jac(i,j)
     Q(i,j,3) = rho(i,j)*v(i,j)/Jac(i,j)
-    Q(i,j,4) = energamy(i,j)/Jac(i,j)
+    Q(i,j,4) = energy(i,j)/Jac(i,j)
   end do
 end do
 !********************ルンゲクッタ法／メイン計算********************
@@ -151,11 +151,11 @@ do n = 1,NMAX
       end do
     end do
   end do
-  do k_rungame_kutta = 1,4
+  do k_runge_kutta = 1,4
     call tvd_xi
     call tvd_eta
     call viscosity_calc
-    call rungame_kutta(1,IM-1,1,JM-1)
+    call runge_kutta(1,IM-1,1,JM-1)
     call boundary_condition
   end do
   if (mod(n,1000)==0) then
@@ -191,7 +191,7 @@ subroutine boundary_condition
     u(i,0) = u(i,2)+slope*(u(i,2)-u(i,1))
     v(i,0) = 0.0d0
     p(i,0) = p(i,2)+slope*(p(i,2)-p(i,1))
-    energamy(i,0) = p(i,0)/(gam-1.0d0)+rho(i,0)*((u(i,0)**2.0+v(i,0)**2.0))/2.0d0
+    energy(i,0) = p(i,0)/(gam-1.0d0)+rho(i,0)*((u(i,0)**2.0+v(i,0)**2.0))/2.0d0
     T(i,0) = T(i,2)+slope*(T(i,2)-T(i,1))
 
     slope = (y(i,JM)-y(i,JM-2))/(y(i,JM-2)-y(i,JM-1))
@@ -199,7 +199,7 @@ subroutine boundary_condition
     u(i,JM) = u(i,JM-2)+slope*(u(i,JM-2)-u(i,JM-1))
     v(i,JM) = v(i,JM-2)+slope*(v(i,JM-2)-v(i,JM-1))
     p(i,JM) = p(i,JM-2)+slope*(p(i,JM-2)-p(i,JM-1))
-    energamy(i,JM) = p(i,jm)/(gam-1.0d0)+rho(i,jm)*((u(i,jm)**2.0)+(v(i,jm)**2.0))/2.0d0
+    energy(i,JM) = p(i,jm)/(gam-1.0d0)+rho(i,jm)*((u(i,jm)**2.0)+(v(i,jm)**2.0))/2.0d0
     T(i,JM) = T(i,JM-2)+slope*(T(i,JM-2)-T(i,JM-1))
   end do
 
@@ -209,7 +209,7 @@ subroutine boundary_condition
     u(IM,j) = u(IM-2,j)+slope*(u(IM-2,j)-u(IM-1,j))
     v(IM,j) = v(IM-2,j)+slope*(v(IM-2,j)-v(IM-1,j))
     p(IM,j) = p(IM-2,j)+slope*(p(IM-2,j)-p(IM-1,j))
-    energamy(IM,j) = p(im,j)/(gam-1.0d0)+rho(im,j)*((u(im,j)**2.0)+(v(im,j)**2.0))/2.0d0
+    energy(IM,j) = p(im,j)/(gam-1.0d0)+rho(im,j)*((u(im,j)**2.0)+(v(im,j)**2.0))/2.0d0
     T(IM,j) = T(IM-2,j)+slope*(T(IM-2,j)-T(IM-1,j))
   end do
 end subroutine boundary_condition
@@ -537,7 +537,7 @@ subroutine viscosity_calc
 end subroutine viscosity_calc
 
 !********************サブルーチン4　ルンゲクッタ********************
-subroutine rungame_kutta(is,ie,js,je)
+subroutine runge_kutta(is,ie,js,je)
   integer is,ie,js,je
   double precision us,ddu,vs,ddv
 
@@ -546,7 +546,7 @@ subroutine rungame_kutta(is,ie,js,je)
   do j = js,je
     do i = is,ie
       do k = 1,4
-        Q(i,j,k) = Q1(i,j,k)-1.0d0/(5.0d0-dble(k_rungame_kutta))*dt*((E(i,j,k)-E(i-1,j,k)) &
+        Q(i,j,k) = Q1(i,j,k)-1.0d0/(5.0d0-dble(k_runge_kutta))*dt*((E(i,j,k)-E(i-1,j,k)) &
                                                      +(F(i,j,k)-F(i,j-1,k)-(Rv(k,i+1,j)-Rv(k,i-1,j)+Sv(k,i,j+1)-Sv(k,i,j-1))/2.0d0))
       end do
       us = u(i,j)
@@ -556,8 +556,8 @@ subroutine rungame_kutta(is,ie,js,je)
       v(i,j) = Q(i,j,3)*Jac(i,j)/rho(i,j)
       U_cvc(i,j) = xi_x(i,j)*u(i,j)+xi_y(i,j)*v(i,j)
       V_cvc(i,j) = eta_x(i,j)*u(i,j)+eta_y(i,j)*v(i,j)
-      energamy(i,j) = Q(i,j,4)*Jac(i,j)
-      T(i,j) = (gam-1.0d0)*(energamy(i,j)/rho(i,j)-(u(i,j)**2+v(i,j)**2)/2.0d0)/R
+      energy(i,j) = Q(i,j,4)*Jac(i,j)
+      T(i,j) = (gam-1.0d0)*(energy(i,j)/rho(i,j)-(u(i,j)**2+v(i,j)**2)/2.0d0)/R
       p(i,j) = rho(i,j)*R*T(i,j)
 
       ddu = abs(u(i,j)-us)/us
@@ -568,7 +568,7 @@ subroutine rungame_kutta(is,ie,js,je)
 
     end do
   end do
-end subroutine rungame_kutta
+end subroutine runge_kutta
 
 !サブルーチン6　出力
 subroutine Save_data
@@ -593,7 +593,7 @@ subroutine Save_data
   write (11,'(a)') 'nspace=2'
   write (11,'(a)') 'veclen=4'
   write (11,'(a)') 'data=float'
-  write (11,'(a)') 'field=irregamular'
+  write (11,'(a)') 'field=irregular'
   write (11,'(a)') 'label=u,v,p,T'
   write (11,'(a)') 'variable 1 file=a6.dat filetype=ascii skip=0 offset=2 stride=6'
   write (11,'(a)') 'variable 2 file=a6.dat filetype=ascii skip=0 offset=3 stride=6'
