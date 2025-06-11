@@ -3,33 +3,39 @@ program a6
 implicit none
 integer :: i,j,k,k_runge_kutta,n
 double precision :: a
-double precision :: rho1,rho2,u1,u2,v1,v2,p1,p2,T1,T2,M,V_abs1,V_abs2,V_n1,V_n2,V_t,theta,energy1,energy2
+double precision :: M =2.9d0 !マッハ数
+! double precision :: rho1,rho2,u1,u2,v1,v2,p1,p2,T1,T2,M,V_abs1,V_abs2,V_n1,V_n2,V_t,theta,energy1,energy2
 !********************格子空間・計算条件・初期条件********************
 double precision,parameter :: H = 10.0d0
-double precision :: du,dv
+double precision :: du,dv,COE
 ! double precision :: slope
 integer,parameter :: IM = 30,JM = 30
 double precision,parameter :: r_y = 1.1d0,dx = 3.0d0*H/dble(IM)
 double precision,parameter :: dt = 1.0d-8
-double precision,parameter :: gam = 1.4d0
+double precision,parameter :: g = 1.4d0
 double precision,parameter :: R = 287.1d0
 double precision,parameter :: pi = dacos(-1.0d0)
 double precision,parameter :: beta = pi/6.0d0
 
 !********************配列定義********************
 !-------衝撃波-------
-double precision,dimension(0:IM,0:JM) :: energy = 0.0d0
 ! double precision,dimension(0:IM,0:JM) :: E_bar = 0.0d0
-double precision,dimension(0:IM,0:JM) :: rho,u,v,p,T
+double precision,dimension(0:IM,0:JM) :: rho = 0.0d0 !密度
+double precision,dimension(0:IM,0:JM) :: u = 0.0d0 !x方向速度
+double precision,dimension(0:IM,0:JM) :: v = 0.0d0 !y方向速度
+double precision,dimension(0:IM,0:JM) :: p = 0.0d0 !圧力
+double precision,dimension(0:IM,0:JM) :: T = 0.0d0 !温度
+double precision,dimension(0:IM,0:JM) :: energy = 0.0d0 !エネルギー
 double precision,dimension(0:IM,0:JM,4) :: Q,Q1,E,F
+double precision :: us !速度uの値保持用
 
 !-------ヤコビアンJa-------
 double precision,dimension(0:IM,0:JM) :: x = 0.0d0,y = 0.0d0,x_xi = 0.0d0,x_eta = 0.0d0,y_xi = 0.0d0,y_eta = 0.0d0
-double precision,dimension(0:IM,0:JM) :: xi_x,xi_y,eta_x,eta_y,Jac,Jac_inv,U_cvc,V_cvc
+double precision,dimension(0:IM,0:JM) :: xi_x,xi_y,eta_x,eta_y,Jac,Jac_inv
 integer,parameter :: NMAX = 100000
 double precision,parameter :: EPS = 1.0d-6
 double precision,dimension(1:4,0:IM,0:JM) :: Rv = 0.0d0,Sv = 0.0d0 !粘性項ベクトルR,S
-double precision::E_s !Eの値保持用
+double precision :: E_s !Eの値保持用
 
 !********************不等間隔格子の生成・ファイル出力********************
 do i = 0,IM
@@ -88,50 +94,25 @@ do i = 0,IM
 end do
 
 !初期条件***************************************************
-do j = 0,JM
-  do i = 0,IM
-    M = 2.9d0
-    rho1 = 1.2d0
-    T1 = 293.0d0
-    u1 = M*dsqrt(gam*R*T1)
-    v1 = 0.0d0
-    V_abs1 = u1
-    V_n1 = u1*dsin(beta)
-    V_t = V_n1/dtan(beta)
-    p1 = rho1*R*T1
-    energy1 = rho1*((R*T1/(gam-1.0d0))+((u1**2.0+v1**2.0)/2.0d0))
-
-    V_n2 = V_n1*(((gam-1.0d0)*(M**2)*(dsin(beta))**2)+2.0d0)/((gam+1.0d0)*(M**2)*(dsin(beta))**2)
-    V_abs2 = dsqrt(V_n2**2.0+V_t**2.0)
-    theta = beta-datan(V_n2/V_t)
-    u2 = V_abs2*dcos(theta)
-    v2 = V_abs2*dsin(-theta)
-    T2 = T1*(2.d0*gam*(M**2)*(sin(beta)**2)-(gam-1.d0)) &
-         *((gam-1.0d0)*(M**2)*(sin(beta)**2)+2.d0) &
-         /(((gam+1.0d0)**2)*(M**2)*(sin(beta)**2))
-    rho2 = rho1*V_n1/V_n2
-    p2 = p1*((2.0d0*gam*(M**2)*(dsin(beta))**2)-(gam-1.0d0))/(gam+1.0d0)
-    energy2 = rho2*((R*T2/(gam-1.0d0))+((u2**2.0+v2**2.0)/2.0d0))
-  end do
-end do
-
+COE = ((g+1.0d0)*(M*dsin(beta))**2.0)/((g-1.0d0)*(M*dsin(beta))**2.0+2.0d0) !係数
 do i = 0,IM
   do j = 0,JM
-    if ((y(0,JM-2)-dtan(beta)*x(i,j))>y(i,j)) then
-      rho(i,j) = rho1 !衝撃波前
-      u(i,j) = u1
-      v(i,j) = v1
-      energy(i,j) = energy1
-      p(i,j) = p1
-      T(i,j) = T1
-    else
-      rho(i,j) = rho2 !衝撃波後
-      u(i,j) = u2
-      v(i,j) = v2
-      energy(i,j) = energy2
-      p(i,j) = p2
-      T(i,j) = T2
+    rho(i,j) = 1.2d0
+    T(i,j) = 293.0d0
+    u(i,j) = M*dsqrt(g*R*T(i,j))
+    p(i,j) = rho(i,j)*R*T(i,j)
+    energy(i,j) = rho(i,j)*(R*T(i,j)/(g-1.0d0)+(u(i,j)**2.0+v(i,j)**2.0)/2.0d0)
+
+    if (y(i,j)>=y(0,JM-2)-x(i,j)/dsqrt(3.0d0)) then !衝撃波後の物理量
+      us = u(i,j)
+      rho(i,j) = COE*rho(i,j)
+      u(i,j) = u(i,j)*dsin(beta)*dsqrt((1.0d0/COE)**2.0+(1.0d0/dtan(beta))**2d0)*dcos(-beta+datan(dtan(beta)/COE))
+      v(i,j) = us*dsin(beta)*dsqrt((1.0d0/COE)**2.0+(1.0d0/dtan(beta))**2.0)*dsin(-beta+datan(dtan(beta)/COE))
+      p(i,j) = (2.0d0*g*(M*dsin(beta))**2.0-(g-1.0d0))/(g+1.0d0)*p(i,j)
+     T(i,j) = (2.0d0*g*(M*dsin(beta))**2.0d0-(g-1.0d0))*((g-1.0d0)*(M*dsin(beta))**2.0+2.0d0)/(((g+1.0d0)*M*dsin(beta))**2.0)*T(i,j)
+      energy(i,j) = rho(i,j)*(R*T(i,j)/(g-1.0d0)+(u(i,j)**2.0+v(i,j)**2.0)/2.0d0)
     end if
+
     Q(i,j,1) = rho(i,j)
     Q(i,j,2) = rho(i,j)*u(i,j)
     Q(i,j,3) = rho(i,j)*v(i,j)
@@ -147,21 +128,13 @@ do i = 0,IM
 
     do k = 1,4 !各流束を一般座標系に変換
       Q(i,j,k) = Q(i,j,k)/Jac(i,j)
-      E_s=E(i,j,k)
+      Q1(i,j,k) = Q(i,j,k)
+      E_s = E(i,j,k)
       E(i,j,k) = (xi_x(i,j)*E(i,j,k)+xi_y(i,j)*F(i,j,k))/Jac(i,j)
       F(i,j,k) = (eta_x(i,j)*E_s+eta_y(i,j)*F(i,j,k))/Jac(i,j)
     end do
   end do
 end do
-!********************ベクトルQ　初期条件********************
-! do j = 0,JM
-!   do i = 0,IM
-!     Q(i,j,1) = rho(i,j)/Jac(i,j)
-!     Q(i,j,2) = rho(i,j)*u(i,j)/Jac(i,j)
-!     Q(i,j,3) = rho(i,j)*v(i,j)/Jac(i,j)
-!     Q(i,j,4) = energy(i,j)/Jac(i,j)
-!   end do
-! end do
 !********************ルンゲクッタ法／メイン計算********************
 do n = 1,NMAX
   do k = 1,4
@@ -181,7 +154,7 @@ do n = 1,NMAX
   if (mod(n,1000)==0) then
     print*,"n du dv",n,du,dv
   end if
-  if (du<=EPS .and. dv<=EPS) exit
+  ! if (du<=EPS .and. dv<=EPS) exit
 end do
 call Save_data
 
@@ -197,7 +170,7 @@ subroutine boundary_condition
         v(IM,j) = v(IM-1,j)
         p(IM,j) = p(IM-1,j)
         T(IM,j) = p(IM,j)/(rho(IM,j)*R)
-        energy(IM,j) = rho(IM,j)*(R*T(IM,j)/(gam-1.0d0)+(u(IM,j)**2.0+v(IM,j)**2.0)/2.0d0)
+        energy(IM,j) = rho(IM,j)*(R*T(IM,j)/(g-1.0d0)+(u(IM,j)**2.0+v(IM,j)**2.0)/2.0d0)
       end if
       if (j==JM) then !上端→ノイマン境界条件（境界法線方向差分0）
         rho(i,JM) = rho(i,JM-1)
@@ -205,7 +178,7 @@ subroutine boundary_condition
         v(i,JM) = v(i,JM-1)
         p(i,JM) = p(i,JM-1)
         T(i,JM) = p(i,JM)/(rho(i,JM)*R)
-        energy(i,JM) = rho(i,JM)*(R*T(i,JM)/(gam-1.0d0)+(u(i,JM)**2.0+v(i,JM)**2.0)/2.0d0)
+        energy(i,JM) = rho(i,JM)*(R*T(i,JM)/(g-1.0d0)+(u(i,JM)**2.0+v(i,JM)**2.0)/2.0d0)
       end if
       if (j==0) then !下端（壁）→粘性を考慮するためu=0，他はノイマン境界条件（境界法線方向差分0）
         rho(i,0) = rho(i,1)
@@ -213,7 +186,7 @@ subroutine boundary_condition
         v(i,0) = 0.0d0
         p(i,0) = p(i,1)
         T(i,0) = p(i,0)/(rho(i,0)*R)
-        energy(i,0) = rho(i,0)*(R*T(i,0)/(gam-1.0d0)+(u(i,0)**2.0+v(i,0)**2.0)/2.0d0)
+        energy(i,0) = rho(i,0)*(R*T(i,0)/(g-1.0d0)+(u(i,0)**2.0+v(i,0)**2.0)/2.0d0)
       end if
       !流束ベクトルの更新
       Q(i,j,1) = rho(i,j)
@@ -231,11 +204,12 @@ subroutine boundary_condition
 
       do k = 1,4 !各流束を一般座標系に変換
         Q(i,j,k) = Q(i,j,k)/Jac(i,j)
-        E_s=E(i,j,k)
+        E_s = E(i,j,k)
         E(i,j,k) = (xi_x(i,j)*E(i,j,k)+xi_y(i,j)*F(i,j,k))/Jac(i,j)
         F(i,j,k) = (eta_x(i,j)*E_s+eta_y(i,j)*F(i,j,k))/Jac(i,j)
       end do
     end do
+
   end do
 end subroutine boundary_condition
 
@@ -271,9 +245,9 @@ subroutine tvd_xi
       UM = RWL*u(i,j)+RWR*u(i+1,j)
       VM = RWL*v(i,j)+RWR*v(i+1,j)
       DUM = RWL*Q(i,j,4)/Q(i,j,1)+RWR*Q(i+1,j,4)/Q(i+1,j,1)
-      CM = dsqrt(gam*(gam-1.0d0)*abs(DUM-0.5d0*(UM**2+VM**2)))
+      CM = dsqrt(g*(g-1.0d0)*abs(DUM-0.5d0*(UM**2+VM**2)))
       !-------NOMENCLATURE-------
-      PHI = 0.5d0*(gam-1.0d0)*(UM**2+VM**2)
+      PHI = 0.5d0*(g-1.0d0)*(UM**2+VM**2)
       BETA = 1.0d0/(2.0d0*CM**2)
       AKXT = AKX/dsqrt(AKX**2+AKY**2)
       AKYT = AKY/dsqrt(AKX**2+AKY**2)
@@ -291,27 +265,27 @@ subroutine tvd_xi
       RR(3,2,i) = -AKXT
       RR(3,3,i) = VM+AKYT*CM
       RR(3,4,i) = VM-AKYT*CM
-      RR(4,1,i) = PHI/(gam-1.0d0)
+      RR(4,1,i) = PHI/(g-1.0d0)
       RR(4,2,i) = AKYT*UM-AKXT*VM
-      RR(4,3,i) = (PHI+CM**2)/(gam-1.0d0)+CM*THIT
-      RR(4,4,i) = (PHI+CM**2)/(gam-1.0d0)-CM*THIT
+      RR(4,3,i) = (PHI+CM**2)/(g-1.0d0)+CM*THIT
+      RR(4,4,i) = (PHI+CM**2)/(g-1.0d0)-CM*THIT
       !-------INVERS OR RIGHT EIGEN-VECTORS-------　 P.88 R_k^-1
       RI(1,1,i) = 1.0d0-PHI/CM**2
-      RI(1,2,i) = (gam-1.0d0)*UM/CM**2
-      RI(1,3,i) = (gam-1.0d0)*VM/CM**2
-      RI(1,4,i) = -(gam-1.0d0)/CM**2
+      RI(1,2,i) = (g-1.0d0)*UM/CM**2
+      RI(1,3,i) = (g-1.0d0)*VM/CM**2
+      RI(1,4,i) = -(g-1.0d0)/CM**2
       RI(2,1,i) = -AKYT*UM+AKXT*VM
       RI(2,2,i) = AKYT
       RI(2,3,i) = -AKXT
       RI(2,4,i) = 0.0d0
       RI(3,1,i) = BETA*(PHI-CM*THIT)
-      RI(3,2,i) = BETA*(AKXT*CM-(gam-1.0d0)*UM)
-      RI(3,3,i) = BETA*(AKYT*CM-(gam-1.0d0)*VM)
-      RI(3,4,i) = BETA*(gam-1.0d0)
+      RI(3,2,i) = BETA*(AKXT*CM-(g-1.0d0)*UM)
+      RI(3,3,i) = BETA*(AKYT*CM-(g-1.0d0)*VM)
+      RI(3,4,i) = BETA*(g-1.0d0)
       RI(4,1,i) = BETA*(PHI+CM*THIT)
-      RI(4,2,i) = -BETA*(AKXT*CM+(gam-1.0d0)*UM)
-      RI(4,3,i) = -BETA*(AKYT*CM+(gam-1.0d0)*VM)
-      RI(4,4,i) = BETA*(gam-1.0d0)
+      RI(4,2,i) = -BETA*(AKXT*CM+(g-1.0d0)*UM)
+      RI(4,3,i) = -BETA*(AKYT*CM+(g-1.0d0)*VM)
+      RI(4,4,i) = BETA*(g-1.0d0)
       !-------ENGEN-VALUES AT INTERMEDIATE-------　 P.87  固有値
       EIGM(1,i) = AKX*UM+AKY*VM
       EIGM(2,i) = EIGM(1,i)
@@ -391,9 +365,9 @@ subroutine tvd_eta
       UM = RWL*u(i,j)+RWR*u(i,j+1)
       VM = RWL*v(i,j)+RWR*v(i,j+1)
       DUM = RWL*Q(i,j,4)/Q(i,j,1)+RWR*Q(i,j+1,4)/Q(i,j+1,1)
-      CM = dsqrt(gam*(gam-1.0d0)*abs(DUM-0.5d0*(UM**2+VM**2)))
+      CM = dsqrt(g*(g-1.0d0)*abs(DUM-0.5d0*(UM**2+VM**2)))
       !NOMENCLATURE
-      PHI = 0.5d0*(gam-1.0d0)*(UM**2+VM**2)
+      PHI = 0.5d0*(g-1.0d0)*(UM**2+VM**2)
       BETA = 1.0d0/(2.0d0*CM**2)
       AKXT = AKX/dsqrt(AKX**2+AKY**2)
       AKYT = AKY/dsqrt(AKX**2+AKY**2)
@@ -411,27 +385,27 @@ subroutine tvd_eta
       RR(3,2,j) = -AKXT
       RR(3,3,j) = VM+AKYT*CM
       RR(3,4,j) = VM-AKYT*CM
-      RR(4,1,j) = PHI/(gam-1.0d0)
+      RR(4,1,j) = PHI/(g-1.0d0)
       RR(4,2,j) = AKYT*UM-AKXT*VM
-      RR(4,3,j) = (PHI+CM**2)/(gam-1.0d0)+CM*THIT
-      RR(4,4,j) = (PHI+CM**2)/(gam-1.0d0)-CM*THIT
+      RR(4,3,j) = (PHI+CM**2)/(g-1.0d0)+CM*THIT
+      RR(4,4,j) = (PHI+CM**2)/(g-1.0d0)-CM*THIT
       !INVERS OR RIGHT EIGEN-VECTORS
       RJ(1,1,j) = 1.0d0-PHI/CM**2
-      RJ(1,2,j) = (gam-1.0d0)*UM/CM**2
-      RJ(1,3,j) = (gam-1.0d0)*VM/CM**2
-      RJ(1,4,j) = -(gam-1.0d0)/CM**2
+      RJ(1,2,j) = (g-1.0d0)*UM/CM**2
+      RJ(1,3,j) = (g-1.0d0)*VM/CM**2
+      RJ(1,4,j) = -(g-1.0d0)/CM**2
       RJ(2,1,j) = -AKYT*UM+AKXT*VM
       RJ(2,2,j) = AKYT
       RJ(2,3,j) = -AKXT
       RJ(2,4,j) = 0.0d0
       RJ(3,1,j) = BETA*(PHI-CM*THIT)
-      RJ(3,2,j) = BETA*(AKXT*CM-(gam-1.0d0)*UM)
-      RJ(3,3,j) = BETA*(AKYT*CM-(gam-1.0d0)*VM)
-      RJ(3,4,j) = BETA*(gam-1.0d0)
+      RJ(3,2,j) = BETA*(AKXT*CM-(g-1.0d0)*UM)
+      RJ(3,3,j) = BETA*(AKYT*CM-(g-1.0d0)*VM)
+      RJ(3,4,j) = BETA*(g-1.0d0)
       RJ(4,1,j) = BETA*(PHI+CM*THIT)
-      RJ(4,2,j) = -BETA*(AKXT*CM+(gam-1.0d0)*UM)
-      RJ(4,3,j) = -BETA*(AKYT*CM+(gam-1.0d0)*VM)
-      RJ(4,4,j) = BETA*(gam-1.0d0)
+      RJ(4,2,j) = -BETA*(AKXT*CM+(g-1.0d0)*UM)
+      RJ(4,3,j) = -BETA*(AKYT*CM+(g-1.0d0)*VM)
+      RJ(4,4,j) = BETA*(g-1.0d0)
       !ENGEN-VALUES AT INTERMEDIATE
       EIGM(1,j) = AKX*UM+AKY*VM
       EIGM(2,j) = EIGM(1,j)
@@ -548,10 +522,10 @@ subroutine viscosity_calc
       tyy = 2.0d0*mu(i,j)*(2.0d0*(v_xi(i,j)*xi_y(i,j)+v_eta(i,j)*eta_y(i,j))-(u_xi(i,j)*xi_x(i,j)+u_eta(i,j)*eta_x(i,j)))/3.0d0
       Rv(2,i,j) = txx
       Rv(3,i,j) = txy
-      Rv(4,i,j) = txx*u(i,j)+txy*v(i,j)+mu(i,j)*gam*R*(T_xi(i,j)*xi_x(i,j)+T_eta(i,j)*eta_x(i,j))/(Pr*(gam-1.0d0))
+      Rv(4,i,j) = txx*u(i,j)+txy*v(i,j)+mu(i,j)*g*R*(T_xi(i,j)*xi_x(i,j)+T_eta(i,j)*eta_x(i,j))/(Pr*(g-1.0d0))
       Sv(2,i,j) = txy
       Sv(3,i,j) = tyy
-      Sv(4,i,j) = txy*u(i,j)+tyy*v(i,j)+mu(i,j)*gam*R*(T_xi(i,j)*xi_y(i,j)+T_eta(i,j)*eta_y(i,j))/(Pr*(gam-1.0d0))
+      Sv(4,i,j) = txy*u(i,j)+tyy*v(i,j)+mu(i,j)*g*R*(T_xi(i,j)*xi_y(i,j)+T_eta(i,j)*eta_y(i,j))/(Pr*(g-1.0d0))
       do k = 1,4 !各流束を一般座標系に変換
         Rv_s = Rv(k,i,j)
         Rv(k,i,j) = (xi_x(i,j)*Rv(k,i,j)+xi_y(i,j)*Sv(k,i,j))/Jac(i,j)
@@ -564,32 +538,32 @@ end subroutine viscosity_calc
 !********************サブルーチン4　ルンゲクッタ********************
 subroutine runge_kutta(is,ie,js,je)
   integer is,ie,js,je
-  double precision us,ddu,vs,ddv
-
-  du = 0.d0
-  dv = 0.d0
+  ! double precision us,ddu,vs,ddv
+  ! du = 0.d0
+  ! dv = 0.d0
   do j = js,je
     do i = is,ie
       do k = 1,4
         Q(i,j,k) = Q1(i,j,k)-1.0d0/(5.0d0-dble(k_runge_kutta))*dt*((E(i,j,k)-E(i-1,j,k)) &
                                                      +(F(i,j,k)-F(i,j-1,k)-(Rv(k,i+1,j)-Rv(k,i-1,j)+Sv(k,i,j+1)-Sv(k,i,j-1))/2.0d0))
+        Q(i,j,k)=Q1(i,j,k)
       end do
-      us = u(i,j)
-      vs = v(i,j)
-      rho(i,j) = Q(i,j,1)*Jac(i,j)
-      u(i,j) = Q(i,j,2)*Jac(i,j)/rho(i,j)
-      v(i,j) = Q(i,j,3)*Jac(i,j)/rho(i,j)
-      U_cvc(i,j) = xi_x(i,j)*u(i,j)+xi_y(i,j)*v(i,j)
-      V_cvc(i,j) = eta_x(i,j)*u(i,j)+eta_y(i,j)*v(i,j)
-      energy(i,j) = Q(i,j,4)*Jac(i,j)
-      T(i,j) = (gam-1.0d0)*(energy(i,j)/rho(i,j)-(u(i,j)**2+v(i,j)**2)/2.0d0)/R
-      p(i,j) = rho(i,j)*R*T(i,j)
+      ! us = u(i,j)
+      ! vs = v(i,j)
+      ! rho(i,j) = Q(i,j,1)*Jac(i,j)
+      ! u(i,j) = Q(i,j,2)*Jac(i,j)/rho(i,j)
+      ! v(i,j) = Q(i,j,3)*Jac(i,j)/rho(i,j)
+      ! U_cvc(i,j) = xi_x(i,j)*u(i,j)+xi_y(i,j)*v(i,j)
+      ! V_cvc(i,j) = eta_x(i,j)*u(i,j)+eta_y(i,j)*v(i,j)
+      ! energy(i,j) = Q(i,j,4)*Jac(i,j)
+      ! T(i,j) = (g-1.0d0)*(energy(i,j)/rho(i,j)-(u(i,j)**2+v(i,j)**2)/2.0d0)/R
+      ! p(i,j) = rho(i,j)*R*T(i,j)
 
-      ddu = abs(u(i,j)-us)/us
-      ddv = abs(v(i,j)-vs)/vs
+      ! ddu = abs(u(i,j)-us)/us
+      ! ddv = abs(v(i,j)-vs)/vs
 
-      if (ddu>du) du = ddu
-      if (ddv>dv) dv = ddv
+      ! if (ddu>du) du = ddu
+      ! if (ddv>dv) dv = ddv
 
     end do
   end do
@@ -600,7 +574,7 @@ subroutine runge_kutta(is,ie,js,je)
       u(i,j) = Q(i,j,2)*Jac(i,j)/rho(i,j)
       v(i,j) = Q(i,j,3)*Jac(i,j)/rho(i,j)
       energy(i,j) = Q(i,j,4)*Jac(i,j)
-      p(i,j) = (gam-1.0d0)*(energy(i,j)-(u(i,j)**2.0+v(i,j)**2.0)*rho(i,j)/2.0d0)
+      p(i,j) = (g-1.0d0)*(energy(i,j)-(u(i,j)**2.0+v(i,j)**2.0)*rho(i,j)/2.0d0)
       T(i,j) = p(i,j)/(rho(i,j)*R)
     end do
   end do
