@@ -544,7 +544,7 @@ subroutine runge_kutta(is,ie,js,je)
   do j = js,je
     do i = is,ie
       do k = 1,4
-        Q(i,j,k) = Q1(i,j,k)-1.0d0/(5.0d0-dble(k_runge_kutta))*dt*((E(i,j,k)-E(i-1,j,k)) &
+        Q1(i,j,k) = Q1(i,j,k)-1.0d0/(5.0d0-dble(k_runge_kutta))*dt*((E(i,j,k)-E(i-1,j,k)) &
                                                      +(F(i,j,k)-F(i,j-1,k)-(Rv(k,i+1,j)-Rv(k,i-1,j)+Sv(k,i,j+1)-Sv(k,i,j-1))/2.0d0))
         Q(i,j,k)=Q1(i,j,k)
       end do
