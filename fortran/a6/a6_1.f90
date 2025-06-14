@@ -19,13 +19,13 @@ double precision,parameter :: beta = pi/6.0d0
 !********************配列定義********************
 !-------衝撃波-------
 double precision,dimension(0:IM,0:JM) :: energy = 0.0d0
-! double precision,dimension(0:IM,0:JM) :: E_bar = 0.0d0
+double precision,dimension(0:IM,0:JM) :: E_bar = 0.0d0
 double precision,dimension(0:IM,0:JM) :: rho,u,v,p,T
 double precision,dimension(0:IM,0:JM,4) :: Q,Q1,E,F
 
 !-------ヤコビアンJa-------
 double precision,dimension(0:IM,0:JM) :: x = 0.0d0,y = 0.0d0,x_xi = 0.0d0,x_eta = 0.0d0,y_xi = 0.0d0,y_eta = 0.0d0
-double precision,dimension(0:IM,0:JM) :: xi_x,xi_y,eta_x,eta_y,Jac,Jac_inv,U_cvc,V_cvc
+double precision,dimension(0:IM,0:JM) :: xi_x,xi_y,eta_x,eta_y,Jac,Jac_inv
 ! double precision,dimension(0:IM,0:JM) :: U_cvc,V_cvc
 integer,parameter :: NMAX = 100000
 double precision,parameter :: EPS = 1.0d-6
@@ -154,8 +154,9 @@ do n = 1,NMAX
   do k_runge_kutta = 1,4
     call tvd_xi
     call tvd_eta
-    call viscosity_calc
     call runge_kutta(1,IM-1,1,JM-1)
+    call viscosity_calc
+    call recalc
     call boundary_condition
   end do
   if (mod(n,1000)==0) then
@@ -168,49 +169,44 @@ call Save_data
 contains
 !********************サブルーチン①　境界条件********************
 subroutine boundary_condition
-!   一次外挿で流入を固定
-  do k = 1,4
-    do i = 1,IM-1
-      Q(i,JM,k) = 2.0d0*Q(i,JM-1,k)-Q(i,JM-2,k)
-    end do
-  end do
-  do k = 1,4
-    do i = 1,IM-1
-      Q(i,0,k) = 2.0d0*Q(i,1,k)-Q(i,2,k)
-    end do
-  end do
-  do k = 1,4
-    do j = 0,JM
-      Q(IM,j,k) = 2.0d0*Q(IM-1,j,k)-Q(IM-2,j,k)
-    end do
-  end do
+  do i = 0,IM !上壁（ノイマン条件）
+    rho(i,JM) = rho(i,JM-1)
+    u(i,JM) = u(i,JM-1)
+    v(i,JM) = v(i,JM-1)
+    p(i,JM) = p(i,JM-1)
+    T(i,JM) = T(i,JM-1)
+    energy(i,JM) = p(i,JM)/(gam-1.0d0)+rho(i,JM)*((u(i,JM)**2.0)+(v(i,JM)**2.0))/2.0d0
+    Q(i,JM,1) = rho(i,JM)/Jac(i,JM)
+    Q(i,JM,2) = rho(i,JM)*u(i,JM)/Jac(i,JM)
+    Q(i,JM,3) = rho(i,JM)*v(i,JM)/Jac(i,JM)
+    Q(i,JM,4) = energy(i,JM)/Jac(i,JM)
 
-  do i = 0,IM !上下壁
-    slope = (y(i,0)-y(i,2))/(y(i,2)-y(i,1))
-    rho(i,0) = rho(i,2)+slope*(rho(i,2)-rho(i,1))
-    u(i,0) = u(i,2)+slope*(u(i,2)-u(i,1))
+    !下壁(粘性を考慮するため，u=0他はノイマン条件)
+    rho(i,0) = rho(i,1)
+    u(i,0) = 0.0d0
     v(i,0) = 0.0d0
-    p(i,0) = p(i,2)+slope*(p(i,2)-p(i,1))
+    p(i,0) = p(i,1)
+    T(i,0) = T(i,1)
     energy(i,0) = p(i,0)/(gam-1.0d0)+rho(i,0)*((u(i,0)**2.0+v(i,0)**2.0))/2.0d0
-    T(i,0) = T(i,2)+slope*(T(i,2)-T(i,1))
-
-    slope = (y(i,JM)-y(i,JM-2))/(y(i,JM-2)-y(i,JM-1))
-    rho(i,JM) = rho(i,JM-2)+slope*(rho(i,JM-2)-rho(i,JM-1))
-    u(i,JM) = u(i,JM-2)+slope*(u(i,JM-2)-u(i,JM-1))
-    v(i,JM) = v(i,JM-2)+slope*(v(i,JM-2)-v(i,JM-1))
-    p(i,JM) = p(i,JM-2)+slope*(p(i,JM-2)-p(i,JM-1))
-    energy(i,JM) = p(i,jm)/(gam-1.0d0)+rho(i,jm)*((u(i,jm)**2.0)+(v(i,jm)**2.0))/2.0d0
-    T(i,JM) = T(i,JM-2)+slope*(T(i,JM-2)-T(i,JM-1))
+    Q(i,0,1) = rho(i,0)/Jac(i,0)
+    Q(i,0,2) = rho(i,0)*u(i,0)/Jac(i,0)
+    Q(i,0,3) = rho(i,0)*v(i,0)/Jac(i,0)
+    Q(i,0,4) = energy(i,0)/Jac(i,0)
   end do
 
-  do j = 1,JM-1 !流出
+  do j = 1,JM-1 !流出(ノイマン条件)
     slope = (x(IM,j)-x(IM-2,j))/(x(IM-2,j)-x(IM-1,j))
     rho(IM,j) = rho(IM-2,j)+slope*(rho(IM-2,j)-rho(IM-1,j))
     u(IM,j) = u(IM-2,j)+slope*(u(IM-2,j)-u(IM-1,j))
     v(IM,j) = v(IM-2,j)+slope*(v(IM-2,j)-v(IM-1,j))
     p(IM,j) = p(IM-2,j)+slope*(p(IM-2,j)-p(IM-1,j))
-    energy(IM,j) = p(im,j)/(gam-1.0d0)+rho(im,j)*((u(im,j)**2.0)+(v(im,j)**2.0))/2.0d0
+    energy(IM,j) = p(IM,j)/(gam-1.0d0)+rho(IM,j)*((u(IM,j)**2.0)+(v(IM,j)**2.0))/2.0d0
     T(IM,j) = T(IM-2,j)+slope*(T(IM-2,j)-T(IM-1,j))
+
+    Q(IM,j,1) = rho(IM,j)/Jac(IM,j)
+    Q(IM,j,2) = rho(IM,j)*u(IM,j)/Jac(IM,j)
+    Q(IM,j,3) = rho(IM,j)*v(IM,j)/Jac(IM,j)
+    Q(IM,j,4) = energy(IM,j)/Jac(IM,j)
   end do
 end subroutine boundary_condition
 
@@ -529,7 +525,7 @@ subroutine viscosity_calc
       Sv(4,i,j) = txy*u(i,j)+tyy*v(i,j)+mu(i,j)*gam*R*(T_xi(i,j)*xi_y(i,j)+T_eta(i,j)*eta_y(i,j))/(Pr*(gam-1.0d0))
       do k = 1,4 !各流束を一般座標系に変換
         Rv_s = Rv(k,i,j)
-        Rv(k,i,j) = (xi_x(i,j)*Rv(k,i,j)+xi_y(i,j)*Sv(k,i,j))/Jac(i,j)
+        Rv(k,i,j) = (xi_x(i,j)*Rv_s+xi_y(i,j)*Sv(k,i,j))/Jac(i,j)
         Sv(k,i,j) = (eta_x(i,j)*Rv_s+eta_y(i,j)*Sv(k,i,j))/Jac(i,j)
       end do
     end do
@@ -539,36 +535,62 @@ end subroutine viscosity_calc
 !********************サブルーチン④　ルンゲクッタ********************
 subroutine runge_kutta(is,ie,js,je)
   integer is,ie,js,je
-  double precision us,ddu,vs,ddv
 
-  du = 0.d0
-  dv = 0.d0
   do j = js,je
     do i = is,ie
       do k = 1,4
         Q(i,j,k) = Q1(i,j,k)-1.0d0/(5.0d0-dble(k_runge_kutta))*dt*((E(i,j,k)-E(i-1,j,k))&
         +(F(i,j,k)-F(i,j-1,k))-((Rv(k,i+1,j)-Rv(k,i-1,j)+Sv(k,i,j+1)-Sv(k,i,j-1))/2.0d0))
       end do
-      us = u(i,j)
-      vs = v(i,j)
-      rho(i,j) = Q(i,j,1)*Jac(i,j)
-      u(i,j) = Q(i,j,2)*Jac(i,j)/rho(i,j)
-      v(i,j) = Q(i,j,3)*Jac(i,j)/rho(i,j)
-      U_cvc(i,j) = xi_x(i,j)*u(i,j)+xi_y(i,j)*v(i,j)
-      V_cvc(i,j) = eta_x(i,j)*u(i,j)+eta_y(i,j)*v(i,j)
-      energy(i,j) = Q(i,j,4)*Jac(i,j)
-      T(i,j) = (gam-1.0d0)*(energy(i,j)/rho(i,j)-(u(i,j)**2+v(i,j)**2)/2.0d0)/R
-      p(i,j) = rho(i,j)*R*T(i,j)
+      ! us = u(i,j)
+      ! vs = v(i,j)
+      ! rho(i,j) = Q(i,j,1)*Jac(i,j)
+      ! u(i,j) = Q(i,j,2)*Jac(i,j)/rho(i,j)
+      ! v(i,j) = Q(i,j,3)*Jac(i,j)/rho(i,j)
+      ! U_cvc(i,j) = xi_x(i,j)*u(i,j)+xi_y(i,j)*v(i,j)
+      ! V_cvc(i,j) = eta_x(i,j)*u(i,j)+eta_y(i,j)*v(i,j)
+      ! energy(i,j) = Q(i,j,4)*Jac(i,j)
+      ! T(i,j) = (gam-1.0d0)*(energy(i,j)/rho(i,j)-(u(i,j)**2+v(i,j)**2)/2.0d0)/R
+      ! p(i,j) = rho(i,j)*R*T(i,j)
 
-      ddu = abs(u(i,j)-us)/us
-      ddv = abs(v(i,j)-vs)/vs
+      ! ddu = abs(u(i,j)-us)/us
+      ! ddv = abs(v(i,j)-vs)/vs
 
-      if (ddu>du) du = ddu
-      if (ddv>dv) dv = ddv
+      ! if (ddu>du) du = ddu
+      ! if (ddv>dv) dv = ddv
 
     end do
   end do
 end subroutine runge_kutta
+
+  ! 諸量の再計算
+subroutine recalc
+  double precision us,vs,ddu,ddv
+  du = 0.d0
+  dv = 0.d0
+
+  do j = 1,JM-1
+    do i = 1,IM-1
+      us = u(i,j)
+      vs = v(i,j)
+      rho(i,j) = Jac(i,j)*Q(i,j,1)
+      u(i,j) = Jac(i,j)*Q(i,j,2)/rho(i,j)
+      v(i,j) = Jac(i,j)*Q(i,j,3)/rho(i,j)
+      energy(i,j) = Jac(i,j)*Q(i,j,4)
+      E_bar(i,j) = energy(i,j)/rho(i,j)-((u(i,j)**2.0+v(i,j)**2.0)/2.0d0)
+      T(i,j) = E_bar(i,j)*(gam-1.0d0)/R
+      p(i,j) = (gam-1.0d0)*rho(i,j)*E_bar(i,j)
+      ddu = dabs((u(i,j)-us)/us)
+      ddv = dabs((v(i,j)-vs)/vs)
+      if (ddu>du) then
+        du = ddu
+      end if
+      if (ddv>dv) then
+        dv = ddv
+      end if
+    end do
+  end do
+end subroutine recalc
 
 !出力
 subroutine Save_data
