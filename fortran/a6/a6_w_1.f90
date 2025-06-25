@@ -32,7 +32,7 @@ call coordinate_transformation
 n = 0
 du = EPS+1.0d0
 dv = EPS+1.0d0
-do while (((du>EPS) .and. (dv>EPS)) .and. (n<50000))
+do while (((du>EPS) .and. (dv>EPS)) .and. (n<100000))
   if (mod(n,1000)==0) then
     print*,"n du dv",n,du,dv
   end if
