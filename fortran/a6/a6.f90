@@ -485,7 +485,7 @@ subroutine viscosity_calc
 
   mu0 = 1.0d-3 !粘性係数の基準値
   T0 = 293.0d0 !基準温度
-  Sl = 110.4d0 !サザーランド定数
+  Sl = 110.0d0 !ザーランド定数
 
   do i = 0,IM
     do j = 0,JM
