@@ -28,8 +28,12 @@ for _ in range(m):
     deg[b] += 1
     dsu.merge(a, b)
     # print(f"Union: {a+1}, {b+1} -> {dsu.groups()},len{len(dsu.groups())}")  # デバッグ用出力
-
-# print(f"Degrees: {deg}")  # デバッグ用出力
+    # print(dsu.parent_or_size)  # デバッグ用出力
+    # print(dsu.merge(a, b))  # デバッグ用出力
+    # print(dsu.leader(a))  # デバッグ用出力
+    # print(dsu.size(a))  # デバッグ用出力
+    # print(dsu.same(a, b))  # デバッグ用出力
+    print(f"Degrees: {deg}")  # デバッグ用出力
 
 # 条件1: M == N
 if m != n:
