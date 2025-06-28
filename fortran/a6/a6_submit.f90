@@ -28,7 +28,7 @@ double precision,dimension(4,-1:IM) :: ALPHA
 call mesh
 call first_condition
 call coordinate_transformation
-!------メイン計算------
+!------繰り返し計算------
 n = 0
 du = EPS+1.0d0
 dv = EPS+1.0d0
@@ -76,7 +76,7 @@ subroutine mesh
   end do
 end subroutine mesh
 
-!------諸条件------
+!------初期条件------
 subroutine first_condition
   do j = 0,JM
     do i = 0,IM
@@ -442,7 +442,7 @@ subroutine tvd_eta
   return
 end subroutine tvd_eta
 
-!------サザーランド------
+!------サザーランドの式------
 double precision function Sutherland(T)
   double precision T
   Sutherland = mu0*((T/T0)**1.5)*(T0+S_const)/(T+S_const)
