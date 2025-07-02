@@ -1,4 +1,4 @@
-program a6
+program a7
 implicit none
 
 !------初期条件------
@@ -50,7 +50,8 @@ do while (((du>EPS) .and. (dv>EPS)) .and. (n<100000))
     call tvd_xi
     call tvd_eta
     call Runge_Kutta
-    call viscosity_calc
+    call viscosity_xi
+    call viscosity_eta
     call re_calc
     call boundary_condition
   end do
@@ -448,61 +449,88 @@ double precision function Sutherland(T)
   Sutherland = mu0*((T/T0)**1.5)*(T0+S_const)/(T+S_const)
 end function
 
-!------粘性項------
-subroutine viscosity_calc
-  mu = Sutherland(T(i,j))
 
-  do j = 0,JM
-    do i = 1,IM-1
-      u_xi(i,j) = (u(i+1,j)-u(i-1,j))/2.0d0
-      v_xi(i,j) = (v(i+1,j)-v(i-1,j))/2.0d0
-      T_xi(i,j) = (T(i+1,j)-T(i-1,j))/2.0d0
+!------粘性項（ξ方向）------
+subroutine viscosity_xi
+  double precision,dimension(0:IM-1,0:JM-1) :: xix_r,xiy_r,ex_r,ey_r,Jac_r,u_r,v_r,T_r,u_xi_r,v_xi_r,T_xi_r,u_eta_r,v_eta_r,T_eta_r
+  do j = 1,JM-1
+    do i = 0,IM-1
+      xix_r(i,j) = (xi_x(i,j)+xi_x(i+1,j))/2.0d0
+      xiy_r(i,j) = (xi_y(i,j)+xi_y(i+1,j))/2.0d0
+      ex_r(i,j) = (eta_x(i,j)+eta_x(i+1,j))/2.0d0
+      ey_r(i,j) = (eta_y(i,j)+eta_y(i+1,j))/2.0d0
+      Jac_r(i,j) = (Jac(i,j)+Jac(i+1,j))/2.0d0
+      u_r(i,j) = (u(i,j)+u(i+1,j))/2.0d0
+      v_r(i,j) = (v(i,j)+v(i+1,j))/2.0d0
+      T_r(i,j) = (t(i,j)+t(i+1,j))/2.0d0
+
+      u_xi_r(i,j) = u(i+1,j)-u(i,j)
+      v_xi_r(i,j) = v(i+1,j)-v(i,j)
+      T_xi_r(i,j) = t(i+1,j)-t(i,j)
+
+      u_eta_r(i,j) = (((u(i,j+1)+u(i+1,j+1))/2.0d0)-((u(i,j-1)+u(i+1,j-1))/2.0d0))/2.0d0
+      v_eta_r(i,j) = (((v(i,j+1)+v(i+1,j+1))/2.0d0)-((v(i,j-1)+v(i+1,j-1))/2.0d0))/2.0d0
+      T_eta_r(i,j) = (((t(i,j+1)+t(i+1,j+1))/2.0d0)-((t(i,j-1)+t(i+1,j-1))/2.0d0))/2.0d0
     end do
   end do
   do j = 1,JM-1
-    do i = 0,IM
-      u_eta(i,j) = (u(i,j+1)-u(i,j-1))/2.0d0
-      v_eta(i,j) = (v(i,j+1)-v(i,j-1))/2.0d0
-      T_eta(i,j) = (T(i,j+1)-T(i,j-1))/2.0d0
-    end do
-  end do
-  do j = 0,JM
-    u_xi(0,j) = (-3.0d0*u(0,j)+4.0d0*u(1,j)-u(2,j))/2.0d0
-    u_xi(IM,j) = (3.0d0*u(IM,j)-4.0d0*u(IM-1,j)+u(IM-2,j))/2.0d0
-    v_xi(0,j) = (-3.0d0*v(0,j)+4.0d0*v(1,j)-v(2,j))/2.0d0
-    v_xi(IM,j) = (3.0d0*v(IM,j)-4.0d0*v(IM-1,j)+v(IM-2,j))/2.0d0
-    T_xi(0,j) = (-3.0d0*T(0,j)+4.0d0*T(1,j)-T(2,j))/2.0d0
-    T_xi(IM,j) = (3.0d0*T(IM,j)-4.0d0*T(IM-1,j)+T(IM-2,j))/2.0d0
-  end do
-
-  do i = 0,IM
-    u_eta(i,0) = (-3.0d0*u(i,0)+4.0d0*u(i,1)-u(i,2))/2.0d0
-    u_eta(i,JM) = (3.0d0*u(i,JM)-4.0d0*u(i,JM-1)+u(i,JM-2))/2.0d0
-    v_eta(i,0) = (-3.0d0*v(i,0)+4.0d0*v(i,1)-v(i,2))/2.0d0
-    v_eta(i,JM) = (3.0d0*v(i,JM)-4.0d0*v(i,JM-1)+v(i,JM-2))/2.0d0
-    T_eta(i,0) = (-3.0d0*T(i,0)+4.0d0*T(i,1)-T(i,2))/2.0d0
-    T_eta(i,JM) = (3.0d0*T(i,JM)-4.0d0*T(i,JM-1)+T(i,JM-2))/2.0d0
-  end do
-
-  do j = 0,JM
-    do i = 0,IM
-      txx = 2.0d0/3.0d0*mu*(2.0d0*(u_xi(i,j)*xi_x(i,j)+u_eta(i,j)*eta_x(i,j))-(v_xi(i,j)*xi_y(i,j)+v_eta(i,j)*eta_y(i,j)))
-      tyy = 2.0d0/3.0d0*mu*(2.0d0*(v_xi(i,j)*xi_y(i,j)+v_eta(i,j)*eta_y(i,j))-(u_xi(i,j)*xi_x(i,j)+u_eta(i,j)*eta_x(i,j)))
-      txy = mu*((u_xi(i,j)*xi_y(i,j)+u_eta(i,j)*eta_y(i,j))+(v_xi(i,j)*xi_x(i,j)+v_eta(i,j)*eta_x(i,j)))
+    do i = 0,IM-1
+      mu = Sutherland(T_r(i,j))
+      txx = 2.0d0/3.0d0*mu*(2.0d0*(u_xi_r(i,j)*xix_r(i,j)+u_eta_r(i,j)*ex_r(i,j))-(v_xi_r(i,j)*xiy_r(i,j)+v_eta_r(i,j)*ey_r(i,j)))
+      tyy = 2.0d0/3.0d0*mu*(2.0d0*(v_xi_r(i,j)*xiy_r(i,j)+v_eta_r(i,j)*ey_r(i,j))-(u_xi_r(i,j)*xix_r(i,j)+u_eta_r(i,j)*ex_r(i,j)))
+      txy = mu*((u_xi_r(i,j)*xiy_r(i,j)+u_eta_r(i,j)*ey_r(i,j))+(v_xi_r(i,j)*xix_r(i,j)+v_eta_r(i,j)*ex_r(i,j)))
       tyx = txy
-      R4 = txx*u(i,j)+txy*v(i,j)+mu/(Pr*(g-1.0d0))*g*r*(T_xi(i,j)*xi_x(i,j)+T_eta(i,j)*eta_x(i,j))
-      S4 = tyx*u(i,j)+tyy*v(i,j)+mu/(Pr*(g-1.0d0))*g*r*(T_xi(i,j)*xi_y(i,j)+T_eta(i,j)*eta_y(i,j))
+      R4 = txx*u_r(i,j)+txy*v_r(i,j)+(mu/(Pr*(g-1.0d0)))*g*R*(T_xi_r(i,j)*xix_r(i,j)+T_eta_r(i,j)*ex_r(i,j))
+      S4 = tyx*u_r(i,j)+tyy*v_r(i,j)+(mu/(Pr*(g-1.0d0)))*g*R*(T_xi_r(i,j)*xiy_r(i,j)+T_eta_r(i,j)*ey_r(i,j))
       RRR(1,i,j) = 0.0d0
-      RRR(2,i,j) = (xi_x(i,j)*txx+xi_y(i,j)*txy)/Jac(i,j)
-      RRR(3,i,j) = (xi_x(i,j)*tyx+xi_y(i,j)*tyy)/Jac(i,j)
-      RRR(4,i,j) = (xi_x(i,j)*R4+xi_y(i,j)*S4)/Jac(i,j)
-      SSS(1,i,j) = 0.0d0
-      SSS(2,i,j) = (eta_x(i,j)*txx+eta_y(i,j)*txy)/Jac(i,j)
-      SSS(3,i,j) = (eta_x(i,j)*tyx+eta_y(i,j)*tyy)/Jac(i,j)
-      SSS(4,i,j) = (eta_x(i,j)*R4+eta_y(i,j)*S4)/Jac(i,j)
+      RRR(2,i,j) = (xix_r(i,j)*txx+xiy_r(i,j)*txy)/Jac_r(i,j)
+      RRR(3,i,j) = (xix_r(i,j)*tyx+xiy_r(i,j)*tyy)/Jac_r(i,j)
+      RRR(4,i,j) = (xix_r(i,j)*r4+xiy_r(i,j)*s4)/Jac_r(i,j)
     end do
   end do
-end subroutine viscosity_calc
+end subroutine viscosity_xi
+
+!------粘性項（η方向）------
+subroutine viscosity_eta
+  double precision,dimension(0:IM-1,0:JM-1) :: xix_s,xiy_s,ex_s,ey_s,Jac_s,u_s,v_s,T_s,u_xi_s,v_xi_s,T_xi_s,u_eta_s,v_eta_s,T_eta_s
+  do i = 1,IM-1
+    do j = 0,JM-1
+      xix_s(i,j) = (xi_x(i,j)+xi_x(i,j+1))/2.0d0
+      xiy_s(i,j) = (xi_y(i,j)+xi_y(i,j+1))/2.0d0
+      ex_s(i,j) = (eta_x(i,j)+eta_x(i,j+1))/2.0d0
+      ey_s(i,j) = (eta_y(i,j)+eta_y(i,j+1))/2.0d0
+      Jac_s(i,j) = (Jac(i,j)+Jac(i,j+1))/2.0d0
+      u_s(i,j) = (u(i,j)+u(i,j+1))/2.0d0
+      v_s(i,j) = (v(i,j)+v(i,j+1))/2.0d0
+      T_s(i,j) = (t(i,j)+t(i,j+1))/2.0d0
+
+      u_eta_s(i,j) = u(i,j+1)-u(i,j)
+      v_eta_s(i,j) = v(i,j+1)-v(i,j)
+      T_eta_s(i,j) = t(i,j+1)-t(i,j)
+
+      u_xi_s(i,j) = (((u(i+1,j)+u(i+1,j+1))/2.0d0)-((u(i-1,j)+u(i-1,j+1))/2.0d0))/2.0d0
+      v_xi_s(i,j) = (((v(i+1,j)+v(i+1,j+1))/2.0d0)-((v(i-1,j)+v(i-1,j+1))/2.0d0))/2.0d0
+      T_xi_s(i,j) = (((t(i+1,j)+t(i+1,j+1))/2.0d0)-((t(i-1,j)+t(i-1,j+1))/2.0d0))/2.0d0
+    end do
+  end do
+
+  do i = 1,IM-1
+    do j = 0,JM-1
+      mu = Sutherland(T_s(i,j))
+      txx = 2.0d0/3.0d0*mu*(2.0d0*(u_xi_s(i,j)*xix_s(i,j)+u_eta_s(i,j)*ex_s(i,j))-(v_xi_s(i,j)*xiy_s(i,j)+v_eta_s(i,j)*ey_s(i,j)))
+      tyy = 2.0d0/3.0d0*mu*(2.0d0*(v_xi_s(i,j)*xiy_s(i,j)+v_eta_s(i,j)*ey_s(i,j))-(u_xi_s(i,j)*xix_s(i,j)+u_eta_s(i,j)*ex_s(i,j)))
+      txy = mu*((u_xi_s(i,j)*xiy_s(i,j)+u_eta_s(i,j)*ey_s(i,j))+(v_xi_s(i,j)*xix_s(i,j)+v_eta_s(i,j)*ex_s(i,j)))
+      tyx = txy
+      R4 = txx*u_s(i,j)+txy*v_s(i,j)+(mu/(Pr*(g-1.0d0)))*g*R*(T_xi_s(i,j)*xix_s(i,j)+T_eta_s(i,j)*ex_s(i,j))
+      S4 = tyx*u_s(i,j)+tyy*v_s(i,j)+(mu/(Pr*(g-1.0d0)))*g*R*(T_xi_s(i,j)*xiy_s(i,j)+T_eta_s(i,j)*ey_s(i,j))
+      SSS(1,i,j) = 0.0d0
+      SSS(2,i,j) = (ex_s(i,j)*txx+ey_s(i,j)*txy)/Jac_s(i,j)
+      SSS(3,i,j) = (ex_s(i,j)*tyx+ey_s(i,j)*tyy)/Jac_s(i,j)
+      SSS(4,i,j) = (ex_s(i,j)*r4+ey_s(i,j)*s4)/Jac_s(i,j)
+    end do
+  end do
+
+end subroutine viscosity_eta
 
 !------Runge-Kutta------
 subroutine Runge_Kutta
@@ -588,7 +616,7 @@ end subroutine boundary_condition
 
 !------データ出力------
 subroutine Save_data
-  open (10,file='a6.dat',status='replace')
+  open (10,file='a7.dat',status='replace')
   do j = 0,JM
     do i = 0,IM
       write (10,'(f13.6,$)') x(i,j)
@@ -601,7 +629,7 @@ subroutine Save_data
   end do
   close (10)
 
-  open (11,file='a6.fld',status='replace')
+  open (11,file='a7.fld',status='replace')
   write (11,'(a)') '# AVS field file'
   write (11,'(a)') 'ndim=2'
   write (11,'(a,i0)') 'dim1=',IM+1
@@ -611,14 +639,14 @@ subroutine Save_data
   write (11,'(a)') 'data=float'
   write (11,'(a)') 'field=irregular'
   write (11,'(a)') 'label=u,v,p,T'
-  write (11,'(a)') 'variable 1 file=a6.dat filetype=ascii skip=0 offset=2 stride=6'
-  write (11,'(a)') 'variable 2 file=a6.dat filetype=ascii skip=0 offset=3 stride=6'
-  write (11,'(a)') 'variable 3 file=a6.dat filetype=ascii skip=0 offset=4 stride=6'
-  write (11,'(a)') 'variable 4 file=a6.dat filetype=ascii skip=0 offset=5 stride=6'
-  write (11,'(a)') 'coord 1 file=a6.dat filetype=ascii skip=0 offset=0 stride=6'
-  write (11,'(a)') 'coord 2 file=a6.dat filetype=ascii skip=0 offset=1 stride=6'
+  write (11,'(a)') 'variable 1 file=a7.dat filetype=ascii skip=0 offset=2 stride=6'
+  write (11,'(a)') 'variable 2 file=a7.dat filetype=ascii skip=0 offset=3 stride=6'
+  write (11,'(a)') 'variable 3 file=a7.dat filetype=ascii skip=0 offset=4 stride=6'
+  write (11,'(a)') 'variable 4 file=a7.dat filetype=ascii skip=0 offset=5 stride=6'
+  write (11,'(a)') 'coord 1 file=a7.dat filetype=ascii skip=0 offset=0 stride=6'
+  write (11,'(a)') 'coord 2 file=a7.dat filetype=ascii skip=0 offset=1 stride=6'
   close (11)
   print*,"→ MicroAVS用の .dat および .fld を出力しました。"
 end subroutine Save_data
 !--------------------
-end program a6
+end program a7
