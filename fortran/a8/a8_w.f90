@@ -1,28 +1,33 @@
-program assyuku8_1
+program a8
 implicit none
 
 !----------定義----------
 double precision,parameter :: H = 0.2d0
 integer,parameter :: IM = 50,JM = 50
-double precision,parameter :: EPS = 1.0d-6,R = 287.1d0,g = 1.4d0,Pr = 0.9d0,Ret = 500.0d0,T0 = 293.0d0
-double precision,parameter :: myu0 = 1.0d-3,SS = 110.0d0
-double precision,parameter :: Cmyu = 0.09d0,sigmak = 1.0d0,sigmaepsi = 1.3d0
+double precision,parameter :: EPS = 1.0d-6,R = 287.1d0,g = 1.4d0,Pr = 0.9d0,Ret = 500.0d0,T0 = 293.0d0,M = 2.9d0
+double precision,parameter :: mu0 = 1.0d-3,S_const = 110.0d0
+double precision,parameter :: C_mu = 0.09d0,sig_k = 1.0d0,sig_epsi = 1.3d0
 double precision :: du,dv,ddu,ddv,slope
 integer :: i,j,n,kk,rk
-double precision,parameter :: M = 2.9d0
 double precision,dimension(0:IM,0:JM) :: x,y,u,v,p,t
-double precision,dimension(0:IM,0:JM) :: xe,ye,xh,yh,xix,xiy,ex,ey,Jac
+double precision,dimension(0:IM,0:JM) :: x_xi,y_xi,x_eta,y_eta,xi_x,xi_y,eta_x,eta_y,Jac
 double precision,dimension(1:6,0:IM,0:JM) :: Q,EE,FF,SSS,RRR,PPP
 double precision,dimension(1:6,0:IM,0:JM,0:5) :: QQ
-double precision,dimension(0:IM,0:JM) :: kwall,epsiwall,ldt = 1.0d-8,enebar,c,un,vn
-double precision,dimension(0:IM,0:JM) :: rho,ene,k,epsi,myu,nyu,myut
+double precision,dimension(0:IM,0:JM) :: k_p_n1,epsi_p_n1,ldt = 1.0d-8,enebar,c,un,vn
+double precision,dimension(0:IM,0:JM) :: rho,ene,k,epsi,mu,nu,mu_t
 
 !------メイン計算------
 call mesh
-call conditions
-call coordinate
+call first_condition
+call coordinate_transformation
 n = 0
+! du = EPS+1.0d0
+! dv = EPS+1.0d0
+! do while (((du>EPS) .and. (dv>EPS)) .and. (n<100000))
 do n = 0,100000
+!   n = n+1
+!   du = 0
+!   dv = 0
   do j = 0,JM
     do i = 0,IM
       do kk = 1,6
@@ -33,45 +38,47 @@ do n = 0,100000
   do rk = 1,4 !Runge-Kuttaの段階数
     call tvd_xi
     call tvd_eta
-    call parameter
+    call calc_parameter
     call viscosity_xi
     call viscosity_eta
-    call production
-    call wall_law
+    call production_term
+    call law_of_wall
     call Runge_Kutta
-    call calculation
-    call local_time_step_method
+    call re_calc_and_boundary_condition
+    call local_time_stepping_method
   end do
-  print*,n
+  if (mod(n,1000)==0) then
+    ! print*,"n du dv",n,du,dv
+    print*,"n",n
+  end if
   if (du<EPS .and. dv<EPS) exit
 end do
-call output_yplus
-call output
+call save_y_plus
+call save_data
 
 !------------------------------------------------------------
 contains
 
 !------格子生成------
 subroutine mesh
-  double precision :: dx,ix,iy
-  double precision,parameter :: a = 1.2d0,b = (a+1.0d0)/(a-1.0d0)
-  do j = 0,JM
-    do i = 0,IM
-      if (i<=5) then
-        dx = 50.0d0*H/50.0d0
-        x(i,j) = dble(i)*dx
+  double precision :: x_45,y_50
+  double precision,parameter :: r_y = 1.1d0
+  x_45 = 45.0d0*H*(r_y-1.0d0)/(r_y**40.0d0-1.0d0) !等比数列初項（x方向）
+  y_50 = H*(r_y-1.0d0)/(r_y**dble(JM)-1.0d0) !等比数列初項（y方向）
+  do i = 0,IM
+    do j = 0,JM
+      if (i<=10) then
+        x(i,j) = dble(i)*50.0d0*H/dble(IM)/2.0d0
       else
-        ix = dble(i)/IM
-        x(i,j) = x(5,j)+45.0d0*H/(b-1.0d0)*(b**((dble(i-5))/((dble(IM-5))))-1.0d0)
+        x(i,j) = x(5,j)+x_45*(r_y**dble(i-10)-1.0d0)/(r_y-1.0d0)
       end if
-      iy = dble(j)/dble(JM)
-      y(i,j) = H*(b**iy-1.0d0)/(b-1.0d0)
+      y(i,j) = y_50*(r_y**dble(j)-1.0d0)/(r_y-1.0d0)
     end do
   end do
 end subroutine mesh
 
 !------初期条件------
-subroutine conditions
+subroutine first_condition
   do j = 0,JM
     do i = 0,IM
       T(i,j) = 293.15d0
@@ -81,69 +88,69 @@ subroutine conditions
       v(i,j) = 0.0d0
       p(i,j) = rho(i,j)*R*T(i,j)
       ene(i,j) = p(i,j)/(g-1.0d0)+rho(i,j)*((u(i,j)**2.0+v(i,j)**2.0))/2.0d0
-      myu(i,j) = 1.82d-5
+      mu(i,j) = 1.82d-5
       k(i,j) = 1.5d0*(1.0d-2*u(i,j))**2.0
-      nyu(i,j) = myu(i,j)/rho(i,j)
-      epsi(i,j) = (k(i,j)**2.0)/(nyu(i,j)*Ret)
+      nu(i,j) = mu(i,j)/rho(i,j)
+      epsi(i,j) = (k(i,j)**2.0)/(nu(i,j)*Ret)
     end do
   end do
 
-  call wall_law
+  call law_of_wall
 
   do i = 5,IM
     u(i,0) = 0.0d0
     v(i,0) = 0.0d0
     ene(i,0) = p(i,0)/(g-1.0d0)+rho(i,0)*((u(i,0)**2.0+v(i,0)**2.0))/2.0d0
-    nyu(i,0) = myu(i,0)/rho(i,0)
+    nu(i,0) = mu(i,0)/rho(i,0)
     k(i,0) = 1.5d0*(1.0d-2*u(i,0))**2.0
-    epsi(i,0) = (k(i,0)**2.0)/(nyu(i,0)*Ret)
+    epsi(i,0) = (k(i,0)**2.0)/(nu(i,0)*Ret)
   end do
 
   do j = 0,JM
     do i = 0,IM
-      myut(i,j) = Cmyu*rho(i,j)*(k(i,j)**2.0)/epsi(i,j)
+      mu_t(i,j) = C_mu*rho(i,j)*(k(i,j)**2.0)/epsi(i,j)
     end do
   end do
 
-end subroutine conditions
+end subroutine first_condition
 
 !------座標変換------
-subroutine coordinate
+subroutine coordinate_transformation
   do j = 0,JM
     do i = 1,IM-1
-      xe(i,j) = (x(i+1,j)-x(i-1,j))/2.0d0
-      ye(i,j) = (y(i+1,j)-y(i-1,j))/2.0d0
+      x_xi(i,j) = (x(i+1,j)-x(i-1,j))/2.0d0
+      y_xi(i,j) = (y(i+1,j)-y(i-1,j))/2.0d0
     end do
   end do
 
   do j = 1,JM-1
     do i = 0,IM
-      xh(i,j) = (x(i,j+1)-x(i,j-1))/2.0d0
-      yh(i,j) = (y(i,j+1)-y(i,j-1))/2.0d0
+      x_eta(i,j) = (x(i,j+1)-x(i,j-1))/2.0d0
+      y_eta(i,j) = (y(i,j+1)-y(i,j-1))/2.0d0
     end do
   end do
 
   do j = 0,JM
-    xe(0,j) = (-3.0*x(0,j)+4.0*x(1,j)-x(2,j))/2.0d0
-    xe(IM,j) = (3.0*x(IM,j)-4.0*x(IM-1,j)+x(IM-2,j))/2.0d0
-    ye(0,j) = (-3.0*y(0,j)+4.0*y(1,j)-y(2,j))/2.0d0
-    ye(IM,j) = (3.0*y(IM,j)-4.0*y(IM-1,j)+y(IM-2,j))/2.0d0
+    x_xi(0,j) = (-3.0*x(0,j)+4.0*x(1,j)-x(2,j))/2.0d0
+    x_xi(IM,j) = (3.0*x(IM,j)-4.0*x(IM-1,j)+x(IM-2,j))/2.0d0
+    y_xi(0,j) = (-3.0*y(0,j)+4.0*y(1,j)-y(2,j))/2.0d0
+    y_xi(IM,j) = (3.0*y(IM,j)-4.0*y(IM-1,j)+y(IM-2,j))/2.0d0
   end do
 
   do i = 0,IM
-    xh(i,0) = (-3.0*x(i,0)+4.0*x(i,1)-x(i,2))/2.0d0
-    xh(i,JM) = (3.0*x(i,JM)-4.0*x(i,JM-1)+x(i,JM-2))/2.0d0
-    yh(i,0) = (-3.0*y(i,0)+4.0*y(i,1)-y(i,2))/2.0d0
-    yh(i,JM) = (3.0*y(i,JM)-4.0*y(i,JM-1)+y(i,JM-2))/2.0d0
+    x_eta(i,0) = (-3.0*x(i,0)+4.0*x(i,1)-x(i,2))/2.0d0
+    x_eta(i,JM) = (3.0*x(i,JM)-4.0*x(i,JM-1)+x(i,JM-2))/2.0d0
+    y_eta(i,0) = (-3.0*y(i,0)+4.0*y(i,1)-y(i,2))/2.0d0
+    y_eta(i,JM) = (3.0*y(i,JM)-4.0*y(i,JM-1)+y(i,JM-2))/2.0d0
   end do
 
   do j = 0,JM
     do i = 0,IM
-      Jac(i,j) = 1.0d0/(xe(i,j)*yh(i,j)-ye(i,j)*xh(i,j))
-      xix(i,j) = yh(i,j)*Jac(i,j)
-      xiy(i,j) = -xh(i,j)*Jac(i,j)
-      ex(i,j) = -ye(i,j)*Jac(i,j)
-      ey(i,j) = xe(i,j)*Jac(i,j)
+      Jac(i,j) = 1.0d0/(x_xi(i,j)*y_eta(i,j)-y_xi(i,j)*x_eta(i,j))
+      xi_x(i,j) = y_eta(i,j)*Jac(i,j)
+      xi_y(i,j) = -x_eta(i,j)*Jac(i,j)
+      eta_x(i,j) = -y_xi(i,j)*Jac(i,j)
+      eta_y(i,j) = x_xi(i,j)*Jac(i,j)
     end do
   end do
 
@@ -157,11 +164,11 @@ subroutine coordinate
       Q(6,i,j) = rho(i,j)*epsi(i,j)/Jac(i,j)
     end do
   end do
-end subroutine coordinate
+end subroutine coordinate_transformation
 
 !------ξ方向TVD------
 subroutine tvd_xi
-  double precision :: RWL,RWR,AKL,AKX,AKY,AJACM,UM,VM,DUM,CM,PHI,BETA,AKXT,AKYT,THIT,AKM,S
+  double precision :: RWL,RWR,AKX,AKY,AJACM,UM,VM,DUM,CM,PHI,BETA,AKXT,AKYT,THIT,S
   double precision,dimension(1:4,1:4,0:IM) :: RR,RI
   double precision,dimension(1:6,0:IM) :: EIGM,EIG,GG,E
   double precision,dimension(1:6) :: D
@@ -173,8 +180,8 @@ subroutine tvd_xi
     do i = 0,IM-1
       RWL = dSQRT(Q(1,I,J)*Jac(I,J))/(dSQRT(Q(1,I+1,J)*Jac(I+1,J))+dSQRT(Q(1,I,J)*Jac(I,J)))
       RWR = dSQRT(Q(1,I+1,J)*Jac(I+1,J))/(dSQRT(Q(1,I+1,J)*Jac(I+1,J))+dSQRT(Q(1,I,J)*Jac(I,J)))
-      AKX = 0.5d0*(xix(I,J)+xix(I+1,J)) !中間点のkx
-      AKY = 0.5d0*(xiy(I,J)+xiy(I+1,J)) !中間点のky
+      AKX = 0.5d0*(xi_x(I,J)+xi_x(I+1,J)) !中間点のkx
+      AKY = 0.5d0*(xi_y(I,J)+xi_y(I+1,J)) !中間点のky
       AJACM = 0.5d0*(Jac(I,J)+Jac(I+1,J)) !中間点のJac
 
       UM = RWL*U(I,J)+RWR*U(I+1,J) !中間点のu
@@ -252,8 +259,8 @@ subroutine tvd_xi
     end do
 
     do i = 0,IM
-      DUM = dSQRT(G*R*T(I,J)*(xix(I,J)**2+xiy(I,J)**2))
-      EIG(1,I) = xix(I,J)*U(I,J)+xiy(I,J)*V(I,J)
+      DUM = dSQRT(G*R*T(I,J)*(xi_x(I,J)**2+xi_y(I,J)**2))
+      EIG(1,I) = xi_x(I,J)*U(I,J)+xi_y(I,J)*V(I,J)
       EIG(2,I) = EIG(1,I)
       EIG(3,I) = EIG(1,I)+DUM
       EIG(4,I) = EIG(1,I)-DUM
@@ -288,10 +295,10 @@ subroutine tvd_xi
     end do
     !CONVECTION COMPORNENTS(計算空間上のE計算)
     do I = 0,IM
-      UCONT = xix(I,J)*U(I,J)+xiy(I,J)*V(I,J) !(反変速度)
+      UCONT = xi_x(I,J)*U(I,J)+xi_y(I,J)*V(I,J) !(反変速度)
       E(1,I) = Q(1,I,J)*UCONT
-      E(2,I) = Q(2,I,J)*UCONT+P(I,J)*xix(I,J)/Jac(i,j)
-      E(3,I) = Q(3,I,J)*UCONT+P(I,J)*xiy(I,J)/Jac(i,j)
+      E(2,I) = Q(2,I,J)*UCONT+P(I,J)*xi_x(I,J)/Jac(i,j)
+      E(3,I) = Q(3,I,J)*UCONT+P(I,J)*xi_y(I,J)/Jac(i,j)
       E(4,I) = Q(4,I,J)*UCONT+P(I,J)*UCONT/Jac(i,j)
       E(5,I) = Q(5,I,J)*UCONT
       E(6,I) = Q(6,I,J)*UCONT
@@ -325,8 +332,8 @@ subroutine tvd_eta
     do J = 0,JM-1
       RWL = dSQRT(Q(1,I,J)*Jac(I,J))/(dSQRT(Q(1,I,J+1)*Jac(I,J+1))+dSQRT(Q(1,I,J)*Jac(I,J)))
       RWR = dSQRT(Q(1,I,J+1)*Jac(I,J+1))/(dSQRT(Q(1,I,J+1)*Jac(I,J+1))+dSQRT(Q(1,I,J)*Jac(I,J)))
-      AKX = 0.5d0*(ex(I,J)+ex(I,J+1))
-      AKY = 0.5d0*(ey(I,J)+ey(I,J+1))
+      AKX = 0.5d0*(eta_x(I,J)+eta_x(I,J+1))
+      AKY = 0.5d0*(eta_y(I,J)+eta_y(I,J+1))
       AJACM = 0.5d0*(Jac(I,J)+Jac(I,J+1))
       UM = RWL*U(I,J)+RWR*U(I,J+1)
       VM = RWL*V(I,J)+RWR*V(I,J+1)
@@ -404,8 +411,8 @@ subroutine tvd_eta
     end do
 
     do J = 0,JM
-      DUM = dSQRT(G*R*T(I,J)*(ex(I,J)**2.0+ey(I,J)**2.0))
-      FIG(1,J) = ex(I,J)*U(I,J)+ey(I,J)*V(I,J)
+      DUM = dSQRT(G*R*T(I,J)*(eta_x(I,J)**2.0+eta_y(I,J)**2.0))
+      FIG(1,J) = eta_x(I,J)*U(I,J)+eta_y(I,J)*V(I,J)
       FIG(2,J) = FIG(1,J)
       FIG(3,J) = FIG(1,J)+DUM
       FIG(4,J) = FIG(1,J)-DUM
@@ -440,10 +447,10 @@ subroutine tvd_eta
 
     !CONVECTION COMPORNENTS
     do J = 0,JM
-      UCONT = ex(I,J)*U(I,J)+ey(I,J)*V(I,J)
+      UCONT = eta_x(I,J)*U(I,J)+eta_y(I,J)*V(I,J)
       F(1,J) = Q(1,I,J)*UCONT
-      F(2,J) = Q(2,I,J)*UCONT+P(I,J)/Jac(i,j)*ex(I,J)
-      F(3,J) = Q(3,I,J)*UCONT+P(I,J)/Jac(i,j)*ey(I,J)
+      F(2,J) = Q(2,I,J)*UCONT+P(I,J)/Jac(i,j)*eta_x(I,J)
+      F(3,J) = Q(3,I,J)*UCONT+P(I,J)/Jac(i,j)*eta_y(I,J)
       F(4,J) = Q(4,I,J)*UCONT+P(I,J)/Jac(i,j)*UCONT
       F(5,J) = Q(5,I,J)*UCONT
       F(6,J) = Q(6,I,J)*UCONT
@@ -478,32 +485,32 @@ end function
 !------サザーランド------
 double precision function Sutherland(T)
   double precision T
-  Sutherland = myu0*((T/T0)**1.5)*(T0+SS)/(T+SS)
+  Sutherland = mu0*((T/T0)**1.5)*(T0+S_const)/(T+S_const)
 end function
 
 !------諸量計算------
-subroutine parameter
+subroutine calc_parameter
   do j = 0,JM
     do i = 0,IM
-      myu(i,j) = Sutherland(T(i,j))
-      nyu(i,j) = myu(i,j)/rho(i,j)
-      myut(i,j) = Cmyu*rho(i,j)*(k(i,j)**2.0)/epsi(i,j)
+      mu(i,j) = Sutherland(T(i,j))
+      nu(i,j) = mu(i,j)/rho(i,j)
+      mu_t(i,j) = C_mu*rho(i,j)*(k(i,j)**2.0)/epsi(i,j)
     end do
   end do
-end subroutine parameter
+end subroutine calc_parameter
 
 !------粘性項（ξ方向）------
 subroutine viscosity_xi
-  double precision,dimension(0:IM-1,0:JM-1) :: xix_r,xiy_r,ex_r,ey_r,Jac_r,u_r,v_r,T_r,k_r,epsi_r,rho_r
-  double precision,dimension(0:IM-1,0:JM-1) :: ue_r,ve_r,Te_r,ke_r,epsie_r,uh_r,vh_r,Th_r,kh_r,epsih_r,myut_r
-  double precision :: myu,Sxx,Syy,Sxy,Syx,txx,tyy,txy,tyx,R4,R5,R6,S4,S5,S6
+  double precision,dimension(0:IM-1,0:JM-1) :: xix_r,xiy_r,ex_r,ey_r,Jac_r,u_r,v_r,T_r,k_r,epsi_r,rho_r,u_xi_r,v_xi_r,T_xi_r, &
+    k_xi_r,epsi_xi_r,u_eta_r,v_eta_r,T_eta_r,k_eta_r,epsi_eta_r,mu_t_r
+  double precision :: mu,Sxx,Syy,Sxy,Syx,txx,tyy,txy,tyx,R4,R5,R6,S4,S5,S6
 
   do j = 1,JM-1
     do i = 0,IM-1
-      xix_r(i,j) = (xix(i,j)+xix(i+1,j))/2.0d0
-      xiy_r(i,j) = (xiy(i,j)+xiy(i+1,j))/2.0d0
-      ex_r(i,j) = (ex(i,j)+ex(i+1,j))/2.0d0
-      ey_r(i,j) = (ey(i,j)+ey(i+1,j))/2.0d0
+      xix_r(i,j) = (xi_x(i,j)+xi_x(i+1,j))/2.0d0
+      xiy_r(i,j) = (xi_y(i,j)+xi_y(i+1,j))/2.0d0
+      ex_r(i,j) = (eta_x(i,j)+eta_x(i+1,j))/2.0d0
+      ey_r(i,j) = (eta_y(i,j)+eta_y(i+1,j))/2.0d0
       Jac_r(i,j) = (Jac(i,j)+Jac(i+1,j))/2.0d0
       u_r(i,j) = (u(i,j)+u(i+1,j))/2.0d0
       v_r(i,j) = (v(i,j)+v(i+1,j))/2.0d0
@@ -512,39 +519,39 @@ subroutine viscosity_xi
       epsi_r(i,j) = (epsi(i,j)+epsi(i+1,j))/2.0d0
       rho_r(i,j) = (Q(1,i,j)*Jac(i,j)+Q(1,i+1,j)*Jac(i+1,j))/(Jac(i,j)+Jac(i+1,j))*Jac_r(i,j)
 
-      ue_r(i,j) = u(i+1,j)-u(i,j)
-      ve_r(i,j) = v(i+1,j)-v(i,j)
-      Te_r(i,j) = t(i+1,j)-t(i,j)
-      ke_r(i,j) = k(i+1,j)-k(i,j)
-      epsie_r(i,j) = epsi(i+1,j)-epsi(i,j)
+      u_xi_r(i,j) = u(i+1,j)-u(i,j)
+      v_xi_r(i,j) = v(i+1,j)-v(i,j)
+      T_xi_r(i,j) = t(i+1,j)-t(i,j)
+      k_xi_r(i,j) = k(i+1,j)-k(i,j)
+      epsi_xi_r(i,j) = epsi(i+1,j)-epsi(i,j)
 
-      uh_r(i,j) = (((u(i,j+1)+u(i+1,j+1))/2.0d0)-((u(i,j-1)+u(i+1,j-1))/2.0d0))/2.0d0
-      vh_r(i,j) = (((v(i,j+1)+v(i+1,j+1))/2.0d0)-((v(i,j-1)+v(i+1,j-1))/2.0d0))/2.0d0
-      Th_r(i,j) = (((t(i,j+1)+t(i+1,j+1))/2.0d0)-((t(i,j-1)+t(i+1,j-1))/2.0d0))/2.0d0
-      kh_r(i,j) = (((k(i,j+1)+k(i+1,j+1))/2.0d0)-((k(i,j-1)+k(i+1,j-1))/2.0d0))/2.0d0
-      epsih_r(i,j) = (((epsi(i,j+1)+epsi(i+1,j+1))/2.0d0)-((epsi(i,j-1)+epsi(i+1,j-1))/2.0d0))/2.0d0
+      u_eta_r(i,j) = (((u(i,j+1)+u(i+1,j+1))/2.0d0)-((u(i,j-1)+u(i+1,j-1))/2.0d0))/2.0d0
+      v_eta_r(i,j) = (((v(i,j+1)+v(i+1,j+1))/2.0d0)-((v(i,j-1)+v(i+1,j-1))/2.0d0))/2.0d0
+      T_eta_r(i,j) = (((t(i,j+1)+t(i+1,j+1))/2.0d0)-((t(i,j-1)+t(i+1,j-1))/2.0d0))/2.0d0
+      k_eta_r(i,j) = (((k(i,j+1)+k(i+1,j+1))/2.0d0)-((k(i,j-1)+k(i+1,j-1))/2.0d0))/2.0d0
+      epsi_eta_r(i,j) = (((epsi(i,j+1)+epsi(i+1,j+1))/2.0d0)-((epsi(i,j-1)+epsi(i+1,j-1))/2.0d0))/2.0d0
 
-      myut_r(i,j) = Cmyu*rho_r(i,j)*(k_r(i,j)**2.0)/epsi_r(i,j)
+      mu_t_r(i,j) = C_mu*rho_r(i,j)*(k_r(i,j)**2.0)/epsi_r(i,j)
     end do
   end do
 
   do j = 1,JM-1
     do i = 0,IM-1
-      Sxx = 2.0d0/3.0d0*(2.0d0*(ue_r(i,j)*xix_r(i,j)+uh_r(i,j)*ex_r(i,j))-(ve_r(i,j)*xiy_r(i,j)+vh_r(i,j)*ey_r(i,j)))
-      Syy = 2.0d0/3.0d0*(2.0d0*(ve_r(i,j)*xiy_r(i,j)+vh_r(i,j)*ey_r(i,j))-(ue_r(i,j)*xix_r(i,j)+uh_r(i,j)*ex_r(i,j)))
-      Sxy = (ue_r(i,j)*xiy_r(i,j)+uh_r(i,j)*ey_r(i,j))+(ve_r(i,j)*xix_r(i,j)+vh_r(i,j)*ex_r(i,j))
+      Sxx = 2.0d0/3.0d0*(2.0d0*(u_xi_r(i,j)*xix_r(i,j)+u_eta_r(i,j)*ex_r(i,j))-(v_xi_r(i,j)*xiy_r(i,j)+v_eta_r(i,j)*ey_r(i,j)))
+      Syy = 2.0d0/3.0d0*(2.0d0*(v_xi_r(i,j)*xiy_r(i,j)+v_eta_r(i,j)*ey_r(i,j))-(u_xi_r(i,j)*xix_r(i,j)+u_eta_r(i,j)*ex_r(i,j)))
+      Sxy = (u_xi_r(i,j)*xiy_r(i,j)+u_eta_r(i,j)*ey_r(i,j))+(v_xi_r(i,j)*xix_r(i,j)+v_eta_r(i,j)*ex_r(i,j))
       Syx = Sxy
-      txx = myut_r(i,j)*Sxx-2.0d0/3.0d0*rho_r(i,j)*k_r(i,j)
-      tyy = myut_r(i,j)*Syy-2.0d0/3.0d0*rho_r(i,j)*k_r(i,j)
-      txy = myut_r(i,j)*Sxy
+      txx = mu_t_r(i,j)*Sxx-2.0d0/3.0d0*rho_r(i,j)*k_r(i,j)
+      tyy = mu_t_r(i,j)*Syy-2.0d0/3.0d0*rho_r(i,j)*k_r(i,j)
+      txy = mu_t_r(i,j)*Sxy
       tyx = txy
 
-      R4 = txx*u_r(i,j)+txy*v_r(i,j)+(myu/(Pr*(g-1.0d0)))*g*R*(Te_r(i,j)*xix_r(i,j)+Th_r(i,j)*ex_r(i,j))
-      R5 = myut_r(i,j)*(ke_r(i,j)*xix_r(i,j)+kh_r(i,j)*ex_r(i,j))/sigmak
-      R6 = myut_r(i,j)*(epsie_r(i,j)*xix_r(i,j)+epsih_r(i,j)*ex_r(i,j))/sigmaepsi
-      S4 = tyx*u_r(i,j)+tyy*v_r(i,j)+(myu/(Pr*(g-1.0d0)))*g*R*(Te_r(i,j)*xiy_r(i,j)+Th_r(i,j)*ey_r(i,j))
-      S5 = myut_r(i,j)*(ke_r(i,j)*xiy_r(i,j)+kh_r(i,j)*ey_r(i,j))/sigmak
-      S6 = myut_r(i,j)*(epsie_r(i,j)*xiy_r(i,j)+epsih_r(i,j)*ey_r(i,j))/sigmaepsi
+      R4 = txx*u_r(i,j)+txy*v_r(i,j)+(mu/(Pr*(g-1.0d0)))*g*R*(T_xi_r(i,j)*xix_r(i,j)+T_eta_r(i,j)*ex_r(i,j))
+      R5 = mu_t_r(i,j)*(k_xi_r(i,j)*xix_r(i,j)+k_eta_r(i,j)*ex_r(i,j))/sig_k
+      R6 = mu_t_r(i,j)*(epsi_xi_r(i,j)*xix_r(i,j)+epsi_eta_r(i,j)*ex_r(i,j))/sig_epsi
+      S4 = tyx*u_r(i,j)+tyy*v_r(i,j)+(mu/(Pr*(g-1.0d0)))*g*R*(T_xi_r(i,j)*xiy_r(i,j)+T_eta_r(i,j)*ey_r(i,j))
+      S5 = mu_t_r(i,j)*(k_xi_r(i,j)*xiy_r(i,j)+k_eta_r(i,j)*ey_r(i,j))/sig_k
+      S6 = mu_t_r(i,j)*(epsi_xi_r(i,j)*xiy_r(i,j)+epsi_eta_r(i,j)*ey_r(i,j))/sig_epsi
 
       RRR(1,i,j) = 0.0d0
       RRR(2,i,j) = (xix_r(i,j)*txx+xiy_r(i,j)*txy)/Jac_r(i,j)
@@ -558,16 +565,16 @@ end subroutine viscosity_xi
 
 !----------η方向粘性項----------
 subroutine viscosity_eta
-  double precision,dimension(0:IM-1,0:JM-1) :: xix_s,xiy_s,ex_s,ey_s,Jac_s,u_s,v_s,T_s,ue_s,ve_s,Te_s,uh_s,vh_s,Th_s
-  double precision,dimension(0:IM-1,0:JM-1) :: k_s,epsi_s,rho_s,myut_s,ke_s,epsie_s,kh_s,epsih_s
+  double precision,dimension(0:IM-1,0:JM-1) :: xix_s,xiy_s,ex_s,ey_s,Jac_s,u_s,v_s,T_s,u_xi_s,v_xi_s,T_xi_s,u_eta_s,v_eta_s, &
+    T_eta_s,k_s,epsi_s,rho_s,mut_s,k_xi_s,epsi_xi_s,k_eta_s,epsi_eta_s
   double precision :: R4,R5,R6,S4,S5,S6,Sxx,Syy,Sxy,Syx,txx,tyy,txy,tyx
 
   do i = 1,IM-1
     do j = 0,JM-1
-      xix_s(i,j) = (xix(i,j)+xix(i,j+1))/2.0d0
-      xiy_s(i,j) = (xiy(i,j)+xiy(i,j+1))/2.0d0
-      ex_s(i,j) = (ex(i,j)+ex(i,j+1))/2.0d0
-      ey_s(i,j) = (ey(i,j)+ey(i,j+1))/2.0d0
+      xix_s(i,j) = (xi_x(i,j)+xi_x(i,j+1))/2.0d0
+      xiy_s(i,j) = (xi_y(i,j)+xi_y(i,j+1))/2.0d0
+      ex_s(i,j) = (eta_x(i,j)+eta_x(i,j+1))/2.0d0
+      ey_s(i,j) = (eta_y(i,j)+eta_y(i,j+1))/2.0d0
       Jac_s(i,j) = (Jac(i,j)+Jac(i,j+1))/2.0d0
       u_s(i,j) = (u(i,j)+u(i,j+1))/2.0d0
       v_s(i,j) = (v(i,j)+v(i,j+1))/2.0d0
@@ -576,39 +583,39 @@ subroutine viscosity_eta
       epsi_s(i,j) = (epsi(i,j)+epsi(i,j+1))/2.0d0
       rho_s(i,j) = (Q(1,i,j)*Jac(i,j)+Q(1,i,j+1)*Jac(i,j+1))/(Jac(i,j)+Jac(i,j+1))*Jac_s(i,j)
 
-      uh_s(i,j) = u(i,j+1)-u(i,j)
-      vh_s(i,j) = v(i,j+1)-v(i,j)
-      Th_s(i,j) = T(i,j+1)-T(i,j)
-      kh_s(i,j) = k(i,j+1)-k(i,j)
-      epsih_s(i,j) = epsi(i,j+1)-epsi(i,j)
+      u_eta_s(i,j) = u(i,j+1)-u(i,j)
+      v_eta_s(i,j) = v(i,j+1)-v(i,j)
+      T_eta_s(i,j) = T(i,j+1)-T(i,j)
+      k_eta_s(i,j) = k(i,j+1)-k(i,j)
+      epsi_eta_s(i,j) = epsi(i,j+1)-epsi(i,j)
 
-      ue_s(i,j) = (((u(i+1,j)+u(i+1,j+1))/2.0d0)-((u(i-1,j)+u(i-1,j+1))/2.0d0))/2.0d0
-      ve_s(i,j) = (((v(i+1,j)+v(i+1,j+1))/2.0d0)-((v(i-1,j)+v(i-1,j+1))/2.0d0))/2.0d0
-      Te_s(i,j) = (((T(i+1,j)+T(i+1,j+1))/2.0d0)-((T(i-1,j)+T(i-1,j+1))/2.0d0))/2.0d0
-      ke_s(i,j) = (((k(i+1,j)+k(i+1,j+1))/2.0d0)-((k(i-1,j)+k(i-1,j+1))/2.0d0))/2.0d0
-      epsie_s(i,j) = (((epsi(i+1,j)+epsi(i+1,j+1))/2.0d0)-((epsi(i-1,j)+epsi(i-1,j+1))/2.0d0))/2.0d0
+      u_xi_s(i,j) = (((u(i+1,j)+u(i+1,j+1))/2.0d0)-((u(i-1,j)+u(i-1,j+1))/2.0d0))/2.0d0
+      v_xi_s(i,j) = (((v(i+1,j)+v(i+1,j+1))/2.0d0)-((v(i-1,j)+v(i-1,j+1))/2.0d0))/2.0d0
+      T_xi_s(i,j) = (((T(i+1,j)+T(i+1,j+1))/2.0d0)-((T(i-1,j)+T(i-1,j+1))/2.0d0))/2.0d0
+      k_xi_s(i,j) = (((k(i+1,j)+k(i+1,j+1))/2.0d0)-((k(i-1,j)+k(i-1,j+1))/2.0d0))/2.0d0
+      epsi_xi_s(i,j) = (((epsi(i+1,j)+epsi(i+1,j+1))/2.0d0)-((epsi(i-1,j)+epsi(i-1,j+1))/2.0d0))/2.0d0
 
-      myut_s(i,j) = Cmyu*rho_s(i,j)*(k_s(i,j)**2.0)/epsi_s(i,j)
+      mut_s(i,j) = C_mu*rho_s(i,j)*(k_s(i,j)**2.0)/epsi_s(i,j)
     end do
   end do
 
   do i = 1,IM-1
     do j = 0,JM-1
-      Sxx = 2.0d0/3.0d0*(2.0d0*(ue_s(i,j)*xix_s(i,j)+uh_s(i,j)*ex_s(i,j))-(ve_s(i,j)*xiy_s(i,j)+vh_s(i,j)*ey_s(i,j)))
-      Syy = 2.0d0/3.0d0*(2.0d0*(ve_s(i,j)*xiy_s(i,j)+vh_s(i,j)*ey_s(i,j))-(ue_s(i,j)*xix_s(i,j)+uh_s(i,j)*ex_s(i,j)))
-      Sxy = (ue_s(i,j)*xiy_s(i,j)+uh_s(i,j)*ey_s(i,j))+(ve_s(i,j)*xix_s(i,j)+vh_s(i,j)*ex_s(i,j))
+      Sxx = 2.0d0/3.0d0*(2.0d0*(u_xi_s(i,j)*xix_s(i,j)+u_eta_s(i,j)*ex_s(i,j))-(v_xi_s(i,j)*xiy_s(i,j)+v_eta_s(i,j)*ey_s(i,j)))
+      Syy = 2.0d0/3.0d0*(2.0d0*(v_xi_s(i,j)*xiy_s(i,j)+v_eta_s(i,j)*ey_s(i,j))-(u_xi_s(i,j)*xix_s(i,j)+u_eta_s(i,j)*ex_s(i,j)))
+      Sxy = (u_xi_s(i,j)*xiy_s(i,j)+u_eta_s(i,j)*ey_s(i,j))+(v_xi_s(i,j)*xix_s(i,j)+v_eta_s(i,j)*ex_s(i,j))
       Syx = Sxy
-      txx = myut_s(i,j)*Sxx-2.0d0/3.0d0*rho_s(i,j)*k_s(i,j)
-      tyy = myut_s(i,j)*Syy-2.0d0/3.0d0*rho_s(i,j)*k_s(i,j)
-      txy = myut_s(i,j)*Sxy
+      txx = mut_s(i,j)*Sxx-2.0d0/3.0d0*rho_s(i,j)*k_s(i,j)
+      tyy = mut_s(i,j)*Syy-2.0d0/3.0d0*rho_s(i,j)*k_s(i,j)
+      txy = mut_s(i,j)*Sxy
       tyx = txy
 
-      R4 = txx*u_s(i,j)+txy*v_s(i,j)+(myut_s(i,j)/(Pr*(g-1.0d0)))*g*R*(Te_s(i,j)*xix_s(i,j)+Th_s(i,j)*ex_s(i,j))
-      R5 = myut_s(i,j)*(ke_s(i,j)*xix_s(i,j)+kh_s(i,j)*ex_s(i,j))/sigmak
-      R6 = myut_s(i,j)*(epsie_s(i,j)*xix_s(i,j)+epsih_s(i,j)*ex_s(i,j))/sigmaepsi
-      S4 = tyx*u_s(i,j)+tyy*v_s(i,j)+(myut_s(i,j)/(Pr*(g-1.0d0)))*g*R*(Te_s(i,j)*xiy_s(i,j)+Th_s(i,j)*ey_s(i,j))
-      S5 = myut_s(i,j)*(ke_s(i,j)*xiy_s(i,j)+kh_s(i,j)*ey_s(i,j))/sigmak
-      S6 = myut_s(i,j)*(epsie_s(i,j)*xiy_s(i,j)+epsih_s(i,j)*ey_s(i,j))/sigmaepsi
+      R4 = txx*u_s(i,j)+txy*v_s(i,j)+(mut_s(i,j)/(Pr*(g-1.0d0)))*g*R*(T_xi_s(i,j)*xix_s(i,j)+T_eta_s(i,j)*ex_s(i,j))
+      R5 = mut_s(i,j)*(k_xi_s(i,j)*xix_s(i,j)+k_eta_s(i,j)*ex_s(i,j))/sig_k
+      R6 = mut_s(i,j)*(epsi_xi_s(i,j)*xix_s(i,j)+epsi_eta_s(i,j)*ex_s(i,j))/sig_epsi
+      S4 = tyx*u_s(i,j)+tyy*v_s(i,j)+(mut_s(i,j)/(Pr*(g-1.0d0)))*g*R*(T_xi_s(i,j)*xiy_s(i,j)+T_eta_s(i,j)*ey_s(i,j))
+      S5 = mut_s(i,j)*(k_xi_s(i,j)*xiy_s(i,j)+k_eta_s(i,j)*ey_s(i,j))/sig_k
+      S6 = mut_s(i,j)*(epsi_xi_s(i,j)*xiy_s(i,j)+epsi_eta_s(i,j)*ey_s(i,j))/sig_epsi
 
       SSS(1,i,j) = 0.0d0
       SSS(2,i,j) = (ex_s(i,j)*txx+ey_s(i,j)*txy)/Jac_s(i,j)
@@ -622,65 +629,65 @@ subroutine viscosity_eta
 end subroutine viscosity_eta
 
 !----------生産項----------
-subroutine production
-  double precision,dimension(0:IM,0:JM) :: ue,ve,uh,vh
+subroutine production_term
+  double precision,dimension(0:IM,0:JM) :: u_xi,v_xi,u_eta,v_eta
   double precision :: Sxx,Syy,Sxy,Syx,txx,tyy,txy,tyx,PRO
-  double precision,parameter :: Cepsi1 = 1.44d0,Cepsi2 = 1.92d0
+  double precision,parameter :: C_epsi1 = 1.44d0,C_epsi2 = 1.92d0
   do j = 1,JM-1
     do i = 1,IM-1
-      ue(i,j) = (u(i+1,j)-u(i-1,j))/2.0d0
-      ve(i,j) = (v(i+1,j)-v(i-1,j))/2.0d0
-      uh(i,j) = (u(i,j+1)-u(i,j-1))/2.0d0
-      vh(i,j) = (v(i,j+1)-v(i,j-1))/2.0d0
+      u_xi(i,j) = (u(i+1,j)-u(i-1,j))/2.0d0
+      v_xi(i,j) = (v(i+1,j)-v(i-1,j))/2.0d0
+      u_eta(i,j) = (u(i,j+1)-u(i,j-1))/2.0d0
+      v_eta(i,j) = (v(i,j+1)-v(i,j-1))/2.0d0
 
-      Sxx = 2.0d0/3.0d0*(2.0d0*(ue(i,j)*xix(i,j)+uh(i,j)*ex(i,j))-(ve(i,j)*xiy(i,j)+vh(i,j)*ey(i,j)))
-      Syy = 2.0d0/3.0d0*(2.0d0*(ve(i,j)*xiy(i,j)+vh(i,j)*ey(i,j))-(ue(i,j)*xix(i,j)+uh(i,j)*ex(i,j)))
-      Sxy = (ue(i,j)*xiy(i,j)+uh(i,j)*ey(i,j))+(ve(i,j)*xix(i,j)+vh(i,j)*ex(i,j))
+      Sxx = 2.0d0/3.0d0*(2.0d0*(u_xi(i,j)*xi_x(i,j)+u_eta(i,j)*eta_x(i,j))-(v_xi(i,j)*xi_y(i,j)+v_eta(i,j)*eta_y(i,j)))
+      Syy = 2.0d0/3.0d0*(2.0d0*(v_xi(i,j)*xi_y(i,j)+v_eta(i,j)*eta_y(i,j))-(u_xi(i,j)*xi_x(i,j)+u_eta(i,j)*eta_x(i,j)))
+      Sxy = (u_xi(i,j)*xi_y(i,j)+u_eta(i,j)*eta_y(i,j))+(v_xi(i,j)*xi_x(i,j)+v_eta(i,j)*eta_x(i,j))
       Syx = Sxy
 
-      txx = myut(i,j)*Sxx-2.0d0/3.0d0*rho(i,j)*k(i,j)
-      tyy = myut(i,j)*Syy-2.0d0/3.0d0*rho(i,j)*k(i,j)
-      txy = myut(i,j)*Sxy
+      txx = mu_t(i,j)*Sxx-2.0d0/3.0d0*rho(i,j)*k(i,j)
+      tyy = mu_t(i,j)*Syy-2.0d0/3.0d0*rho(i,j)*k(i,j)
+      txy = mu_t(i,j)*Sxy
       tyx = txy
 
-      PRO = txx*(ue(i,j)*xix(i,j)+uh(i,j)*ex(i,j))&
-              &+txy*((ve(i,j)*xix(i,j)+vh(i,j)*ex(i,j))+(ue(i,j)*xiy(i,j)+uh(i,j)*ey(i,j)))&
-              &+tyy*(ve(i,j)*xiy(i,j)+vh(i,j)*ey(i,j))
+      PRO = txx*(u_xi(i,j)*xi_x(i,j)+u_eta(i,j)*eta_x(i,j))&
+              &+txy*((v_xi(i,j)*xi_x(i,j)+v_eta(i,j)*eta_x(i,j))+(u_xi(i,j)*xi_y(i,j)+u_eta(i,j)*eta_y(i,j)))&
+              &+tyy*(v_xi(i,j)*xi_y(i,j)+v_eta(i,j)*eta_y(i,j))
 
       PPP(1,i,j) = 0.0d0
       PPP(2,i,j) = 0.0d0
       PPP(3,i,j) = 0.0d0
       PPP(4,i,j) = 0.0d0
       PPP(5,i,j) = (PRO-rho(i,j)*epsi(i,j))/Jac(i,j)
-      PPP(6,i,j) = (Cepsi1*epsi(i,j)/k(i,j)*PRO-Cepsi2*rho(i,j)*(epsi(i,j)**2.0)/k(i,j))/Jac(i,j)
+      PPP(6,i,j) = (C_epsi1*epsi(i,j)/k(i,j)*PRO-C_epsi2*rho(i,j)*(epsi(i,j)**2.0)/k(i,j))/Jac(i,j)
     end do
   end do
-end subroutine production
+end subroutine production_term
 
 !----------壁法則----------
-subroutine wall_law
-  double precision :: utau,ypp,yp,kp,epsip
-  double precision,parameter :: kap = 0.42d0,EEE = 9.7d0
+subroutine law_of_wall
+  double precision :: u_tau,y_p_plus,y_p,k_p,epsi_p
+  double precision,parameter :: kappa = 0.42d0,EEE = 9.7d0
 
   do i = 5,IM
-    yp = y(i,1)
-    kp = k(i,1)
-    epsip = epsi(i,1)
+    y_p = y(i,1)
+    k_p = k(i,1)
+    epsi_p = epsi(i,1)
 
-    utau = Cmyu*(kp**2.0)/(kap*yp*epsip)
-    ypp = yp*utau/nyu(i,1)
-    if (ypp>11.63d0) then
-      utau = kap*u(i,1)/dlog(ypp*EEE)
+    u_tau = C_mu*(k_p**2.0)/(kappa*y_p*epsi_p)
+    y_p_plus = y_p*u_tau/nu(i,1)
+    if (y_p_plus>11.63d0) then
+      u_tau = kappa*u(i,1)/dlog(y_p_plus*EEE)
     else
-      utau = dsqrt(nyu(i,1)*u(i,1)/yp)
+      u_tau = dsqrt(nu(i,1)*u(i,1)/y_p)
     end if
 
-    k(i,1) = (utau**2.0)/dsqrt(Cmyu)
-    epsi(i,1) = (utau**3.0)/(kap*yp)
-    kwall(i,1) = k(i,1)
-    epsiwall(i,1) = epsi(i,1)
+    k(i,1) = (u_tau**2.0)/dsqrt(C_mu)
+    epsi(i,1) = (u_tau**3.0)/(kappa*y_p)
+    k_p_n1(i,1) = k(i,1)
+    epsi_p_n1(i,1) = epsi(i,1)
   end do
-end subroutine wall_law
+end subroutine law_of_wall
 
 !------Runge-Kutta------
 subroutine Runge_Kutta
@@ -696,8 +703,8 @@ subroutine Runge_Kutta
   end do
 end subroutine Runge_Kutta
 
-!------諸量の計算------
-subroutine calculation
+!------保存量ベクトルQから諸量を再計算および境界条件------
+subroutine re_calc_and_boundary_condition
   do j = 1,JM-1
     do i = 1,IM-1
       un(i,j) = u(i,j)
@@ -764,9 +771,9 @@ subroutine calculation
       epsi(i,0) = epsi(i,1)
     else
       u(i,0) = 0.0d0
-      k(i,1) = kwall(i,1)
+      k(i,1) = k_p_n1(i,1)
       k(i,0) = k(i,1)
-      epsi(i,1) = epsiwall(i,1)
+      epsi(i,1) = epsi_p_n1(i,1)
       epsi(i,0) = epsi(i,1)
     end if
 
@@ -795,89 +802,93 @@ subroutine calculation
     end do
   end do
 
-end subroutine calculation
+end subroutine re_calc_and_boundary_condition
 
-!------局所時間刻み法------
-subroutine local_time_step_method
-  double precision,parameter :: CN = 0.2
+!------局所時間刻み法------TVDのときのプリント参照
+subroutine local_time_stepping_method
+  double precision,parameter :: CN = 0.2d0
   double precision,dimension(0:IM,0:JM) :: uu,vv
-  double precision :: lcxi,lce,ldxi,lde,lepsixi,lepsie,Lxi,Le
+  double precision :: lc_xi,lc_eta,ld_xi,ld_eta,lepsi_xi,lepsi_eta,L_xi,L_eta
 
   do j = 0,JM
     do i = 0,IM
       c(i,j) = dsqrt(g*r*T(i,j))
-      uu(i,j) = xix(i,j)*u(i,j)+xiy(i,j)*v(i,j) !反変速度
-      vv(i,j) = ex(i,j)*u(i,j)+ey(i,j)*v(i,j)
+      uu(i,j) = xi_x(i,j)*u(i,j)+xi_y(i,j)*v(i,j) !反変速度
+      vv(i,j) = eta_x(i,j)*u(i,j)+eta_y(i,j)*v(i,j)
 
       !対流項
-      lcxi = dabs(uu(i,j))+c(i,j)*dsqrt(xix(i,j)**2.0+xiy(i,j)**2.0)
-      lce = dabs(vv(i,j))+c(i,j)*dsqrt(ex(i,j)**2.0+ey(i,j)**2.0)
+      lc_xi = dabs(uu(i,j))+c(i,j)*dsqrt(xi_x(i,j)**2.0+xi_y(i,j)**2.0)
+      lc_eta = dabs(vv(i,j))+c(i,j)*dsqrt(eta_x(i,j)**2.0+eta_y(i,j)**2.0)
 
       !拡散項
-      ldxi = 2.0d0*(myu(i,j)+myut(i,j))/rho(i,j)*(xix(i,j)**2.0+xiy(i,j)**2.0)
-      lde = 2.0d0*(myu(i,j)+myut(i,j))/rho(i,j)*(ex(i,j)**2.0+ey(i,j)**2.0)
+      ld_xi = 2.0d0*(mu(i,j)+mu_t(i,j))/rho(i,j)*(xi_x(i,j)**2.0+xi_y(i,j)**2.0)
+      ld_eta = 2.0d0*(mu(i,j)+mu_t(i,j))/rho(i,j)*(eta_x(i,j)**2.0+eta_y(i,j)**2.0)
 
       !流れの散逸項
-      lepsixi = epsi(i,j)/k(i,j)
-      lepsie = lepsixi
+      lepsi_xi = epsi(i,j)/k(i,j)
+      lepsi_eta = lepsi_xi
 
-      Lxi = lcxi+ldxi+lepsixi
-      Le = lce+lde+lepsie
+      L_xi = lc_xi+ld_xi+lepsi_xi
+      L_eta = lc_eta+ld_eta+lepsi_eta
 
-      ldt(i,j) = CN*dmin1(1.0d0/Lxi,1.0d0/Le)
+      ldt(i,j) = CN*dmin1(1.0d0/L_xi,1.0d0/L_eta)
     end do
   end do
-end subroutine local_time_step_method
+end subroutine local_time_stepping_method
 
-!----------y＋とu+計算・出力----------
-subroutine output_yplus
-  double precision :: utau,tauw
-  double precision,dimension(0:IM,0:JM) :: yplus,uplus
-
+!----------y_+とu_+の計算および出力----------
+subroutine save_y_plus
+  double precision :: u_tau,tau_w
+  double precision,dimension(0:IM,0:JM) :: y_plus,u_plus
   do j = 0,JM
     do i = 5,IM
-      tauw = myu(i,0)*(u(i,1)-u(i,0))/(y(i,1)-y(i,0))
-      utau = dsqrt(tauw/rho(i,0))
-      uplus(i,j) = u(i,j)/utau
-      yplus(i,j) = y(i,j)*utau/nyu(i,j)
+      tau_w = mu(i,0)*(u(i,1)-u(i,0))/(y(i,1)-y(i,0))
+      u_tau = dsqrt(tau_w/rho(i,0))
+      u_plus(i,j) = u(i,j)/u_tau
+      y_plus(i,j) = y(i,j)*u_tau/nu(i,j)
     end do
   end do
-  open (10,file='assyuku8_1_yu.dat',status='replace')
+  open (10,file='a8_y_plus_u_plus.dat',status='replace')
   do j = 0,JM
-    write (10,*) yplus(45,j),uplus(45,j)
+    write (10,*) y_plus(45,j),u_plus(45,j)
   end do
   close (10)
-end subroutine output_yplus
+end subroutine save_y_plus
 
-!----------計算結果出力----------
-subroutine output
-  open (1,file='assyuku8_1.dat',status='replace')
+!----------データ出力----------
+subroutine save_data
+  open (11,file='a8.dat',status='replace')
   do j = 0,JM
     do i = 0,IM
-      write (1,*) x(i,j),y(i,j),u(i,j),v(i,j),p(i,j),T(i,j)
+      write (11,'(f13.6,$)') x(i,j)
+      write (11,'(f13.6,$)') y(i,j)
+      write (11,'(f13.6,$)') u(i,j)
+      write (11,'(f13.6,$)') v(i,j)
+      write (11,'(f13.3,$)') p(i,j)
+      write (11,'(f13.6)') T(i,j)
     end do
   end do
-  close (1)
-
-  open (11,file='assyuku8_1.fld',status='replace')
-  write (11,'(a)') '# AVS field file'
-  write (11,'(a)') 'ndIM=2'
-  write (11,'(a,i0)') 'dIM1=',IM+1
-  write (11,'(a,i0)') 'dIM2=',JM+1
-  write (11,'(a)') 'nspace=2'
-  write (11,'(a)') 'veclen=4'
-  write (11,'(a)') 'data=float'
-  write (11,'(a)') 'field=irregular'
-  write (11,'(a)') 'label=u,v,p,t'
-  write (11,'(a)') 'coord 1 file=assyuku8_1.dat filetype=ascii skip=0 offset=0 stride=6'
-  write (11,'(a)') 'coord 2 file=assyuku8_1.dat filetype=ascii skip=0 offset=1 stride=6'
-  write (11,'(a)') 'variable 1 file=assyuku8_1.dat filetype=ascii skip=0 offset=2 stride=6'
-  write (11,'(a)') 'variable 2 file=assyuku8_1.dat filetype=ascii skip=0 offset=3 stride=6'
-  write (11,'(a)') 'variable 3 file=assyuku8_1.dat filetype=ascii skip=0 offset=4 stride=6'
-  write (11,'(a)') 'variable 4 file=assyuku8_1.dat filetype=ascii skip=0 offset=5 stride=6'
   close (11)
-end subroutine output
+
+  open (12,file='a8.fld',status='replace')
+  write (12,'(a)') '# AVS field file'
+  write (12,'(a)') 'ndIM=2'
+  write (12,'(a,i0)') 'dIM1=',IM+1
+  write (12,'(a,i0)') 'dIM2=',JM+1
+  write (12,'(a)') 'nspace=2'
+  write (12,'(a)') 'veclen=4'
+  write (12,'(a)') 'data=float'
+  write (12,'(a)') 'field=irregular'
+  write (12,'(a)') 'label=u,v,p,t'
+  write (12,'(a)') 'coord 1 file=a8.dat filetype=ascii skip=0 offset=0 stride=6'
+  write (12,'(a)') 'coord 2 file=a8.dat filetype=ascii skip=0 offset=1 stride=6'
+  write (12,'(a)') 'variable 1 file=a8.dat filetype=ascii skip=0 offset=2 stride=6'
+  write (12,'(a)') 'variable 2 file=a8.dat filetype=ascii skip=0 offset=3 stride=6'
+  write (12,'(a)') 'variable 3 file=a8.dat filetype=ascii skip=0 offset=4 stride=6'
+  write (12,'(a)') 'variable 4 file=a8.dat filetype=ascii skip=0 offset=5 stride=6'
+  close (12)
+end subroutine save_data
 
 !--------------------
 
-end program assyuku8_1
+end program a8
