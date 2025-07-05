@@ -1,0 +1,15 @@
+# AVS field file
+ndIM=2
+dIM1=51
+dIM2=51
+nspace=2
+veclen=4
+data=float
+field=irregular
+label=u,v,p,t
+coord 1 file=a8.dat filetype=ascii skip=0 offset=0 stride=6
+coord 2 file=a8.dat filetype=ascii skip=0 offset=1 stride=6
+variable 1 file=a8.dat filetype=ascii skip=0 offset=2 stride=6
+variable 2 file=a8.dat filetype=ascii skip=0 offset=3 stride=6
+variable 3 file=a8.dat filetype=ascii skip=0 offset=4 stride=6
+variable 4 file=a8.dat filetype=ascii skip=0 offset=5 stride=6

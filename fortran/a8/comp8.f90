@@ -494,7 +494,7 @@ do while(dq>epsln.and.n<nmax)
     end do
    end do
   end do
-  
+
   !η方向（スタガード格子でS^を求める）
   do j=0,JM-1 !S付き変数はスタガード格子点上の値（添え字i,j+1/2）
    do i=1,IM-1

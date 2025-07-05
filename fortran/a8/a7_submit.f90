@@ -62,25 +62,16 @@ contains
 
 !------格子生成------
 subroutine mesh
-  ! do i = 0,IM
-  !   do j = 0,JM
-  !     x(i,j) = dx*dble(i)
-  !   end do
-  ! end do
+  do i = 0,IM
+    do j = 0,JM
+      x(i,j) = dx*dble(i)
+    end do
+  end do
 
-  ! do j = 0,JM
-  !   a = H*(r_y-1.0d0)/(r_y**dble(JM)-1.0d0)
-  !   do i = 0,IM
-  !     y(i,j) = a*(r_y**dble(j)-1.0d0)/(r_y-1.0d0)
-  !   end do
-  ! end do
-  double precision :: b = 1.2d0,ix
   do j = 0,JM
+    a = H*(r_y-1.0d0)/(r_y**dble(JM)-1.0d0)
     do i = 0,IM
-      x(i,j) = dble(i)*dx !等間隔格子
-      a = (b+1.0d0)/(b-1.0d0)
-      ix = dble(j)/JM
-      y(i,j) = H*(a**ix-1.0d0)/(a-1.0d0) !不等間隔格子
+      y(i,j) = a*(r_y**dble(j)-1.0d0)/(r_y-1.0d0)
     end do
   end do
 end subroutine mesh
@@ -645,7 +636,7 @@ subroutine Save_data
   write (11,'(a)') 'veclen=4'
   write (11,'(a)') 'data=float'
   write (11,'(a)') 'field=irregular'
-  write (11,'(a)') 'label=u,v,p,t'
+  write (11,'(a)') 'label=u,v,p,T'
   write (11,'(a)') 'variable 1 file=a7.dat filetype=ascii skip=0 offset=2 stride=6'
   write (11,'(a)') 'variable 2 file=a7.dat filetype=ascii skip=0 offset=3 stride=6'
   write (11,'(a)') 'variable 3 file=a7.dat filetype=ascii skip=0 offset=4 stride=6'
