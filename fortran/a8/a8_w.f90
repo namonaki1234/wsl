@@ -61,18 +61,33 @@ contains
 
 !------格子生成------
 subroutine mesh
-  double precision :: x_45,y_50
-  double precision,parameter :: r_y = 1.1d0
-  x_45 = 45.0d0*H*(r_y-1.0d0)/(r_y**40.0d0-1.0d0) !等比数列初項（x方向）
-  y_50 = H*(r_y-1.0d0)/(r_y**dble(JM)-1.0d0) !等比数列初項（y方向）
-  do i = 0,IM
-    do j = 0,JM
-      if (i<=10) then
-        x(i,j) = dble(i)*50.0d0*H/dble(IM)/2.0d0
+!   double precision :: x_45,y_50
+!   double precision,parameter :: r_y = 1.1d0
+!   x_45 = 45.0d0*H*(r_y-1.0d0)/(r_y**40.0d0-1.0d0) !等比数列初項（x方向）
+!   y_50 = H*(r_y-1.0d0)/(r_y**dble(JM)-1.0d0) !等比数列初項（y方向）
+!   do i = 0,IM
+!     do j = 0,JM
+!       if (i<=10) then
+!         x(i,j) = dble(i)*50.0d0*H/dble(IM)/2.0d0
+!       else
+!         x(i,j) = x(5,j)+x_45*(r_y**dble(i-10)-1.0d0)/(r_y-1.0d0)
+!       end if
+!       y(i,j) = y_50*(r_y**dble(j)-1.0d0)/(r_y-1.0d0)
+!     end do
+!   end do
+  double precision :: dx,ix,iy
+  double precision,parameter :: a = 1.2d0,b = (a+1.0d0)/(a-1.0d0)
+  do j = 0,JM
+    do i = 0,IM
+      if (i<=5) then
+        dx = 50.0d0*H/50.0d0
+        x(i,j) = dble(i)*dx
       else
-        x(i,j) = x(5,j)+x_45*(r_y**dble(i-10)-1.0d0)/(r_y-1.0d0)
+        ix = dble(i)/IM
+        x(i,j) = x(5,j)+45.0d0*H/(b-1.0d0)*(b**((dble(i-5))/((dble(IM-5))))-1.0d0)
       end if
-      y(i,j) = y_50*(r_y**dble(j)-1.0d0)/(r_y-1.0d0)
+      iy = dble(j)/dble(JM)
+      y(i,j) = H*(b**iy-1.0d0)/(b-1.0d0)
     end do
   end do
 end subroutine mesh
@@ -842,6 +857,7 @@ subroutine save_y_plus
   double precision,dimension(0:IM,0:JM) :: y_plus,u_plus
   do j = 0,JM
     do i = 5,IM
+    ! do i = 10,IM
       tau_w = mu(i,0)*(u(i,1)-u(i,0))/(y(i,1)-y(i,0))
       u_tau = dsqrt(tau_w/rho(i,0))
       u_plus(i,j) = u(i,j)/u_tau
