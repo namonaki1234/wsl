@@ -1,2 +1,6 @@
 .env
 credentials.json
+grid.g
+phys.q
+fortran/itr_50000/phys.q
+fortran/itr_50000/grid.g
