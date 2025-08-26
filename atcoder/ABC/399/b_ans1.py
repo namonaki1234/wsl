@@ -1,6 +1,5 @@
 import io
 import sys
-from collections import defaultdict,deque,Counter
 
 # 下記に標準入力を記載
 _INPUT = """\
@@ -9,7 +8,6 @@ _INPUT = """\
 """
 sys.stdin = io.StringIO(_INPUT)
 # ここからコードを記載
-
 
 n = int(input())
 p = list(map(int, input().split()))
