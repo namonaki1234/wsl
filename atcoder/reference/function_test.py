@@ -2,7 +2,6 @@ from collections import defaultdict
 import io
 import pprint
 import sys
-import pandas as pd
 import math
 
 # 下記に標準入力を記載
@@ -53,7 +52,7 @@ print(n)
 set_n = set(n)
 print(set_n)
 
-for i,j in enumerate(l,start=1): 
+for i,j in enumerate(l,start=1):
     # startを入れることでlの最初のindexを0から2（任意の数）に変更できる
     print(i, j,end=' , ')
 

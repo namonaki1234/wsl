@@ -14,6 +14,9 @@ sys.stdin = io.StringIO(_INPUT)
 T = input()
 U = input()
 indices = [i for i in range(len(T)) if T[i] == "?"]
+#ord(c) = 文字 → 数字（Unicodeコードポイント）
+# chr(n) = 数字（Unicodeコードポイント） → 文字
+# 名前の由来は ord = ordinal（番号）, chr = character（文字）
 alphabets = [chr(ord("a") + i) for i in range(26)]
 for a in alphabets:
     for b in alphabets:
@@ -29,24 +32,3 @@ for a in alphabets:
                     print("Yes")
                     exit()
 print("No")
-     
-
-
-
-
-
-    
-
-
-    
-
-
-
-
-
-
-
-
-
-
-

@@ -1,7 +1,6 @@
 import io
 import sys
 from collections import defaultdict,deque,Counter
-import numpy as np
 from itertools import combinations
 
 # 下記に標準入力を記載

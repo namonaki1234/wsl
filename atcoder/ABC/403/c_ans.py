@@ -6,41 +6,36 @@ import math
 
 # 下記に標準入力を記載
 _INPUT = """\
-5 4
-2 1 2
-3 3 4 5
-3 1 2 5
-1 3
-1 3 2 5 4
-
+5 5 10
+2 2
+3 4 4
+1 1 1
+1 4 1
+1 4 2
+1 4 4
+1 2 4
+3 3 2
+3 5 4
+3 2 1
 
 """
 sys.stdin = io.StringIO(_INPUT)
 # ここからコードを記載
 
-n, m = map(int, input().split())
-
-a = []  # 各グループのリスト
-idx = [[] for _ in range(n)]  # 各数字がどのグループに含まれるか
-cnt = [0] * m
-
-for i in range(m):
-    parts = list(map(int, input().split()))
-    k = parts[0]
-    rest = parts[1:]
-    if len(rest) < k:
-        rest += list(map(int, input().split()))
-    cnt[i] = k
-    a.append([x - 1 for x in rest])  # 0-indexed
-    for e in a[-1]:
-        idx[e].append(i)
-
-ans = 0
-bs = list(map(lambda x: int(x) - 1, input().split()))
-for b in bs:
-    for id in idx[b]:
-        cnt[id] -= 1
-        if cnt[id] == 0:
-            ans += 1
-    print(ans)
-
+N, M, Q = map(int, input().split())
+#setを使うことで計算量O(QM)をO(QlogM)にする
+can_view = [set() for _ in range(N)]
+#fxで状態管理し、計算量O(1)にする
+can_view_all = [False] * N
+for _ in range(Q):
+    t, *q = map(int, input().split())
+    x = q[0] - 1
+    if t == 1:
+        y = q[1]
+        can_view[x].add(y)
+        # print(can_view)
+    elif t == 2:
+        can_view_all[x] = True
+    elif t == 3:
+        y = q[1]
+        print("Yes" if can_view_all[x] or y in can_view[x] else "No")
