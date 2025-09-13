@@ -18,6 +18,7 @@ ans = n + 1
 #　aの値をpositionつまり位置で管理する
 pos = [[] for _ in range(1_000_001)]
 
+# aの中でダブってるものを見つけたいから、a_index→a→posの写像を2次元配列posで再現し、そのpos内でlenが2以上のもの(a_index)の差+1が長さとなり、その最小をmin関数で求める
 for i in range(n):
     pos[a[i]].append(i)
 
