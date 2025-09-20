@@ -1,178 +1,139 @@
-program grid_generator
+program grid_airfoil_naca0018
   implicit none
+  integer, parameter :: dp = selected_real_kind(15, 307)
 
-  ! Parameters based on the provided drawings
-  double precision, parameter :: CHORD = 105.0d0
-  double precision, parameter :: WING_THICKNESS = 0.18d0
-  double precision, parameter :: WING_SPAN = 250.0d0
-  double precision, parameter :: PI = acos(-1.0d0)
+  ! --- 翼形状パラメータ ---
+  real(dp), parameter :: CHORD = 105.0_dp       ! 弦長 [mm]
+  real(dp), parameter :: THICKNESS = 0.18_dp    ! 翼厚比 NACA0018
+  real(dp), parameter :: SPAN = 250.0_dp        ! スパン長 [mm]
+  real(dp), parameter :: PI = acos(-1.0_dp)
 
-  ! Grid generation parameters
-  integer, parameter :: NI_UPSTREAM = 51
-  integer, parameter :: NJ_UPSTREAM = 51
-  integer, parameter :: NK_UPSTREAM = 51
-  
-  integer, parameter :: NI_AIRFOIL = 101
-  integer, parameter :: NJ_AIRFOIL = 51
-  integer, parameter :: NK_AIRFOIL = 51
-  
-  integer, parameter :: NI_DOWNSTREAM = 101
-  integer, parameter :: NJ_DOWNSTREAM = 51
-  integer, parameter :: NK_DOWNSTREAM = 51
-
-  ! Multiblock data
+  ! --- 格子分割数 ---
+  integer, parameter :: NI_UP = 51,  NJ_UP = 51,  NK_UP = 51
+  integer, parameter :: NI_AF = 101, NJ_AF = 51, NK_AF = 51
+  integer, parameter :: NI_DN = 101, NJ_DN = 51, NK_DN = 51
   integer, parameter :: NBLOCKS = 3
+
+  ! --- 配列 ---
+  real(dp), allocatable :: x_up(:,:,:), y_up(:,:,:), z_up(:,:,:)
+  real(dp), allocatable :: x_af(:,:,:), y_af(:,:,:), z_af(:,:,:)
+  real(dp), allocatable :: x_dn(:,:,:), y_dn(:,:,:), z_dn(:,:,:)
+  real(dp), allocatable :: wing_x(:), wing_y(:)
   integer :: ni(NBLOCKS), nj(NBLOCKS), nk(NBLOCKS)
-  
-  ! Variables for grid coordinates
-  double precision, allocatable :: x_up(:,:,:), y_up(:,:,:), z_up(:,:,:)
-  double precision, allocatable :: x_af(:,:,:), y_af(:,:,:), z_af(:,:,:)
-  double precision, allocatable :: x_down(:,:,:), y_down(:,:,:), z_down(:,:,:)
-  
-  double precision, allocatable :: wing_x(:), wing_y(:)
-  integer :: i, j, k
+  integer :: i,j,k
 
-  ! Set block dimensions
-  ni(1) = NI_UPSTREAM; nj(1) = NJ_UPSTREAM; nk(1) = NK_UPSTREAM
-  ni(2) = NI_AIRFOIL; nj(2) = NJ_AIRFOIL; nk(2) = NK_AIRFOIL
-  ni(3) = NI_DOWNSTREAM; nj(3) = NJ_DOWNSTREAM; nk(3) = NK_DOWNSTREAM
+  ! --- ブロック寸法 ---
+  ni(1)=NI_UP; nj(1)=NJ_UP; nk(1)=NK_UP
+  ni(2)=NI_AF; nj(2)=NJ_AF; nk(2)=NK_AF
+  ni(3)=NI_DN; nj(3)=NJ_DN; nk(3)=NK_DN
 
-  ! Allocate arrays for each block
-  allocate(x_up(ni(1), nj(1), nk(1)), y_up(ni(1), nj(1), nk(1)), z_up(ni(1), nj(1), nk(1)))
-  allocate(x_af(ni(2), nj(2), nk(2)), y_af(ni(2), nj(2), nk(2)), z_af(ni(2), nj(2), nk(2)))
-  allocate(x_down(ni(3), nj(3), nk(3)), y_down(ni(3), nj(3), nk(3)), z_down(ni(3), nj(3), nk(3)))
+  ! --- メモリ確保 ---
+  allocate(x_up(NI_UP,NJ_UP,NK_UP), y_up(NI_UP,NJ_UP,NK_UP), z_up(NI_UP,NJ_UP,NK_UP))
+  allocate(x_af(NI_AF,NJ_AF,NK_AF), y_af(NI_AF,NJ_AF,NK_AF), z_af(NI_AF,NJ_AF,NK_AF))
+  allocate(x_dn(NI_DN,NJ_DN,NK_DN), y_dn(NI_DN,NJ_DN,NK_DN), z_dn(NI_DN,NJ_DN,NK_DN))
+  allocate(wing_x(NI_AF), wing_y(NI_AF))
 
-  allocate(wing_x(ni(2)), wing_y(ni(2)))
+  ! --- 格子生成 ---
+  call generate_h_up(CHORD, NI_UP,NJ_UP,NK_UP, x_up,y_up,z_up)
+  call generate_naca0018(CHORD, THICKNESS, wing_x, wing_y)
+  call generate_co_grid(wing_x, wing_y, NI_AF,NJ_AF,NK_AF, x_af,y_af,z_af)
+  call generate_h_dn(CHORD, NI_DN,NJ_DN,NK_DN, x_dn,y_dn,z_dn)
 
-  ! --- Generate grid for each block ---
+  ! --- 出力 (Plot3D) ---
+  open(10,file="airfoil_grid.g",status="replace",form="unformatted")
+  write(10) NBLOCKS
+  write(10) (ni(i),nj(i),nk(i), i=1,NBLOCKS)
 
-  ! Block 1: Upstream H-grid
-  call generate_h_grid_upstream(CHORD, ni(1), nj(1), nk(1), x_up, y_up, z_up)
+  write(10) (((real(x_up(i,j,k),4), i=1,NI_UP), j=1,NJ_UP), k=1,NK_UP)
+  write(10) (((real(y_up(i,j,k),4), i=1,NI_UP), j=1,NJ_UP), k=1,NK_UP)
+  write(10) (((real(z_up(i,j,k),4), i=1,NI_UP), j=1,NJ_UP), k=1,NK_UP)
 
-  ! Block 2: Airfoil C-O grid
-  call generate_naca0018(CHORD, WING_THICKNESS, wing_x, wing_y)
-  call generate_co_grid(wing_x, wing_y, ni(2), nj(2), nk(2), x_af, y_af, z_af)
+  write(10) (((real(x_af(i,j,k),4), i=1,NI_AF), j=1,NJ_AF), k=1,NK_AF)
+  write(10) (((real(y_af(i,j,k),4), i=1,NI_AF), j=1,NJ_AF), k=1,NK_AF)
+  write(10) (((real(z_af(i,j,k),4), i=1,NI_AF), j=1,NJ_AF), k=1,NK_AF)
 
-  ! Block 3: Downstream H-grid
-  call generate_h_grid_downstream(CHORD, ni(3), nj(3), nk(3), x_down, y_down, z_down)
+  write(10) (((real(x_dn(i,j,k),4), i=1,NI_DN), j=1,NJ_DN), k=1,NK_DN)
+  write(10) (((real(y_dn(i,j,k),4), i=1,NI_DN), j=1,NJ_DN), k=1,NK_DN)
+  write(10) (((real(z_dn(i,j,k),4), i=1,NI_DN), j=1,NJ_DN), k=1,NK_DN)
+  close(10)
 
-  ! --- Write Plot3D multiblock file (.g) ---
-  ! Plot3D形式で互換性のある単精度で書き出す
-  open(unit=7, file='airfoil_grid.g', status='replace', form='unformatted')
-
-  ! Header: Number of blocks
-  write(7) NBLOCKS
-
-  ! Header: Dimensions of each block, written as a single record
-  write(7) ni(1), nj(1), nk(1), ni(2), nj(2), nk(2), ni(3), nj(3), nk(3)
-  
-  ! Data: Write coordinates for each block in a multiblock-specific order
-  write(7) (((REAL(x_up(i,j,k),4), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
-  write(7) (((REAL(y_up(i,j,k),4), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
-  write(7) (((REAL(z_up(i,j,k),4), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
-            
-  write(7) (((REAL(x_af(i,j,k),4), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
-  write(7) (((REAL(y_af(i,j,k),4), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
-  write(7) (((REAL(z_af(i,j,k),4), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
-            
-  write(7) (((REAL(x_down(i,j,k),4), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
-  write(7) (((REAL(y_down(i,j,k),4), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
-  write(7) (((REAL(z_down(i,j,k),4), i=1,nj(3)), j=1,nj(3)), k=1,nk(3))
-  
-  close(7)
-
-  print *, 'Multiblock grid generation complete. Output written to airfoil_grid.g'
+  print *, "Grid written to airfoil_grid.g"
 
 contains
 
-  subroutine generate_naca0018(chord, t, x, y)
-    double precision, intent(in) :: chord, t
-    double precision, intent(out) :: x(:), y(:)
-    integer :: n, i
-    double precision :: xt, yt, dx
+  !--- NACA0018 翼型生成 ---
+    subroutine generate_naca0018(chord, thick, x, y)
+    real(dp), intent(in) :: chord, thick
+    real(dp), intent(out) :: x(:), y(:)
+    integer :: i, n
+    real(dp) :: xt, yt, dx
 
     n = size(x)
-    dx = chord / (dble(n) - 1.0d0)
+    dx = chord / (n - 1)
 
     do i = 1, n
-      xt = dx * (dble(i) - 1.0d0)
-      yt = 5.0d0 * t * chord * (0.2969d0*dsqrt(xt/chord) - 0.1260d0*(xt/chord) - &
-                                 0.3516d0*(xt/chord)**2 + 0.2843d0*(xt/chord)**3 - &
-                                 0.1015d0*(xt/chord)**4)
-      x(i) = xt
-      y(i) = yt
+        xt = dx * (i - 1)
+        yt = 5*thick*chord * ( 0.2969*sqrt(xt/chord) - 0.1260*(xt/chord) - &
+                            0.3516*(xt/chord)**2 + 0.2843*(xt/chord)**3 - &
+                            0.1015*(xt/chord)**4 )
+        x(i) = xt
+        y(i) = yt
     end do
+    end subroutine generate_naca0018
 
-  end subroutine generate_naca0018
+  !--- 上流 H 格子 ---
+  subroutine generate_h_up(chord,ni,nj,nk,xh,yh,zh)
+    real(dp), intent(in) :: chord
+    integer,intent(in)::ni,nj,nk
+    real(dp),intent(out)::xh(ni,nj,nk),yh(ni,nj,nk),zh(ni,nj,nk)
+    real(dp)::dx,dy,dz
+    integer::i,j,k
+    dx = -chord/(ni-1)
+    dy = chord/(nj-1)
+    dz = SPAN/(nk-1)
+    do k=1,nk; do j=1,nj; do i=1,ni
+      xh(i,j,k)=-chord + dx*(i-1)
+      yh(i,j,k)=-0.5*chord + dy*(j-1)
+      zh(i,j,k)=dz*(k-1)
+    end do; end do; end do
+  end subroutine
 
-  subroutine generate_h_grid_upstream(chord, ni, nj, nk, x_h, y_h, z_h)
-    double precision, intent(in) :: chord
-    integer, intent(in) :: ni, nj, nk
-    double precision, intent(inout) :: x_h(:,:,:), y_h(:,:,:), z_h(:,:,:)
-    integer :: i, j, k
-    double precision :: dx, dy, dz
+  !--- 下流 H 格子 ---
+  subroutine generate_h_dn(chord,ni,nj,nk,xh,yh,zh)
+    real(dp), intent(in) :: chord
+    integer,intent(in)::ni,nj,nk
+    real(dp),intent(out)::xh(ni,nj,nk),yh(ni,nj,nk),zh(ni,nj,nk)
+    real(dp)::dx,dy,dz
+    integer::i,j,k
+    dx = 4*chord/(ni-1)
+    dy = chord/(nj-1)
+    dz = SPAN/(nk-1)
+    do k=1,nk; do j=1,nj; do i=1,ni
+      xh(i,j,k)=chord + dx*(i-1)
+      yh(i,j,k)=-0.5*chord + dy*(j-1)
+      zh(i,j,k)=dz*(k-1)
+    end do; end do; end do
+  end subroutine
 
-    dx = (-1.0d0 * chord) / (dble(ni) - 1.0d0)
-    dy = CHORD / (dble(nj) - 1.0d0)
-    dz = WING_SPAN / (dble(nk) - 1.0d0)
-
-    do k = 1, nk
-      do j = 1, nj
-        do i = 1, ni
-          x_h(i, j, k) = (-1.0d0 * chord) + dx * (dble(i) - 1.0d0)
-          y_h(i, j, k) = (-0.5d0 * CHORD) + dy * (dble(j) - 1.0d0)
-          z_h(i, j, k) = dz * (dble(k) - 1.0d0)
+  !--- 翼周り C-O 格子 ---
+  subroutine generate_co_grid(wx,wy,ni,nj,nk,xc,yc,zc)
+    real(dp),intent(in)::wx(:),wy(:)
+    integer,intent(in)::ni,nj,nk
+    real(dp),intent(out)::xc(ni,nj,nk),yc(ni,nj,nk),zc(ni,nj,nk)
+    real(dp)::r_out, r_in, dz
+    integer::i,j,k
+    r_out = 5*CHORD
+    dz = SPAN/(nk-1)
+    do k=1,nk
+      do j=1,nj
+        do i=1,ni
+          r_in = sqrt(wx(i)**2 + wy(i)**2)
+          xc(i,j,k) = wx(i) + (r_out-r_in)*real(j-1)/real(nj-1)
+          yc(i,j,k) = wy(i) * (1.0 - real(j-1)/real(nj-1))
+          zc(i,j,k) = dz*(k-1)
         end do
       end do
     end do
-  end subroutine generate_h_grid_upstream
+  end subroutine
 
-  subroutine generate_h_grid_downstream(chord, ni, nj, nk, x_h, y_h, z_h)
-    double precision, intent(in) :: chord
-    integer, intent(in) :: ni, nj, nk
-    double precision, intent(inout) :: x_h(:,:,:), y_h(:,:,:), z_h(:,:,:)
-    integer :: i, j, k
-    double precision :: dx, dy, dz
-
-    dx = (4.0d0 * chord) / (dble(ni) - 1.0d0)
-    dy = CHORD / (dble(nj) - 1.0d0)
-    dz = WING_SPAN / (dble(nk) - 1.0d0)
-
-    do k = 1, nk
-      do j = 1, nj
-        do i = 1, ni
-          x_h(i, j, k) = chord + dx * (dble(i) - 1.0d0)
-          y_h(i, j, k) = (-0.5d0 * CHORD) + dy * (dble(j) - 1.0d0)
-          z_h(i, j, k) = dz * (dble(k) - 1.0d0)
-        end do
-      end do
-    end do
-  end subroutine generate_h_grid_downstream
-
-  subroutine generate_co_grid(wing_x, wing_y, ni, nj, nk, x_co, y_co, z_co)
-    double precision, intent(in) :: wing_x(:), wing_y(:)
-    integer, intent(in) :: ni, nj, nk
-    double precision, intent(inout) :: x_co(:,:,:), y_co(:,:,:), z_co(:,:,:)
-    double precision :: r_outer, r_inner, ratio
-    integer :: i, j, k
-    double precision :: dy_dist, dz
-
-    r_outer = 1.5d0 * CHORD
-    ratio = 1.05d0
-    dy_dist = 0.5d0 * CHORD
-
-    dz = WING_SPAN / (dble(nk) - 1.0d0)
-
-    do k = 1, nk
-      do j = 1, nj
-        do i = 1, ni
-          r_inner = dsqrt(wing_x(i)**2 + wing_y(i)**2)
-          x_co(i,j,k) = wing_x(i) + (r_outer - r_inner) * (dble(j-1)/dble(nj-1))
-          y_co(i,j,k) = wing_y(i) + (dy_dist - wing_y(i)) * (dble(j-1)/dble(nj-1))
-          z_co(i,j,k) = dz * (dble(k) - 1.0d0)
-        end do
-      end do
-    end do
-  end subroutine generate_co_grid
-
-end program grid_generator
+end program grid_airfoil_naca0018
