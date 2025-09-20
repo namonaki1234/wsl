@@ -62,8 +62,8 @@ program grid_generator
   ! Header: Number of blocks
   write(7) NBLOCKS
 
-  ! Header: Dimensions of each block
-  write(7) ni, nj, nk
+  ! Header: Dimensions of each block, written as a single record
+  write(7) ni(1), nj(1), nk(1), ni(2), nj(2), nk(2), ni(3), nj(3), nk(3)
   
   ! Data: Write coordinates for each block in a multiblock-specific order
   write(7) (((REAL(x_up(i,j,k),4), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
