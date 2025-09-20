@@ -2,23 +2,23 @@ program grid_generator
   implicit none
 
   ! Parameters based on the provided drawings
-  double precision, parameter :: CHORD = 105.0d0  ! 翼の弦長 [mm]
+  double precision, parameter :: CHORD = 105.0d0  ! 翼の弦長 [mm]
   double precision, parameter :: WING_THICKNESS = 0.18d0 ! NACA0018翼厚比
   double precision, parameter :: WING_SPAN = 250.0d0 ! 翼のスパン長 [mm]
   double precision, parameter :: PI = acos(-1.0d0)
 
   ! Grid generation parameters
-  integer, parameter :: NI_UPSTREAM = 51   ! 上流ブロックのi方向格子点数
-  integer, parameter :: NJ_UPSTREAM = 51   ! 上流ブロックのj方向格子点数
-  integer, parameter :: NK_UPSTREAM = 51   ! 上流ブロックのk方向格子点数
+  integer, parameter :: NI_UPSTREAM = 51   ! 上流ブロックのi方向格子点数
+  integer, parameter :: NJ_UPSTREAM = 51   ! 上流ブロックのj方向格子点数
+  integer, parameter :: NK_UPSTREAM = 51   ! 上流ブロックのk方向格子点数
   
-  integer, parameter :: NI_AIRFOIL = 101   ! 翼周りブロックのi方向格子点数
-  integer, parameter :: NJ_AIRFOIL = 51    ! 翼周りブロックのj方向格子点数
-  integer, parameter :: NK_AIRFOIL = 51    ! 翼周りブロックのk方向格子点数
+  integer, parameter :: NI_AIRFOIL = 101   ! 翼周りブロックのi方向格子点数
+  integer, parameter :: NJ_AIRFOIL = 51    ! 翼周りブロックのj方向格子点数
+  integer, parameter :: NK_AIRFOIL = 51    ! 翼周りブロックのk方向格子点数
   
   integer, parameter :: NI_DOWNSTREAM = 101 ! 下流ブロックのi方向格子点数
-  integer, parameter :: NJ_DOWNSTREAM = 51  ! 下流ブロックのj方向格子点数
-  integer, parameter :: NK_DOWNSTREAM = 51  ! 下流ブロックのk方向格子点数
+  integer, parameter :: NJ_DOWNSTREAM = 51  ! 下流ブロックのj方向格子点数
+  integer, parameter :: NK_DOWNSTREAM = 51  ! 下流ブロックのk方向格子点数
 
   ! Multiblock data
   integer, parameter :: NBLOCKS = 3
