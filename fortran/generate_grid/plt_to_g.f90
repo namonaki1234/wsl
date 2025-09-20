@@ -15,8 +15,6 @@ program plt_to_g
   read(10, '(a)') line  ! ZONE
 
   ! ZONE行からサイズを読み取る
-  ! この行は、ZONE I=..., J=..., K=... の形式を想定しています
-  ! 内部ファイル機能と文字列操作を組み合わせて、より堅牢な読み取りを実現
   read(line, *)
   read(line(index(line, 'I=')+2:), *) ni
   read(line(index(line, 'J=')+2:), *) nj
@@ -24,20 +22,59 @@ program plt_to_g
 
   print *, 'Detected grid size from .plt file: I=', ni, ', J=', nj, ', K=', nk
 
-  ! --- 2. .g ファイルへの変換と書き込み ---
+  ! --- 2. Plot3D形式（.g）への変換と書き込み ---
+  ! Plot3Dグリッドファイルは非フォーマット（unformatted）でなければならない
   open(unit=7, file='airfoil_grid.g', status='replace', form='unformatted')
 
-  ! .g ファイル形式に合わせてヘッダー情報を書き込む
+  ! Plot3Dヘッダー情報を書き込む
+  ! ブロック数
   nblocks = 1
   write(7) nblocks
+  
+  ! 各ブロックのni, nj, nkを書き込む
   write(7) ni, nj, nk
+  
+  ! 座標データを読み込み、Plot3D形式で書き込む
+  ! Plot3DはまずX座標をすべて、次にY座標、最後にZ座標を書き込む
+  
+  ! X座標を書き込む
+  do k = 1, nk
+    do j = 1, nj
+      do i = 1, ni
+        read(10, *) val_x, val_y, val_z ! この行は、x,y,zのセットとして読み込まれる
+        write(7) val_x
+      end do
+    end do
+  end do
+  
+  rewind(10)
+  ! ヘッダー行を再読み込み
+  read(10, '(a)') line
+  read(10, '(a)') line
+  read(10, '(a)') line
 
-  ! 座標データを読み込み、すぐに.gファイルに書き込む
+  ! Y座標を書き込む
   do k = 1, nk
     do j = 1, nj
       do i = 1, ni
         read(10, *) val_x, val_y, val_z
-        write(7) val_x, val_y, val_z
+        write(7) val_y
+      end do
+    end do
+  end do
+  
+  rewind(10)
+  ! ヘッダー行を再読み込み
+  read(10, '(a)') line
+  read(10, '(a)') line
+  read(10, '(a)') line
+
+  ! Z座標を書き込む
+  do k = 1, nk
+    do j = 1, nj
+      do i = 1, ni
+        read(10, *) val_x, val_y, val_z
+        write(7) val_z
       end do
     end do
   end do
