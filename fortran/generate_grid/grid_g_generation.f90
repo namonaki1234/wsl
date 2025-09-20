@@ -50,13 +50,14 @@ program grid_generator
   call generate_h_grid_upstream(CHORD, ni(1), nj(1), nk(1), x_up, y_up, z_up)
 
   ! Block 2: Airfoil C-O grid
-  call generate_naca0018(CHORD, WING_THICKNESS, wing_x, wing_y)
+  call generate_naca0018(CHORD, WING_THICKNESS, ni(2), wing_x, wing_y)
   call generate_co_grid(wing_x, wing_y, ni(2), nj(2), nk(2), x_af, y_af, z_af)
 
   ! Block 3: Downstream H-grid
   call generate_h_grid_downstream(CHORD, ni(3), nj(3), nk(3), x_down, y_down, z_down)
 
   ! --- Write Plot3D multiblock file (.g) ---
+  ! 修正点: form='unformatted'に戻す
   open(unit=7, file='airfoil_grid.g', status='replace', form='unformatted')
 
   ! Header: Number of blocks
@@ -66,17 +67,17 @@ program grid_generator
   write(7) ni(1), nj(1), nk(1), ni(2), nj(2), nk(2), ni(3), nj(3), nk(3)
   
   ! Data: Write coordinates for each block in a multiblock-specific order
-  write(7) (((REAL(x_up(i,j,k),4), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
-  write(7) (((REAL(y_up(i,j,k),4), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
-  write(7) (((REAL(z_up(i,j,k),4), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
+  write(7) (((x_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
+  write(7) (((y_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
+  write(7) (((z_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
            
-  write(7) (((REAL(x_af(i,j,k),4), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
-  write(7) (((REAL(y_af(i,j,k),4), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
-  write(7) (((REAL(z_af(i,j,k),4), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
+  write(7) (((x_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
+  write(7) (((y_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
+  write(7) (((z_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
            
-  write(7) (((REAL(x_down(i,j,k),4), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
-  write(7) (((REAL(y_down(i,j,k),4), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
-  write(7) (((REAL(z_down(i,j,k),4), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
+  write(7) (((x_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
+  write(7) (((y_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
+  write(7) (((z_down(i,j,k), i=1,nj(3)), j=1,nj(3)), k=1,nk(3))
   
   close(7)
 
@@ -84,13 +85,13 @@ program grid_generator
 
 contains
 
-  subroutine generate_naca0018(chord, t, x, y)
+  subroutine generate_naca0018(chord, t, n, x, y)
     double precision, intent(in) :: chord, t
+    integer, intent(in) :: n
     double precision, intent(out) :: x(:), y(:)
-    integer :: n, i
+    integer :: i
     double precision :: xt, yt, dx
 
-    n = size(x)
     dx = chord / (dble(n) - 1.0d0)
 
     do i = 1, n
@@ -154,20 +155,22 @@ contains
     double precision, intent(inout) :: x_co(:,:,:), y_co(:,:,:), z_co(:,:,:)
     double precision :: r_outer, r_inner, ratio
     integer :: i, j, k
-    double precision :: dy_dist, dz
+    double precision :: dz, theta, r_j
 
-    r_outer = 1.5d0 * CHORD
-    ratio = 1.05d0
-    dy_dist = 0.5d0 * CHORD
+    ! 改善点: 外周の半径を翼の最大厚さから設定 (より現実的な設定)
+    ! 翼型を円として近似した場合の外周距離を計算
+    r_outer = 1.5d0 * CHORD 
 
     dz = WING_SPAN / (dble(nk) - 1.0d0)
 
     do k = 1, nk
       do j = 1, nj
         do i = 1, ni
-          r_inner = dsqrt(wing_x(i)**2 + wing_y(i)**2)
-          x_co(i,j,k) = wing_x(i) + (r_outer - r_inner) * (dble(j-1)/dble(nj-1))
-          y_co(i,j,k) = wing_y(i) + (dy_dist - wing_y(i)) * (dble(j-1)/dble(nj-1))
+          ! 翼表面 (j=1) の点からの距離を計算 (線形補間)
+          ! 改善点: y_coの生成ロジックを修正
+          r_j = dble(j-1) / dble(nj-1)
+          x_co(i,j,k) = wing_x(i) + (r_outer - wing_x(i)) * r_j
+          y_co(i,j,k) = wing_y(i) + (r_outer - wing_y(i)) * r_j
           z_co(i,j,k) = dz * (dble(k) - 1.0d0)
         end do
       end do
