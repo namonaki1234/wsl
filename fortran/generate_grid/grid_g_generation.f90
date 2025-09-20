@@ -62,7 +62,7 @@ program grid_airfoil_naca0018
 contains
 
   !--- NACA0018 翼型生成 ---
-    subroutine generate_naca0018(chord, thick, x, y)
+  subroutine generate_naca0018(chord, thick, x, y)
     real(dp), intent(in) :: chord, thick
     real(dp), intent(out) :: x(:), y(:)
     integer :: n, i, half
@@ -92,7 +92,7 @@ contains
         x(half+i) = xt
         y(half+i) = -yt
     end do
-    end subroutine generate_naca0018
+  end subroutine generate_naca0018
 
   !--- 上流 H 格子 ---
   subroutine generate_h_up(chord,ni,nj,nk,xh,yh,zh)
@@ -129,23 +129,28 @@ contains
   end subroutine
 
   !--- 翼周り C-O 格子 ---
-  subroutine generate_co_grid(wx,wy,ni,nj,nk,xc,yc,zc)
-    real(dp),intent(in)::wx(:),wy(:)
-    integer,intent(in)::ni,nj,nk
-    real(dp),intent(out)::xc(ni,nj,nk),yc(ni,nj,nk),zc(ni,nj,nk)
-    real(dp)::r_out, r_in, dz
-    integer::i,j,k
-    r_out = 5*CHORD
-    dz = SPAN/(nk-1)
-    do k=1,nk
-      do j=1,nj
-        do i=1,ni
-          r_in = sqrt(wx(i)**2 + wy(i)**2)
-          xc(i,j,k) = wx(i) + (r_out-r_in)*real(j-1)/real(nj-1)
-          yc(i,j,k) = wy(i) * (1.0 - real(j-1)/real(nj-1))
-          zc(i,j,k) = dz*(k-1)
+  subroutine generate_co_grid(wx, wy, ni, nj, nk, xc, yc, zc)
+    real(dp), intent(in) :: wx(:), wy(:)
+    integer, intent(in) :: ni, nj, nk
+    real(dp), intent(out) :: xc(ni,nj,nk), yc(ni,nj,nk), zc(ni,nj,nk)
+    real(dp) :: r_out, theta, eta, r_in, dz
+    integer :: i, j, k
+
+    r_out = 5.0_dp * CHORD
+    dz = SPAN / real(nk-1,dp)
+
+    do k = 1, nk
+        do j = 1, nj
+        eta = real(j-1,dp)/real(nj-1,dp)   ! 0→1
+        do i = 1, ni
+            theta = atan2(wy(i), wx(i))
+            r_in  = sqrt(wx(i)**2 + wy(i)**2)
+            ! 内側: 翼表面、外側: 半径 r_out の円周
+            xc(i,j,k) = (1.0-eta)*wx(i) + eta*r_out*cos(theta)
+            yc(i,j,k) = (1.0-eta)*wy(i) + eta*r_out*sin(theta)
+            zc(i,j,k) = dz * real(k-1,dp)
         end do
-      end do
+        end do
     end do
   end subroutine
 
