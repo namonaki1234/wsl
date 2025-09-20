@@ -2,23 +2,23 @@ program grid_generator
   implicit none
 
   ! Parameters based on the provided drawings
-  double precision, parameter :: CHORD = 105.0d0  ! 翼の弦長 [mm]
+  double precision, parameter :: CHORD = 105.0d0  ! 翼の弦長 [mm]
   double precision, parameter :: WING_THICKNESS = 0.18d0 ! NACA0018翼厚比
   double precision, parameter :: WING_SPAN = 250.0d0 ! 翼のスパン長 [mm]
   double precision, parameter :: PI = acos(-1.0d0)
 
   ! Grid generation parameters
-  integer, parameter :: NI_UPSTREAM = 51   ! 上流ブロックのi方向格子点数
-  integer, parameter :: NJ_UPSTREAM = 51   ! 上流ブロックのj方向格子点数
-  integer, parameter :: NK_UPSTREAM = 51   ! 上流ブロックのk方向格子点数
+  integer, parameter :: NI_UPSTREAM = 51   ! 上流ブロックのi方向格子点数
+  integer, parameter :: NJ_UPSTREAM = 51   ! 上流ブロックのj方向格子点数
+  integer, parameter :: NK_UPSTREAM = 51   ! 上流ブロックのk方向格子点数
   
-  integer, parameter :: NI_AIRFOIL = 101   ! 翼周りブロックのi方向格子点数
-  integer, parameter :: NJ_AIRFOIL = 51    ! 翼周りブロックのj方向格子点数
-  integer, parameter :: NK_AIRFOIL = 51    ! 翼周りブロックのk方向格子点数
+  integer, parameter :: NI_AIRFOIL = 101   ! 翼周りブロックのi方向格子点数
+  integer, parameter :: NJ_AIRFOIL = 51    ! 翼周りブロックのj方向格子点数
+  integer, parameter :: NK_AIRFOIL = 51    ! 翼周りブロックのk方向格子点数
   
   integer, parameter :: NI_DOWNSTREAM = 101 ! 下流ブロックのi方向格子点数
-  integer, parameter :: NJ_DOWNSTREAM = 51  ! 下流ブロックのj方向格子点数
-  integer, parameter :: NK_DOWNSTREAM = 51  ! 下流ブロックのk方向格子点数
+  integer, parameter :: NJ_DOWNSTREAM = 51  ! 下流ブロックのj方向格子点数
+  integer, parameter :: NK_DOWNSTREAM = 51  ! 下流ブロックのk方向格子点数
 
   ! Multiblock data
   integer, parameter :: NBLOCKS = 3
@@ -57,27 +57,20 @@ program grid_generator
   call generate_h_grid_downstream(CHORD, ni(3), nj(3), nk(3), x_down, y_down, z_down)
 
   ! --- Write Plot3D multiblock file (.g) ---
-  ! 修正点: form='unformatted'に戻す
+  ! 修正点: 全データを単一のWRITE文で書き込む
   open(unit=7, file='airfoil_grid.g', status='replace', form='unformatted')
 
-  ! Header: Number of blocks
-  write(7) NBLOCKS
-
-  ! Header: Dimensions of each block, written as a single record
-  write(7) ni(1), nj(1), nk(1), ni(2), nj(2), nk(2), ni(3), nj(3), nk(3)
-  
-  ! Data: Write coordinates for each block in a multiblock-specific order
-  write(7) (((x_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
-  write(7) (((y_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
-  write(7) (((z_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
-           
-  write(7) (((x_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
-  write(7) (((y_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
-  write(7) (((z_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
-           
-  write(7) (((x_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
-  write(7) (((y_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
-  write(7) (((z_down(i,j,k), i=1,nj(3)), j=1,nj(3)), k=1,nk(3))
+  write(7) NBLOCKS, &
+           ni(1), nj(1), nk(1), ni(2), nj(2), nk(2), ni(3), nj(3), nk(3), &
+           (((x_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1)), &
+           (((y_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1)), &
+           (((z_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1)), &
+           (((x_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2)), &
+           (((y_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2)), &
+           (((z_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2)), &
+           (((x_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3)), &
+           (((y_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3)), &
+           (((z_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
   
   close(7)
 
@@ -97,8 +90,8 @@ contains
     do i = 1, n
       xt = dx * (dble(i) - 1.0d0)
       yt = 5.0d0 * t * chord * (0.2969d0*dsqrt(xt/chord) - 0.1260d0*(xt/chord) - &
-                                0.3516d0*(xt/chord)**2 + 0.2843d0*(xt/chord)**3 - &
-                                0.1015d0*(xt/chord)**4)
+                                 0.3516d0*(xt/chord)**2 + 0.2843d0*(xt/chord)**3 - &
+                                 0.1015d0*(xt/chord)**4)
       x(i) = xt
       y(i) = yt
     end do
@@ -157,8 +150,6 @@ contains
     integer :: i, j, k
     double precision :: dz, theta, r_j
 
-    ! 改善点: 外周の半径を翼の最大厚さから設定 (より現実的な設定)
-    ! 翼型を円として近似した場合の外周距離を計算
     r_outer = 1.5d0 * CHORD 
 
     dz = WING_SPAN / (dble(nk) - 1.0d0)
@@ -166,8 +157,6 @@ contains
     do k = 1, nk
       do j = 1, nj
         do i = 1, ni
-          ! 翼表面 (j=1) の点からの距離を計算 (線形補間)
-          ! 改善点: y_coの生成ロジックを修正
           r_j = dble(j-1) / dble(nj-1)
           x_co(i,j,k) = wing_x(i) + (r_outer - wing_x(i)) * r_j
           y_co(i,j,k) = wing_y(i) + (r_outer - wing_y(i)) * r_j
