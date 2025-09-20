@@ -66,17 +66,17 @@ program grid_generator
   write(7) ni, nj, nk
   
   ! Data: Write coordinates for each block in a multiblock-specific order
-  write(7) (((x_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1)), &
-           (((y_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1)), &
-           (((z_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
+  write(7) (((x_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
+  write(7) (((y_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
+  write(7) (((z_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
            
-  write(7) (((x_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2)), &
-           (((y_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2)), &
-           (((z_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
+  write(7) (((x_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
+  write(7) (((y_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
+  write(7) (((z_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
            
-  write(7) (((x_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3)), &
-           (((y_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3)), &
-           (((z_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
+  write(7) (((x_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
+  write(7) (((y_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
+  write(7) (((z_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
   
   close(7)
 
