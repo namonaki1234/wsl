@@ -65,19 +65,32 @@ contains
     subroutine generate_naca0018(chord, thick, x, y)
     real(dp), intent(in) :: chord, thick
     real(dp), intent(out) :: x(:), y(:)
-    integer :: i, n
+    integer :: n, i, half
     real(dp) :: xt, yt, dx
 
     n = size(x)
-    dx = chord / (n - 1)
+    half = n/2        ! 上面と下面に分割
 
-    do i = 1, n
+    dx = chord / (half - 1)
+
+    ! 上面 (前縁→後縁)
+    do i = 1, half
         xt = dx * (i - 1)
         yt = 5*thick*chord * ( 0.2969*sqrt(xt/chord) - 0.1260*(xt/chord) - &
                             0.3516*(xt/chord)**2 + 0.2843*(xt/chord)**3 - &
                             0.1015*(xt/chord)**4 )
         x(i) = xt
-        y(i) = yt
+        y(i) =  yt
+    end do
+
+    ! 下面 (後縁→前縁)
+    do i = 1, half
+        xt = dx * (half - i)
+        yt = 5*thick*chord * ( 0.2969*sqrt(xt/chord) - 0.1260*(xt/chord) - &
+                            0.3516*(xt/chord)**2 + 0.2843*(xt/chord)**3 - &
+                            0.1015*(xt/chord)**4 )
+        x(half+i) = xt
+        y(half+i) = -yt
     end do
     end subroutine generate_naca0018
 
