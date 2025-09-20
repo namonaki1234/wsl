@@ -3,83 +3,63 @@ program plt_to_g
 
   character(len=256) :: line
   integer :: ni, nj, nk, nblocks
-  double precision :: val_x, val_y, val_z
   integer :: i, j, k
   
-  ! --- 1. .plt ファイルの読み込み（ヘッダー情報とグリッドサイズ） ---
+  ! Use allocatable arrays to store all data in memory
+  double precision, allocatable :: x_coords(:,:,:), y_coords(:,:,:), z_coords(:,:,:)
+  double precision :: val_x, val_y, val_z
+
+  ! --- 1. Read .plt file into memory arrays ---
   open(unit=10, file='airfoil_grid.plt', status='old', form='formatted')
 
-  ! ヘッダー行を読み飛ばす
+  ! Skip header lines
   read(10, '(a)') line  ! TITLE
   read(10, '(a)') line  ! VARIABLES
   read(10, '(a)') line  ! ZONE
 
-  ! ZONE行からサイズを読み取る
+  ! Read dimensions from the ZONE line
   read(line, *)
   read(line(index(line, 'I=')+2:), *) ni
   read(line(index(line, 'J=')+2:), *) nj
   read(line(index(line, 'K=')+2:), *) nk
-
+  
   print *, 'Detected grid size from .plt file: I=', ni, ', J=', nj, ', K=', nk
 
-  ! --- 2. Plot3D形式（.g）への変換と書き込み ---
-  ! Plot3Dグリッドファイルは非フォーマット（unformatted）でなければならない
-  open(unit=7, file='airfoil_grid.g', status='replace', form='unformatted')
+  ! Allocate memory for coordinates
+  allocate(x_coords(ni, nj, nk), y_coords(ni, nj, nk), z_coords(ni, nj, nk))
 
-  ! Plot3Dヘッダー情報を書き込む
-  ! ブロック数
-  nblocks = 1
-  write(7) nblocks
-  
-  ! 各ブロックのni, nj, nkを書き込む
-  write(7) ni, nj, nk
-  
-  ! 座標データを読み込み、Plot3D形式で書き込む
-  ! Plot3DはまずX座標をすべて、次にY座標、最後にZ座標を書き込む
-  
-  ! X座標を書き込む
-  do k = 1, nk
-    do j = 1, nj
-      do i = 1, ni
-        read(10, *) val_x, val_y, val_z ! この行は、x,y,zのセットとして読み込まれる
-        write(7) val_x
-      end do
-    end do
-  end do
-  
-  rewind(10)
-  ! ヘッダー行を再読み込み
-  read(10, '(a)') line
-  read(10, '(a)') line
-  read(10, '(a)') line
-
-  ! Y座標を書き込む
+  ! Read all coordinate data into the arrays
   do k = 1, nk
     do j = 1, nj
       do i = 1, ni
         read(10, *) val_x, val_y, val_z
-        write(7) val_y
-      end do
-    end do
-  end do
-  
-  rewind(10)
-  ! ヘッダー行を再読み込み
-  read(10, '(a)') line
-  read(10, '(a)') line
-  read(10, '(a)') line
-
-  ! Z座標を書き込む
-  do k = 1, nk
-    do j = 1, nj
-      do i = 1, ni
-        read(10, *) val_x, val_y, val_z
-        write(7) val_z
+        x_coords(i, j, k) = val_x
+        y_coords(i, j, k) = val_y
+        z_coords(i, j, k) = val_z
       end do
     end do
   end do
 
   close(10)
+
+  ! --- 2. Write Plot3D file (.g) from memory ---
+  open(unit=7, file='airfoil_grid.g', status='replace', form='unformatted')
+
+  ! Plot3D header (write block count)
+  nblocks = 1
+  write(7) nblocks
+
+  ! Write ni, nj, nk for each block
+  write(7) ni, nj, nk
+  
+  ! Write coordinate data in Plot3D's specific XYZ order
+  ! X coordinates
+  write(7) x_coords
+  ! Y coordinates
+  write(7) y_coords
+  ! Z coordinates
+  write(7) z_coords
+
   close(7)
 
   print *, 'Conversion successful. Output written to airfoil_grid.g'
