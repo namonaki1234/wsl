@@ -2,23 +2,23 @@ program grid_generator
   implicit none
 
   ! Parameters based on the provided drawings
-  double precision, parameter :: CHORD = 105.0d0  ! 翼の弦長 [mm]
-  double precision, parameter :: WING_THICKNESS = 0.18d0 ! NACA0018翼厚比
-  double precision, parameter :: WING_SPAN = 250.0d0 ! 翼のスパン長 [mm]
+  double precision, parameter :: CHORD = 105.0d0
+  double precision, parameter :: WING_THICKNESS = 0.18d0
+  double precision, parameter :: WING_SPAN = 250.0d0
   double precision, parameter :: PI = acos(-1.0d0)
 
   ! Grid generation parameters
-  integer, parameter :: NI_UPSTREAM = 51   ! 上流ブロックのi方向格子点数
-  integer, parameter :: NJ_UPSTREAM = 51   ! 上流ブロックのj方向格子点数
-  integer, parameter :: NK_UPSTREAM = 51   ! 上流ブロックのk方向格子点数
+  integer, parameter :: NI_UPSTREAM = 51
+  integer, parameter :: NJ_UPSTREAM = 51
+  integer, parameter :: NK_UPSTREAM = 51
   
-  integer, parameter :: NI_AIRFOIL = 101   ! 翼周りブロックのi方向格子点数
-  integer, parameter :: NJ_AIRFOIL = 51    ! 翼周りブロックのj方向格子点数
-  integer, parameter :: NK_AIRFOIL = 51    ! 翼周りブロックのk方向格子点数
+  integer, parameter :: NI_AIRFOIL = 101
+  integer, parameter :: NJ_AIRFOIL = 51
+  integer, parameter :: NK_AIRFOIL = 51
   
-  integer, parameter :: NI_DOWNSTREAM = 101 ! 下流ブロックのi方向格子点数
-  integer, parameter :: NJ_DOWNSTREAM = 51  ! 下流ブロックのj方向格子点数
-  integer, parameter :: NK_DOWNSTREAM = 51  ! 下流ブロックのk方向格子点数
+  integer, parameter :: NI_DOWNSTREAM = 101
+  integer, parameter :: NJ_DOWNSTREAM = 51
+  integer, parameter :: NK_DOWNSTREAM = 51
 
   ! Multiblock data
   integer, parameter :: NBLOCKS = 3
@@ -50,27 +50,34 @@ program grid_generator
   call generate_h_grid_upstream(CHORD, ni(1), nj(1), nk(1), x_up, y_up, z_up)
 
   ! Block 2: Airfoil C-O grid
-  call generate_naca0018(CHORD, WING_THICKNESS, ni(2), wing_x, wing_y)
+  call generate_naca0018(CHORD, WING_THICKNESS, wing_x, wing_y)
   call generate_co_grid(wing_x, wing_y, ni(2), nj(2), nk(2), x_af, y_af, z_af)
 
   ! Block 3: Downstream H-grid
   call generate_h_grid_downstream(CHORD, ni(3), nj(3), nk(3), x_down, y_down, z_down)
 
   ! --- Write Plot3D multiblock file (.g) ---
-  ! 修正点: 全データを単一のWRITE文で書き込む
+  ! Plot3D形式で互換性のある単精度で書き出す
   open(unit=7, file='airfoil_grid.g', status='replace', form='unformatted')
 
-  write(7) NBLOCKS, &
-           ni(1), nj(1), nk(1), ni(2), nj(2), nk(2), ni(3), nj(3), nk(3), &
-           (((x_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1)), &
-           (((y_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1)), &
-           (((z_up(i,j,k), i=1,ni(1)), j=1,nj(1)), k=1,nk(1)), &
-           (((x_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2)), &
-           (((y_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2)), &
-           (((z_af(i,j,k), i=1,ni(2)), j=1,nj(2)), k=1,nk(2)), &
-           (((x_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3)), &
-           (((y_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3)), &
-           (((z_down(i,j,k), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
+  ! Header: Number of blocks
+  write(7) NBLOCKS
+
+  ! Header: Dimensions of each block, written as a single record
+  write(7) ni(1), nj(1), nk(1), ni(2), nj(2), nk(2), ni(3), nj(3), nk(3)
+  
+  ! Data: Write coordinates for each block in a multiblock-specific order
+  write(7) (((REAL(x_up(i,j,k),4), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
+  write(7) (((REAL(y_up(i,j,k),4), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
+  write(7) (((REAL(z_up(i,j,k),4), i=1,ni(1)), j=1,nj(1)), k=1,nk(1))
+            
+  write(7) (((REAL(x_af(i,j,k),4), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
+  write(7) (((REAL(y_af(i,j,k),4), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
+  write(7) (((REAL(z_af(i,j,k),4), i=1,ni(2)), j=1,nj(2)), k=1,nk(2))
+            
+  write(7) (((REAL(x_down(i,j,k),4), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
+  write(7) (((REAL(y_down(i,j,k),4), i=1,ni(3)), j=1,nj(3)), k=1,nk(3))
+  write(7) (((REAL(z_down(i,j,k),4), i=1,nj(3)), j=1,nj(3)), k=1,nk(3))
   
   close(7)
 
@@ -78,13 +85,13 @@ program grid_generator
 
 contains
 
-  subroutine generate_naca0018(chord, t, n, x, y)
+  subroutine generate_naca0018(chord, t, x, y)
     double precision, intent(in) :: chord, t
-    integer, intent(in) :: n
     double precision, intent(out) :: x(:), y(:)
-    integer :: i
+    integer :: n, i
     double precision :: xt, yt, dx
 
+    n = size(x)
     dx = chord / (dble(n) - 1.0d0)
 
     do i = 1, n
@@ -148,18 +155,20 @@ contains
     double precision, intent(inout) :: x_co(:,:,:), y_co(:,:,:), z_co(:,:,:)
     double precision :: r_outer, r_inner, ratio
     integer :: i, j, k
-    double precision :: dz, theta, r_j
+    double precision :: dy_dist, dz
 
-    r_outer = 1.5d0 * CHORD 
+    r_outer = 1.5d0 * CHORD
+    ratio = 1.05d0
+    dy_dist = 0.5d0 * CHORD
 
     dz = WING_SPAN / (dble(nk) - 1.0d0)
 
     do k = 1, nk
       do j = 1, nj
         do i = 1, ni
-          r_j = dble(j-1) / dble(nj-1)
-          x_co(i,j,k) = wing_x(i) + (r_outer - wing_x(i)) * r_j
-          y_co(i,j,k) = wing_y(i) + (r_outer - wing_y(i)) * r_j
+          r_inner = dsqrt(wing_x(i)**2 + wing_y(i)**2)
+          x_co(i,j,k) = wing_x(i) + (r_outer - r_inner) * (dble(j-1)/dble(nj-1))
+          y_co(i,j,k) = wing_y(i) + (dy_dist - wing_y(i)) * (dble(j-1)/dble(nj-1))
           z_co(i,j,k) = dz * (dble(k) - 1.0d0)
         end do
       end do
