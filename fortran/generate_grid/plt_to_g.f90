@@ -45,21 +45,20 @@ program plt_to_g
   ! --- 2. Write Plot3D file (.g) from memory ---
   open(unit=7, file='airfoil_grid.g', status='replace', form='unformatted')
 
-  ! Plot3D header (write block count)
+  ! Write Plot3D header and coordinate data in the correct order
+  ! Note: Using a single WRITE statement for each major data block ensures
+  !       the correct binary record structure for Plot3D files.
+  
+  ! Header: Number of blocks
   nblocks = 1
   write(7) nblocks
 
-  ! Write ni, nj, nk for each block
+  ! Header: Dimensions of each block
   write(7) ni, nj, nk
   
-  ! Write coordinate data in Plot3D's specific XYZ order
-  ! X coordinates
-  write(7) x_coords
-  ! Y coordinates
-  write(7) y_coords
-  ! Z coordinates
-  write(7) z_coords
-
+  ! Data: X, Y, and Z coordinates
+  write(7) x_coords, y_coords, z_coords
+  
   close(7)
 
   print *, 'Conversion successful. Output written to airfoil_grid.g'
