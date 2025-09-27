@@ -1,6 +1,5 @@
 import io
 import sys
-from collections import defaultdict,deque,Counter
 
 # 下記に標準入力を記載
 _InPUT = """\
@@ -13,7 +12,6 @@ _InPUT = """\
 """
 sys.stdin = io.StringIO(_InPUT)
 # ここからコードを記載
-# sys.setrecursionlimit(1000000)
 
 t = int(input())
 for _ in range(t):
