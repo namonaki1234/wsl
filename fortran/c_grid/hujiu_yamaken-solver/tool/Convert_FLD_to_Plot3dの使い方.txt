@@ -1,0 +1,81 @@
+**********************************************************************
+*******       Convert_FLD_to_Plot3d.f90の使い方（暫定版）      *******
+**********************************************************************
+2019.11.14 更新（written by Tomoya Yagi）
+
+1．コンパイルについて
+Convert_FLD_to_Plot3d.f90のコンパイルはデスクトップ上で
+gfortranを使って行うことが可能
+ただし、格子点数が多い場合はメモリ不足で実行できないので、
+その場合は計算機上のifortでコンパイルする
+（ifortでコンパイルするときは、[ifort [ファイル名(～.f90)]]）
+
+2. 実行について
+実行すると、対話形式で数回、値を入力する
+入力する値は.fldに書かれた値と対応するため、
+事前にplot3d形式に変換したいデータのfldファイルを秀丸等で表示しておく
+（例えば、Main_ViewGrid.fldを[プログラムから開く]で秀丸から開く）
+各対話の意味、入力する値は以下の通り
+
+・Conversion for grid or flowfield?
+　=> 変換したいデータが格子データor流れ場データのどちらかを入力
+　格子データであれば、"g"
+　流れ場データであれば、"f"と入力
+　"g"または"f"以外の入力をすると、プログラムは終了する
+
+・Input the number of dimensions
+　=> 次元数を入力
+　fldファイル内のndimの値に対応
+　2次元なら2、3次元なら3を入力
+
+・Input the number of grid points in i direction
+　=> i方向の格子点数を入力
+　fldファイル内のdim1の値に対応
+
+・Input the number of grid points in j direction
+　=> j方向の格子点数を入力
+　fldファイル内のdim2の値に対応
+
+・Input the number of grid points in k direction
+　=> k方向の格子点数を入力
+　fldファイル内のdim3の値に対応
+　（'Input the number of dimensions'で2を入力した場合は表示されない）
+
+・Input the number of variables (u,v,rho...etc )
+　=>物理量データ内の変数の個数を入力
+　fldファイル内のveclenの値に対応
+
+・Input the file name before conversion
+　=> plot3d形式に変換したい格子のファイル名を入力
+　例えば、Main_ViewGrid.binの場合は、拡張子を除いた"Main_ViewGrid"と入力
+
+実行すると、
+格子データの場合には、(変換前のファイル名).g
+流れ場データの場合には、(変換前のファイル名).gと(変換前のファイル名).f
+がそれぞれ出力される
+
+3. 出力データについて
+出力されたファンクションファイル（.fファイル）内の変数は、
+fldファイル内のlabelに書かれた変数に対応する
+ex) label  = u v rho Ps Ts mu k eps mut mach Pt Ttの場合
+　　function1 （paraview上はfunction0 ）= u
+　　function2 （paraview上はfunction1 ）= v
+　　function3 （paraview上はfunction2 ）= rho
+            :                      :    :
+　　function12（paraview上はfunction11）= Tt
+　　function13（paraview上はfunction12）= sqrt(u^2+v^2) (3次元の場合はsqrt(u^2+v^2+w^2))
+
+ここで、最後のファンクション変数（上の例だとfunction13）は
+元々のfldファイル内には含まれていないデータである
+可視化をする上で、Velocity Magnitudeを見ることが多いので、
+変換プログラムでVelocity Magnitudeが出力されるようにした
+したがって、Velocity Magnitudeを使わない場合は無視してよい
+
+
+3. その他
+現段階では、1ブロックの格子データしかplot3d形式に変換できない
+複数ブロックの格子データに対して実行したことがないため、挙動は不明
+
+
+
+
