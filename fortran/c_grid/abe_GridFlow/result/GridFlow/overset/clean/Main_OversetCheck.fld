@@ -1,0 +1,14 @@
+# AVS field file
+ndim   = 3
+dim1   =  261
+dim2   =   71
+dim3   =    4
+label  = flag
+nspace = 3
+veclen =  1
+data   = float
+field  = irregular
+variable  1 file = Main_OversetCheck.bin filetype = binary skip =           4 stride = 1 close = 1
+coord 1 file = Main_OversetCheck.bin filetype = binary skip =      296508 stride = 1 close = 1
+coord 2 file = Main_OversetCheck.bin filetype = binary skip =      593012 stride = 1 close = 1
+coord 3 file = Main_OversetCheck.bin filetype = binary skip =      889516 stride = 1 close = 1

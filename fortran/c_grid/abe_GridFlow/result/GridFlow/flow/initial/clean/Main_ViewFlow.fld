@@ -1,0 +1,26 @@
+# AVS field file
+ndim   = 3
+dim1   =  261
+dim2   =   71
+dim3   =    4
+label  = u v w rho Ps Ts mu k eps mut mach Pt Tt
+nspace = 3
+veclen = 13
+data   = float
+field  = irregular
+variable  1 file = Main_ViewFlow.bin filetype = binary skip =           4 stride = 1 close = 1
+variable  2 file = Main_ViewFlow.bin filetype = binary skip =      296508 stride = 1 close = 1
+variable  3 file = Main_ViewFlow.bin filetype = binary skip =      593012 stride = 1 close = 1
+variable  4 file = Main_ViewFlow.bin filetype = binary skip =      889516 stride = 1 close = 1
+variable  5 file = Main_ViewFlow.bin filetype = binary skip =     1186020 stride = 1 close = 1
+variable  6 file = Main_ViewFlow.bin filetype = binary skip =     1482524 stride = 1 close = 1
+variable  7 file = Main_ViewFlow.bin filetype = binary skip =     1779028 stride = 1 close = 1
+variable  8 file = Main_ViewFlow.bin filetype = binary skip =     2075532 stride = 1 close = 1
+variable  9 file = Main_ViewFlow.bin filetype = binary skip =     2372036 stride = 1 close = 1
+variable 10 file = Main_ViewFlow.bin filetype = binary skip =     2668540 stride = 1 close = 1
+variable 11 file = Main_ViewFlow.bin filetype = binary skip =     2965044 stride = 1 close = 1
+variable 12 file = Main_ViewFlow.bin filetype = binary skip =     3261548 stride = 1 close = 1
+variable 13 file = Main_ViewFlow.bin filetype = binary skip =     3558052 stride = 1 close = 1
+coord 1 file = Main_ViewFlow.bin filetype = binary skip =     3854556 stride = 1 close = 1
+coord 2 file = Main_ViewFlow.bin filetype = binary skip =     4151060 stride = 1 close = 1
+coord 3 file = Main_ViewFlow.bin filetype = binary skip =     4447564 stride = 1 close = 1

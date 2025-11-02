@@ -1,0 +1,14 @@
+# AVS field file
+ndim   = 3
+dim1   =  301
+dim2   =   51
+dim3   =    4
+label  = flag
+nspace = 3
+veclen =  1
+data   = float
+field  = irregular
+variable  1 file = Sub_ViewGrid.bin filetype = binary skip =           4 stride = 1 close = 1
+coord 1 file = Sub_ViewGrid.bin filetype = binary skip =      245628 stride = 1 close = 1
+coord 2 file = Sub_ViewGrid.bin filetype = binary skip =      491252 stride = 1 close = 1
+coord 3 file = Sub_ViewGrid.bin filetype = binary skip =      736876 stride = 1 close = 1

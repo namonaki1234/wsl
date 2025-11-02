@@ -1,0 +1,476 @@
+ ===============================================
+ Switch ICM : ON
+ ===============================================
+<< Exp. Case Selecation >>
++++ Icing Step +++
+* Ice step      =  0
+* Ice step max. =  4
+
++++ Exp. Condition +++
+* Ts    =  0.26214999E+003
+* Ps    =  0.95610000E+005
+* V     =  0.50930000E+002
+* LWC   =  0.11900001E-002
+* MVD   =  0.10000000E-002
+* Rho   =  0.99999994E+003
+* Chord =  0.26699999E+000
+* AOA   =  0.00000000E+000
+
+<< Initial Setting >>
+
+<< Flow Field Computation >>
++++ Computational loop start +++
++++ Numerical Condition +++
+* Cn                  =  0.1000E+1
+* TVD Order           =  2
+* TVD Entropy         =  0.1000E+0
+* Limitter k-e Ave    =  0.1000E+3
+* Limitter k-e Pro    =  0.1000E+0
+* Computational Count =   20000
++++ Calculation progress +++
+* Calculation Count =      1
+* Main Min. dt =  0.61645893E-004
+* Main Max. dt =  0.58765610E-003
+* Sub  Min. dt =  0.40541981E-004
+* Sub  Max. dt =  0.58745872E-003
+ Output File : Main_Flow0001
+ Output File : Sub_Flow0001
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    5.848373    
+  Drag by Friction :   0.2660019    
+  Total Drag :    6.114375    
+  Cd =   1.3899630E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -8.596725    
+  Lift by Friction :  -4.5980867E-03
+  Total Lift :   -8.601323    
+  Cl =  -1.9553136E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =   1000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58763823E-003
+* Sub  Min. dt =  0.40527295E-004
+* Sub  Max. dt =  0.58744557E-003
+ Output File : Main_Flow0002
+ Output File : Sub_Flow0002
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.372520    
+  Drag by Friction :   0.2623676    
+  Total Drag :    6.634888    
+  Cd =   1.5082898E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.869965    
+  Lift by Friction :  -2.6625565E-03
+  Total Lift :   -7.872627    
+  Cl =  -1.7896613E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =   2000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58764656E-003
+* Sub  Min. dt =  0.40526440E-004
+* Sub  Max. dt =  0.58744510E-003
+ Output File : Main_Flow0003
+ Output File : Sub_Flow0003
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.381351    
+  Drag by Friction :   0.2599264    
+  Total Drag :    6.641278    
+  Cd =   1.5097423E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.874802    
+  Lift by Friction :  -2.3899605E-03
+  Total Lift :   -7.877192    
+  Cl =  -1.7906990E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =   3000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58764801E-003
+* Sub  Min. dt =  0.40511859E-004
+* Sub  Max. dt =  0.58744493E-003
+ Output File : Main_Flow0004
+ Output File : Sub_Flow0004
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.443642    
+  Drag by Friction :   0.2586358    
+  Total Drag :    6.702277    
+  Cd =   1.5236091E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -8.133316    
+  Lift by Friction :  -2.3675326E-03
+  Total Lift :   -8.135684    
+  Cl =  -1.8494613E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =   4000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58764726E-003
+* Sub  Min. dt =  0.40535699E-004
+* Sub  Max. dt =  0.58744667E-003
+ Output File : Main_Flow0005
+ Output File : Sub_Flow0005
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.499004    
+  Drag by Friction :   0.2578665    
+  Total Drag :    6.756871    
+  Cd =   1.5360197E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -8.849121    
+  Lift by Friction :  -2.3916184E-03
+  Total Lift :   -8.851513    
+  Cl =  -2.0121885E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =   5000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58764656E-003
+* Sub  Min. dt =  0.40573010E-004
+* Sub  Max. dt =  0.58744423E-003
+ Output File : Main_Flow0006
+ Output File : Sub_Flow0006
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.516121    
+  Drag by Friction :   0.2574072    
+  Total Drag :    6.773528    
+  Cd =   1.5398064E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -8.887589    
+  Lift by Friction :  -2.3995060E-03
+  Total Lift :   -8.889988    
+  Cl =  -2.0209350E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =   6000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58764516E-003
+* Sub  Min. dt =  0.40594885E-004
+* Sub  Max. dt =  0.58744382E-003
+ Output File : Main_Flow0007
+ Output File : Sub_Flow0007
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.522308    
+  Drag by Friction :   0.2570391    
+  Total Drag :    6.779347    
+  Cd =   1.5411292E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -8.575760    
+  Lift by Friction :  -2.4129211E-03
+  Total Lift :   -8.578173    
+  Cl =  -1.9500509E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =   7000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58764312E-003
+* Sub  Min. dt =  0.40606334E-004
+* Sub  Max. dt =  0.58744370E-003
+ Output File : Main_Flow0008
+ Output File : Sub_Flow0008
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.524712    
+  Drag by Friction :   0.2567957    
+  Total Drag :    6.781507    
+  Cd =   1.5416203E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -8.287430    
+  Lift by Friction :  -2.4320094E-03
+  Total Lift :   -8.289862    
+  Cl =  -1.8845100E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =   8000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58764155E-003
+* Sub  Min. dt =  0.40612616E-004
+* Sub  Max. dt =  0.58744504E-003
+ Output File : Main_Flow0009
+ Output File : Sub_Flow0009
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.526176    
+  Drag by Friction :   0.2566438    
+  Total Drag :    6.782820    
+  Cd =   1.5419187E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -8.080643    
+  Lift by Friction :  -2.4454845E-03
+  Total Lift :   -8.083088    
+  Cl =  -1.8375047E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =   9000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58764196E-003
+* Sub  Min. dt =  0.40616193E-004
+* Sub  Max. dt =  0.58744621E-003
+ Output File : Main_Flow0010
+ Output File : Sub_Flow0010
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.527039    
+  Drag by Friction :   0.2565521    
+  Total Drag :    6.783591    
+  Cd =   1.5420939E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.937347    
+  Lift by Friction :  -2.4550243E-03
+  Total Lift :   -7.939803    
+  Cl =  -1.8049322E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =  10000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58764056E-003
+* Sub  Min. dt =  0.40618121E-004
+* Sub  Max. dt =  0.58744318E-003
+ Output File : Main_Flow0011
+ Output File : Sub_Flow0011
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.528397    
+  Drag by Friction :   0.2564929    
+  Total Drag :    6.784889    
+  Cd =   1.5423890E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.841980    
+  Lift by Friction :  -2.4613370E-03
+  Total Lift :   -7.844441    
+  Cl =  -1.7832540E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =  11000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58763934E-003
+* Sub  Min. dt =  0.40619154E-004
+* Sub  Max. dt =  0.58744103E-003
+ Output File : Main_Flow0012
+ Output File : Sub_Flow0012
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.527657    
+  Drag by Friction :   0.2564568    
+  Total Drag :    6.784113    
+  Cd =   1.5422126E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.770523    
+  Lift by Friction :  -2.4653887E-03
+  Total Lift :   -7.772988    
+  Cl =  -1.7670106E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =  12000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58763620E-003
+* Sub  Min. dt =  0.40619641E-004
+* Sub  Max. dt =  0.58744033E-003
+ Output File : Main_Flow0013
+ Output File : Sub_Flow0013
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.528618    
+  Drag by Friction :   0.2564350    
+  Total Drag :    6.785053    
+  Cd =   1.5424262E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.739456    
+  Lift by Friction :  -2.4677054E-03
+  Total Lift :   -7.741924    
+  Cl =  -1.7599490E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =  13000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58763614E-003
+* Sub  Min. dt =  0.40619838E-004
+* Sub  Max. dt =  0.58743905E-003
+ Output File : Main_Flow0014
+ Output File : Sub_Flow0014
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.528603    
+  Drag by Friction :   0.2564202    
+  Total Drag :    6.785023    
+  Cd =   1.5424194E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.724197    
+  Lift by Friction :  -2.4689059E-03
+  Total Lift :   -7.726666    
+  Cl =  -1.7564805E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =  14000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58763515E-003
+* Sub  Min. dt =  0.40619896E-004
+* Sub  Max. dt =  0.58743876E-003
+ Output File : Main_Flow0015
+ Output File : Sub_Flow0015
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.528065    
+  Drag by Friction :   0.2564110    
+  Total Drag :    6.784476    
+  Cd =   1.5422950E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.717804    
+  Lift by Friction :  -2.4694195E-03
+  Total Lift :   -7.720273    
+  Cl =  -1.7550273E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =  15000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58763416E-003
+* Sub  Min. dt =  0.40619911E-004
+* Sub  Max. dt =  0.58743934E-003
+ Output File : Main_Flow0016
+ Output File : Sub_Flow0016
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.527748    
+  Drag by Friction :   0.2564045    
+  Total Drag :    6.784153    
+  Cd =   1.5422216E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.710892    
+  Lift by Friction :  -2.4696460E-03
+  Total Lift :   -7.713361    
+  Cl =  -1.7534558E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =  16000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58763463E-003
+* Sub  Min. dt =  0.40619867E-004
+* Sub  Max. dt =  0.58743934E-003
+ Output File : Main_Flow0017
+ Output File : Sub_Flow0017
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.528831    
+  Drag by Friction :   0.2564010    
+  Total Drag :    6.785233    
+  Cd =   1.5424671E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.712784    
+  Lift by Friction :  -2.4696640E-03
+  Total Lift :   -7.715253    
+  Cl =  -1.7538860E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =  17000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58763736E-003
+* Sub  Min. dt =  0.40619860E-004
+* Sub  Max. dt =  0.58744347E-003
+ Output File : Main_Flow0018
+ Output File : Sub_Flow0018
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.528275    
+  Drag by Friction :   0.2563982    
+  Total Drag :    6.784673    
+  Cd =   1.5423398E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.714569    
+  Lift by Friction :  -2.4696041E-03
+  Total Lift :   -7.717039    
+  Cl =  -1.7542919E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =  18000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58763823E-003
+* Sub  Min. dt =  0.40619838E-004
+* Sub  Max. dt =  0.58744644E-003
+ Output File : Main_Flow0019
+ Output File : Sub_Flow0019
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.528408    
+  Drag by Friction :   0.2563964    
+  Total Drag :    6.784804    
+  Cd =   1.5423697E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.706848    
+  Lift by Friction :  -2.4695394E-03
+  Total Lift :   -7.709318    
+  Cl =  -1.7525366E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =  19000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58763818E-003
+* Sub  Min. dt =  0.40619816E-004
+* Sub  Max. dt =  0.58744632E-003
+ Output File : Main_Flow0020
+ Output File : Sub_Flow0020
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.528339    
+  Drag by Friction :   0.2563953    
+  Total Drag :    6.784735    
+  Cd =   1.5423539E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.705109    
+  Lift by Friction :  -2.4694742E-03
+  Total Lift :   -7.707578    
+  Cl =  -1.7521413E-02
+ --------------------------------------------
++++ Calculation progress +++
+* Calculation Count =  20000
+* Main Min. dt =  0.61631108E-004
+* Main Max. dt =  0.58763934E-003
+* Sub  Min. dt =  0.40619801E-004
+* Sub  Max. dt =  0.58744586E-003
+ Output File : Main_Flow0021
+ Output File : Sub_Flow0021
+ --------------------------------------------
+ Drag Coefficient
+  Drag by Pressure :    6.528206    
+  Drag by Friction :   0.2563944    
+  Total Drag :    6.784600    
+  Cd =   1.5423234E-02
+ --------------------------------------------
+ Lift Coefficient
+  Lift by Pressure :   -7.708206    
+  Lift by Friction :  -2.4694132E-03
+  Total Lift :   -7.710676    
+  Cl =  -1.7528454E-02
+ --------------------------------------------
+
+<< Computation Finallized >>
+
+real	91m17.882s
+user	1369m37.064s
+sys	33m31.164s

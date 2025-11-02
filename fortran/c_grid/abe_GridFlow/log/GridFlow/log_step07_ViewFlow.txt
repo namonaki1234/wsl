@@ -1,0 +1,21 @@
+<< Icing Step >>
+* Ice step      =  0
+* Ice step max. =  4
+
+<< Exp. Condition >>
+* Ts    =  0.26214999E+003
+* Ps    =  0.95610000E+005
+* V     =  0.50930000E+002
+* LWC   =  0.11900001E-002
+* MVD   =  0.10000000E-002
+* Rho   =  0.99999994E+003
+* Chord =  0.26699999E+000
+* AOA   =  0.00000000E+000
++++++ Select Exp. case complete. +++++
++++++ Initial setting complete. +++++
++++++ Flow visualized complete. +++++
++++++ Calculation complete. +++++
+
+real	0m13.826s
+user	0m8.935s
+sys	0m10.448s

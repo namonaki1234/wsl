@@ -1,0 +1,19 @@
+<< Exp. Case Selection >>
+
+<< Initial Setting >>
+
+<< Searching Area Limitation >>
+
+<< Sub to Main Computation >>
+* SG to MG : k = 1 section calculation...
+* SG to MG : k = 2 section calculation...
+
+<< Main to Sub Computation >>
+* MG to SG : k = 1 section calculation...
+* MG to SG : k = 2 section calculation...
+
+<< Computational Removal Point >>
+
+real	0m7.788s
+user	0m18.144s
+sys	0m0.163s

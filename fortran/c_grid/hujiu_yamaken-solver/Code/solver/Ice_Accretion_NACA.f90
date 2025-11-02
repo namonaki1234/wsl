@@ -1,460 +1,460 @@
 !*******************************************************************************************************
 !*******************************************************************************************************
-!******** ’…•XŒvZƒvƒƒOƒ‰ƒ€									********
-!******** (NACA—ƒCOŸŒ³ˆ³k«——¬êCd‡Šiq–@)						********
-!******** —LŸŒ³										********
-!********					      2013.07.06  PROGRAMMED BY RYOSUKE HAYASHI ********
-!********					      2013.07.18     UPDATED BY RYOSUKE HAYASHI ********
-!********					      2014.04.15     UPDATED BY RYOSUKE HAYASHI ********
-!********					      2015.06.11     UPDATED BY MIKI    SHIMURA ********
+!******** ç€æ°·è¨ˆç®—ãƒ—ãƒ­ã‚°ãƒ©ãƒ                                                                         ********
+!******** (NACAç¿¼ï¼Œä¸‰æ¬¡å…ƒåœ§ç¸®æ€§ä¹±æµå ´ï¼Œé‡åˆæ ¼å­æ³•)                                                ********
+!******** æœ‰æ¬¡å…ƒ                                                                                ********
+!********                                              2013.07.06  PROGRAMMED BY RYOSUKE HAYASHI ********
+!********                                              2013.07.18     UPDATED BY RYOSUKE HAYASHI ********
+!********                                              2014.04.15     UPDATED BY RYOSUKE HAYASHI ********
+!********                                              2015.06.11     UPDATED BY MIKI    SHIMURA ********
 !*******************************************************************************************************
 !*******************************************************************************************************
 program IceAccretion_NACA
- ! ƒ‚ƒWƒ…[ƒ‹éŒ¾ **************************************************************************************
- use Package_NACA
- use Package_FileIO
- use Package_Flow
- use Package_Icing
- ! •Ï”éŒ¾ ********************************************************************************************
- implicit none
- ! ‹ÇŠ’è” ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- integer, parameter :: mRef = 2
- ! ‹ÇŠ•Ï” ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- integer :: kRef
- ! ˆ—ŠJn ********************************************************************************************
- ! ŒŸØÀŒ±ƒP[ƒX‘I‘ğ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- write(*, '(a)') "<< Exp. Case Selection >>"
- call SelectExpCase
- ! ‰Šúİ’è ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- write(*, '(/,a)') "<< Initial Setting >>"
- call InitialSetting
- ! ’…•XŒvZ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- write(*, '(/,a)') "<< Icing Computation >>"
- call CalIceAccretion
- ! ’…•X—ƒÀ•W ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- write(*, '(/,a)') "<< Icing Blade Geometry >>"
- call CalIcingBlade
- ! ƒtƒ@ƒCƒ‹o—Í ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- write(*, '(/,a)') "<< File Output >>"
- call OutputFile
- ! “à•”è‘±‚« ******************************************************************************************
- stop
+   ! ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«å®£è¨€ **************************************************************************************
+   use Package_NACA
+   use Package_FileIO
+   use Package_Flow
+   use Package_Icing
+   ! å¤‰æ•°å®£è¨€ ********************************************************************************************
+   implicit none
+   ! å±€æ‰€å®šæ•° ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   integer, parameter :: mRef = 2
+   ! å±€æ‰€å¤‰æ•° ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   integer :: kRef
+   ! å‡¦ç†é–‹å§‹ ********************************************************************************************
+   ! æ¤œè¨¼å®Ÿé¨“ã‚±ãƒ¼ã‚¹é¸æŠ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   write (*, '(a)') "<< Exp. Case Selection >>"
+   call SelectExpCase
+   ! åˆæœŸè¨­å®š ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   write (*, '(/,a)') "<< Initial Setting >>"
+   call InitialSetting
+   ! ç€æ°·è¨ˆç®— ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   write (*, '(/,a)') "<< Icing Computation >>"
+   call CalIceAccretion
+   ! ç€æ°·ç¿¼åº§æ¨™ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   write (*, '(/,a)') "<< Icing Blade Geometry >>"
+   call CalIcingBlade
+   ! ãƒ•ã‚¡ã‚¤ãƒ«å‡ºåŠ› ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   write (*, '(/,a)') "<< File Output >>"
+   call OutputFile
+   ! å†…éƒ¨æ‰‹ç¶šã ******************************************************************************************
+   stop
 contains
 !*******************************************************************************************************
-!******** ŒŸØÀŒ±ƒP[ƒX‘I‘ğ 									********
+!******** æ¤œè¨¼å®Ÿé¨“ã‚±ãƒ¼ã‚¹é¸æŠ                                                                         ********
 !*******************************************************************************************************
-subroutine SelectExpCase
- ! •Ï”éŒ¾ ********************************************************************************************
- implicit none
- ! ‹ÇŠ•Ï” ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- character :: fname * 20
- ! ˆ—ŠJn ********************************************************************************************
- ! ŒvZğŒƒtƒ@ƒCƒ‹“ü—Í
- call Input_CalSetting( trim(ND_CalSetFile) // strtxt )
- ! —LŸŒ³‰» ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- VelIn  = VelIn * aRef
- PtIn   = PtIn * (rhoRef * aRef**2)
- TtIn   = TtIn * aRef**2
- PsOut  = PsOut * (rhoRef * aRef**2)
- TsOut  = TsOut * aRef**2
- LWC    = LWC  * RhoRef
- MVD    = MVD  * LRef
- RhoD   = RhoD * RhoRef
- Span   = Span * LRef
- Chord  = Chord * LRef
- VelExp = VelExp * aRef
- PsExp  = PsExp * (rhoRef * aRef**2)
- TsExp  = TsExp * aRef**2
- ! ƒfƒBƒŒƒNƒgƒŠİ’è
- if( IceStep == 0 ) then
-   GrdInDir    = bckdir // 'grid//clean//'
-   OSGDir      = bckdir // 'overset//clean//'
-   FlwIniDir   = bckdir // 'flow//initial//clean//'
-   FlwCalInDir = bckdir // 'flow//cal//clean//'
-   DrpImpDir   = bckdir // 'droplet//impingement//clean//'
-  else
-   GrdInDir    = bckdir // 'grid//icing//'
-   OSGDir      = bckdir // 'overset//icing//'
-   FlwIniDir   = bckdir // 'flow//initial//icing//'
-   FlwCalInDir = bckdir // 'flow//cal//icing//'
-   DrpImpDir   = bckdir // 'droplet//impingement//icing//'
-   IceCalInDir = bckdir // 'icing//cal//'
- endif
- IceCalOutDir = bckdir // 'icing//cal//'
- write(*, '(a)') '+++ Icing Step +++'
- write(*, '(a,i2)') '* Ice step      = ', IceStep
- write(*, '(a,i2)') '* Ice step max. = ', IceStepMax
- write(*, '(/,a)') '+++ Exp. Condition +++'
- write(*, '(a,e16.8e3)') '* Ts    = ', TsExp
- write(*, '(a,e16.8e3)') '* Ps    = ', PsExp
- write(*, '(a,e16.8e3)') '* V     = ', VelExp
- write(*, '(a,e16.8e3)') '* LWC   = ', LWC
- write(*, '(a,e16.8e3)') '* MVD   = ', MVD
- write(*, '(a,e16.8e3)') '* Rho   = ', Rhod
- write(*, '(a,e16.8e3)') '* Chord = ', Chord
- write(*, '(a,e16.8e3)') '* AOA   = ', AOA * 180.0 / pi
- ! ˆ—I—¹ ********************************************************************************************
- return
-end subroutine SelectExpCase
+   subroutine SelectExpCase
+      ! å¤‰æ•°å®£è¨€ ********************************************************************************************
+      implicit none
+      ! å±€æ‰€å¤‰æ•° ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      character :: fname*20
+      ! å‡¦ç†é–‹å§‹ ********************************************************************************************
+      ! è¨ˆç®—æ¡ä»¶ãƒ•ã‚¡ã‚¤ãƒ«å…¥åŠ›
+      call Input_CalSetting(trim(ND_CalSetFile)//strtxt)
+      ! æœ‰æ¬¡å…ƒåŒ– ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      VelIn = VelIn*aRef
+      PtIn = PtIn*(rhoRef*aRef**2)
+      TtIn = TtIn*aRef**2
+      PsOut = PsOut*(rhoRef*aRef**2)
+      TsOut = TsOut*aRef**2
+      LWC = LWC*RhoRef
+      MVD = MVD*LRef
+      RhoD = RhoD*RhoRef
+      Span = Span*LRef
+      Chord = Chord*LRef
+      VelExp = VelExp*aRef
+      PsExp = PsExp*(rhoRef*aRef**2)
+      TsExp = TsExp*aRef**2
+      ! ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªè¨­å®š
+      if (IceStep == 0) then
+         GrdInDir = bckdir//'grid//clean//'
+         OSGDir = bckdir//'overset//clean//'
+         FlwIniDir = bckdir//'flow//initial//clean//'
+         FlwCalInDir = bckdir//'flow//cal//clean//'
+         DrpImpDir = bckdir//'droplet//impingement//clean//'
+      else
+         GrdInDir = bckdir//'grid//icing//'
+         OSGDir = bckdir//'overset//icing//'
+         FlwIniDir = bckdir//'flow//initial//icing//'
+         FlwCalInDir = bckdir//'flow//cal//icing//'
+         DrpImpDir = bckdir//'droplet//impingement//icing//'
+         IceCalInDir = bckdir//'icing//cal//'
+      end if
+      IceCalOutDir = bckdir//'icing//cal//'
+      write (*, '(a)') '+++ Icing Step +++'
+      write (*, '(a,i2)') '* Ice step      = ', IceStep
+      write (*, '(a,i2)') '* Ice step max. = ', IceStepMax
+      write (*, '(/,a)') '+++ Exp. Condition +++'
+      write (*, '(a,e16.8e3)') '* Ts    = ', TsExp
+      write (*, '(a,e16.8e3)') '* Ps    = ', PsExp
+      write (*, '(a,e16.8e3)') '* V     = ', VelExp
+      write (*, '(a,e16.8e3)') '* LWC   = ', LWC
+      write (*, '(a,e16.8e3)') '* MVD   = ', MVD
+      write (*, '(a,e16.8e3)') '* Rho   = ', Rhod
+      write (*, '(a,e16.8e3)') '* Chord = ', Chord
+      write (*, '(a,e16.8e3)') '* AOA   = ', AOA*180.0/pi
+      ! å‡¦ç†çµ‚äº† ********************************************************************************************
+      return
+   end subroutine SelectExpCase
 !*******************************************************************************************************
-!******** ‰Šúİ’è										********
+!******** åˆæœŸè¨­å®š                                                                                ********
 !*******************************************************************************************************
-subroutine InitialSetting
- ! •Ï”éŒ¾ ********************************************************************************************
- implicit none
- ! ‹ÇŠ•Ï” ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- real     , pointer :: CE2D(:)
- integer   :: i, k, m
- integer   :: j0, j1, jb
- character :: fname * 30
- ! ˆ—ŠJn ********************************************************************************************
- ! \‘¢‘Ìƒƒ‚ƒŠŠm•Û ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- allocate( Flw(ms:me), Ice(ms:me) )
- ! ƒuƒƒbƒN–¼İ’è ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- call Set_BlockName
- ! Šiq‰ğ‘œ“x ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   subroutine InitialSetting
+      ! å¤‰æ•°å®£è¨€ ********************************************************************************************
+      implicit none
+      ! å±€æ‰€å¤‰æ•° ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      real, pointer :: CE2D(:)
+      integer   :: i, k, m
+      integer   :: j0, j1, jb
+      character :: fname*30
+      ! å‡¦ç†é–‹å§‹ ********************************************************************************************
+      ! æ§‹é€ ä½“ãƒ¡ãƒ¢ãƒªç¢ºä¿ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      allocate (Flw(ms:me), Ice(ms:me))
+      ! ãƒ–ãƒ­ãƒƒã‚¯åè¨­å®š ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      call Set_BlockName
+      ! æ ¼å­è§£åƒåº¦ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ! do m = ms, me
- m = me
-  call Input_Resolution3D( &
-  &      trim(GrdInDir) // trim(BlkName(m)) // trim(RslFile), strtxt, &
-  &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke )
+      m = me
+      call Input_Resolution3D( &
+      &      trim(GrdInDir)//trim(BlkName(m))//trim(RslFile), strtxt, &
+      &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke)
 ! enddo
- ! C Œ^Šiq•ªŠ„“_ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      ! C å‹æ ¼å­åˆ†å‰²ç‚¹ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ! m = 1
- m = me
- call Input_CtypeGridPoint( &
- &      trim(GrdInDir) // trim(BlkName(m)) // trim(CtypePointFile) // strtxt, &
- &      Flw(m)%i1, Flw(m)%i2, Flw(m)%i3 )
- ! ƒƒ‚ƒŠŠm•Û ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      m = me
+      call Input_CtypeGridPoint( &
+      &      trim(GrdInDir)//trim(BlkName(m))//trim(CtypePointFile)//strtxt, &
+      &      Flw(m)%i1, Flw(m)%i2, Flw(m)%i3)
+      ! ãƒ¡ãƒ¢ãƒªç¢ºä¿ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ! do m = ms, me
- m = me
-  allocate( Flw(m)%x   (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%y   (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%z   (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%rho (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%u   (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%v   (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%w   (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%p   (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%t   (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%mu  (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%kin (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%eps (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%mut (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%xix (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%xiy (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%xiz (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%etx (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%ety (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%etz (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%zex (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%zey (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%zez (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%jac (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%qh  (Flw(m)%is: Flw(m)%ie, Flw(m)%js: Flw(m)%je, Flw(m)%ks: Flw(m)%ke, ls: le) )
+      m = me
+      allocate (Flw(m)%x(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%y(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%z(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%rho(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%u(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%v(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%w(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%p(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%t(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%mu(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%kin(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%eps(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%mut(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%xix(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%xiy(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%xiz(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%etx(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%ety(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%etz(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%zex(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%zey(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%zez(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%jac(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%qh(Flw(m)%is:Flw(m)%ie, Flw(m)%js:Flw(m)%je, Flw(m)%ks:Flw(m)%ke, ls:le))
 ! enddo
- ! ŠiqÀ•W ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      ! æ ¼å­åº§æ¨™ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ! do m = ms, me
- m = me
-  call Input_Grid3D( &
-  &      trim(GrdInDir) // trim(BlkName(m)) // trim(GrdFile), strbin, &
-  &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke, &
-  &      Flw(m)%x, Flw(m)%y, Flw(m)%z )
+      m = me
+      call Input_Grid3D( &
+      &      trim(GrdInDir)//trim(BlkName(m))//trim(GrdFile), strbin, &
+      &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke, &
+      &      Flw(m)%x, Flw(m)%y, Flw(m)%z)
 ! enddo
- ! ƒƒgƒŠƒbƒNƒX ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      ! ãƒ¡ãƒˆãƒªãƒƒã‚¯ã‚¹ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ! do m = ms, me
- m = me
-  call Input_Metrics3D( &
-  &      trim(FlwIniDir) // trim(BlkName(m)) // trim(ND_MetFile), strbin, &
-  &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke, &
-  &      Flw(m)%jac, &
-  &      Flw(m)%xix, Flw(m)%xiy, Flw(m)%xiz, &
-  &      Flw(m)%etx, Flw(m)%ety, Flw(m)%etz, &
-  &      Flw(m)%zex, Flw(m)%zey, Flw(m)%zez )
+      m = me
+      call Input_Metrics3D( &
+      &      trim(FlwIniDir)//trim(BlkName(m))//trim(ND_MetFile), strbin, &
+      &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke, &
+      &      Flw(m)%jac, &
+      &      Flw(m)%xix, Flw(m)%xiy, Flw(m)%xiz, &
+      &      Flw(m)%etx, Flw(m)%ety, Flw(m)%etz, &
+      &      Flw(m)%zex, Flw(m)%zey, Flw(m)%zez)
 ! enddo
- ! —¬‘©ŠÖ” ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      ! æµæŸé–¢æ•° ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ! do m = ms, me
- m = me
-  call Input_Flux3D( &
-  &      trim(FlwCalInDir) // trim(BlkName(m)) // trim(ND_FlxFile), strbin, &
-  &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke, &
-  &      ls, le, Flw(m)%qh )
+      m = me
+      call Input_Flux3D( &
+      &      trim(FlwCalInDir)//trim(BlkName(m))//trim(ND_FlxFile), strbin, &
+      &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke, &
+      &      ls, le, Flw(m)%qh)
 ! enddo
- ! •¨——Ê ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      ! ç‰©ç†é‡ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ! do m = ms, me
- m = me
-  call SetPhysics3DKEM( &
-  &      Rg, gamma, &
-  &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke, ls, le, &
-  &      Flw(m)%qh, Flw(m)%jac, &
-  &      Flw(m)%rho, Flw(m)%u, Flw(m)%v, Flw(m)%w, Flw(m)%p, Flw(m)%t, Flw(m)%kin, Flw(m)%eps )
-  call ViscosityCoefficient3D( &
-  &      muSth, TsSth, s1, &
-  &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke, &
-  &      Flw(m)%t, &
-  &      Flw(m)%mu )
-  Flw(m)%w(:,:,:) = 0.0
+      m = me
+      call SetPhysics3DKEM( &
+      &      Rg, gamma, &
+      &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke, ls, le, &
+      &      Flw(m)%qh, Flw(m)%jac, &
+      &      Flw(m)%rho, Flw(m)%u, Flw(m)%v, Flw(m)%w, Flw(m)%p, Flw(m)%t, Flw(m)%kin, Flw(m)%eps)
+      call ViscosityCoefficient3D( &
+      &      muSth, TsSth, s1, &
+      &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke, &
+      &      Flw(m)%t, &
+      &      Flw(m)%mu)
+      Flw(m)%w(:, :, :) = 0.0
 ! enddo
- ! —LŸŒ³‰» ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      ! æœ‰æ¬¡å…ƒåŒ– ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ! do m = ms, me
- m = me
-  call DimensionalizedPhysics3D( &
-  &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke, &
-  &      Flw(m)%rho, Flw(m)%u, Flw(m)%v, Flw(m)%w, Flw(m)%p, Flw(m)%t, Flw(m)%mu, &
-  &      Flw(m)%kin, Flw(m)%eps, Flw(m)%mut )
+      m = me
+      call DimensionalizedPhysics3D( &
+      &      Flw(m)%is, Flw(m)%ie, Flw(m)%js, Flw(m)%je, Flw(m)%ks, Flw(m)%ke, &
+      &      Flw(m)%rho, Flw(m)%u, Flw(m)%v, Flw(m)%w, Flw(m)%p, Flw(m)%t, Flw(m)%mu, &
+      &      Flw(m)%kin, Flw(m)%eps, Flw(m)%mut)
 ! enddo
- ! ’…•XŒvZ—Ìˆæ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      ! ç€æ°·è¨ˆç®—é ˜åŸŸ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ! do m = ms, me
- m = me
-  call Input_Resolution1D( &
-  &      trim(GrdInDir) // trim(BlkName(m)) // trim(IceRslFile), strtxt, &
-  &      Ice(m)%is, Ice(m)%ie )
+      m = me
+      call Input_Resolution1D( &
+      &      trim(GrdInDir)//trim(BlkName(m))//trim(IceRslFile), strtxt, &
+      &      Ice(m)%is, Ice(m)%ie)
 ! enddo
- ! ŒvZ‘ÎÛ’f–Êİ’è ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- m = mRef; kRef = Flw(m)%ks + int( 0.5 * (Flw(m)%ke - Flw(m)%ks) )
- ! ‰t“H“Š“üğŒ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- call Input_DropInCondition( &
- &      trim(DrpImpDir) // trim(DrpInConditionFile), strtxt, &
- &      DrpInArea,  DrpInVel )
- ! ‰t“HÕ“Ëƒf[ƒ^ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      ! è¨ˆç®—å¯¾è±¡æ–­é¢è¨­å®š ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      m = mRef; kRef = Flw(m)%ks + int(0.5*(Flw(m)%ke - Flw(m)%ks))
+      ! æ¶²æ»´æŠ•å…¥æ¡ä»¶ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      call Input_DropInCondition( &
+      &      trim(DrpImpDir)//trim(DrpInConditionFile), strtxt, &
+      &      DrpInArea, DrpInVel)
+      ! æ¶²æ»´è¡çªãƒ‡ãƒ¼ã‚¿ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ! do m = ms, me
- m = me
-  ! ƒƒ‚ƒŠŠm•Û
-  allocate( Flw(m)%Nimp(Ice(m)%is: Ice(m)%ie, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%Uimp(Ice(m)%is: Ice(m)%ie, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%Vimp(Ice(m)%is: Ice(m)%ie, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%Wimp(Ice(m)%is: Ice(m)%ie, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%Simp(Ice(m)%is: Ice(m)%ie, Flw(m)%ks: Flw(m)%ke), &
-  &         Flw(m)%CE  (Ice(m)%is: Ice(m)%ie, Flw(m)%ks: Flw(m)%ke) )
-  ! Õ“Ë–ÊÏ
-  call Input_ArrayReal2D( &
-  &      trim(DrpImpDir) // trim(BlkName(m)) // trim(DrpImpiAreaFile), strbin, &
-  &      Ice(m)%is, Ice(m)%ie, Flw(m)%ks, Flw(m)%ke, Flw(m)%simp )
-  ! ‰t“HûWŒø—¦‹y‚ÑÕ“Ë‘¬“x
-  call Input_CollectionEfficiency3D( &
-  &      trim(DrpImpDir) // trim(BlkName(m)) // trim(CollectionFile), strbin, &
-  &      Ice(m)%is, Ice(m)%ie, Flw(m)%ks, Flw(m)%ke, &
-  &      Flw(m)%CE, Flw(m)%Uimp, Flw(m)%Vimp, Flw(m)%Wimp )
+      m = me
+      ! ãƒ¡ãƒ¢ãƒªç¢ºä¿
+      allocate (Flw(m)%Nimp(Ice(m)%is:Ice(m)%ie, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%Uimp(Ice(m)%is:Ice(m)%ie, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%Vimp(Ice(m)%is:Ice(m)%ie, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%Wimp(Ice(m)%is:Ice(m)%ie, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%Simp(Ice(m)%is:Ice(m)%ie, Flw(m)%ks:Flw(m)%ke), &
+      &         Flw(m)%CE(Ice(m)%is:Ice(m)%ie, Flw(m)%ks:Flw(m)%ke))
+      ! è¡çªé¢ç©
+      call Input_ArrayReal2D( &
+      &      trim(DrpImpDir)//trim(BlkName(m))//trim(DrpImpiAreaFile), strbin, &
+      &      Ice(m)%is, Ice(m)%ie, Flw(m)%ks, Flw(m)%ke, Flw(m)%simp)
+      ! æ¶²æ»´åé›†åŠ¹ç‡åŠã³è¡çªé€Ÿåº¦
+      call Input_CollectionEfficiency3D( &
+      &      trim(DrpImpDir)//trim(BlkName(m))//trim(CollectionFile), strbin, &
+      &      Ice(m)%is, Ice(m)%ie, Flw(m)%ks, Flw(m)%ke, &
+      &      Flw(m)%CE, Flw(m)%Uimp, Flw(m)%Vimp, Flw(m)%Wimp)
 ! enddo
- ! ’…•XŒvZ‰Šúİ’è ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- ! ƒƒ‚ƒŠŠm•Û
- m = mRef; k = kRef
- allocate( Ice(m)%x     ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%y     ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%z     ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%f     ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Rho0  ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%mu0   ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Ts0   ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Yp    ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Up    ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Vp    ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Wp    ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Velp  ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%nup   ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Ptp   ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%SA    ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%fRough( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Uimp  ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Vimp  ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%CE    ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Ue    ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Ta    ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%nPhase( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Mes   ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Mim   ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Mrin  ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Mrout ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Mst   ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Mac   ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Bi    ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Bi0   ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%dBi   ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%Ti    ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%xi    ( Ice(m)%is: Ice(m)%ie ), &
- &         Ice(m)%yi    ( Ice(m)%is: Ice(m)%ie ) )
- ! •¨——Ê
- j0 = Flw(m)%js; j1 = Flw(m)%js + 1
+      ! ç€æ°·è¨ˆç®—åˆæœŸè¨­å®š ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      ! ãƒ¡ãƒ¢ãƒªç¢ºä¿
+      m = mRef; k = kRef
+      allocate (Ice(m)%x(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%y(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%z(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%f(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Rho0(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%mu0(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Ts0(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Yp(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Up(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Vp(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Wp(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Velp(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%nup(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Ptp(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%SA(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%fRough(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Uimp(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Vimp(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%CE(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Ue(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Ta(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%nPhase(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Mes(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Mim(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Mrin(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Mrout(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Mst(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Mac(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Bi(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Bi0(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%dBi(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%Ti(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%xi(Ice(m)%is:Ice(m)%ie), &
+      &         Ice(m)%yi(Ice(m)%is:Ice(m)%ie))
+      ! ç‰©ç†é‡
+      j0 = Flw(m)%js; j1 = Flw(m)%js + 1
 ! jb = nint(0.3 * Flw(m)%je)
 ! jb = 10
- jb = 100
- do i = Ice(m)%is, Ice(m)%ie
-  Ice(m)%x   (i) = Flw(m)%x  (i,j0,k)
-  Ice(m)%y   (i) = Flw(m)%y  (i,j0,k)
-  Ice(m)%z   (i) = Flw(m)%z  (i,j0,k)
-  Ice(m)%Rho0(i) = Flw(m)%rho(i,j0,k)
-  Ice(m)%mu0 (i) = Flw(m)%mu (i,j0,k)
-  Ice(m)%Ts0 (i) = Flw(m)%t  (i,j0,k)
-  Ice(m)%Yp  (i) = sqrt( ( Flw(m)%x(i,j1,k) - Flw(m)%x(i,j0,k) )**2 &
-  &                    + ( Flw(m)%y(i,j1,k) - Flw(m)%y(i,j0,k) )**2 &
-  &                    + ( Flw(m)%z(i,j1,k) - Flw(m)%z(i,j0,k) )**2 )
-  Ice(m)%Up  (i) = Flw(m)%u(i,j1,k) - Flw(m)%u(i,j0,k)
-  Ice(m)%Vp  (i) = Flw(m)%v(i,j1,k) - Flw(m)%v(i,j0,k)
-  Ice(m)%Wp  (i) = Flw(m)%w(i,j1,k) - Flw(m)%w(i,j0,k)
-  Ice(m)%Velp(i) = sqrt( Ice(m)%Up(i)**2 + Ice(m)%Vp(i)**2 + Ice(m)%Wp(i)**2 )
-  Ice(m)%Ptp (i) = Flw(m)%p(i,j1,k) + 0.5 * Flw(m)%rho(i,j1,k) * Ice(m)%Velp(i)**2
-  Ice(m)%Uimp(i) = Flw(m)%Uimp(i,k)
-  Ice(m)%Vimp(i) = Flw(m)%Vimp(i,k)
-  Ice(m)%SA  (i) = Flw(m)%Simp(i,k)
-  Ice(m)%CE  (i) = Flw(m)%CE  (i,k)
-  Ice(m)%Ue  (i) = maxval( sqrt( Flw(m)%u(i,:jb,k)**2 &
-  &                            + Flw(m)%v(i,:jb,k)**2 &
-  &                            + Flw(m)%w(i,:jb,k)**2 ) )		!!! ‹«ŠE‘wŠO’[‚Ì‘¬“x‚É•ÏX !!!
-  Ice(m)%Ta  (i) = Flw(m)%t  (i,jb,k)					!!! üˆÍ—¬‘Ì‚Ì‰·“x‚É•ÏX !!!
-  if( Flw(m)%rho(i,j1,k) > 0.0 ) then
-    Ice(m)%nup(i) = Flw(m)%mu(i,j1,k) / Flw(m)%rho(i,j1,k)
-   else
-    Ice(m)%nup(i) = Flw(m)%mu(i,j1,k)
-    write(*, '(a)') '!!!!! Error : density is negative !!!!!'
-  endif
- enddo
- ! ’…•XŒvZ“r’†‰ğ
- if( IceStep == 0 ) then
-   Ice(m)%fRough(:) = 0
-   Ice(m)%nPhase(:) = 0
-   Ice(m)%Mes(:)    = 0.0
-   Ice(m)%Mim(:)    = 0.0
-   Ice(m)%Mrin(:)   = 0.0
-   Ice(m)%Mrout(:)  = 0.0
-   Ice(m)%Mst(:)    = 0.0
-   Ice(m)%Mac(:)    = 0.0
-   Ice(m)%Bi(:)     = 0.0
-   Ice(m)%dBi(:)    = 0.0
-  else
-   ! •\–Ê‘e‚³‚Ìƒtƒ‰ƒO
-   Ice(m)%fRough(:) = 1
-   ! •X‘wŒú‚³E•X‘w‰·“x
-   call Input_IceThickTem2D( &
-   &      trim(IceCalInDir) // trim(BlkName(m)) // trim(IceThickTemFile), strdat, &
-   &      Ice(m)%is, Ice(m)%ie, &
-   &      Ice(m)%f, Ice(m)%Bi, Ice(m)%dBi, Ice(m)%Ti )
-   ! ”M—ÍŠwƒ‚ƒfƒ‹ƒpƒ‰ƒ[ƒ^
-   select case(ThermoNum)
-    case(1)
-     call Input_OrgMessingerPara2D( &
-     &      trim(IceCalInDir) // trim(BlkName(m)) // trim(MessingerFile), strdat, &
-     &      Ice(m)%is, Ice(m)%ie, &
-     &      Ice(m)%Mac, Ice(m)%Mes, Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mrout, Ice(m)%Mst )
-    case(2)
-     call Input_ExtMessingerPara2D( &
-     &      trim(IceCalInDir) // trim(BlkName(m)) // trim(ExMessingerFile), strdat, &
-     &      Ice(m)%is, Ice(m)%ie, &
-     &      Ice(m)%nPhase, &
-     &      Ice(m)%Mes, Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mrout, Ice(m)%Mst )
-   end select
- endif
- ! ƒƒ‚ƒŠ‰ğ•ú ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      jb = 100
+      do i = Ice(m)%is, Ice(m)%ie
+         Ice(m)%x(i) = Flw(m)%x(i, j0, k)
+         Ice(m)%y(i) = Flw(m)%y(i, j0, k)
+         Ice(m)%z(i) = Flw(m)%z(i, j0, k)
+         Ice(m)%Rho0(i) = Flw(m)%rho(i, j0, k)
+         Ice(m)%mu0(i) = Flw(m)%mu(i, j0, k)
+         Ice(m)%Ts0(i) = Flw(m)%t(i, j0, k)
+         Ice(m)%Yp(i) = sqrt((Flw(m)%x(i, j1, k) - Flw(m)%x(i, j0, k))**2 &
+         &                    + (Flw(m)%y(i, j1, k) - Flw(m)%y(i, j0, k))**2 &
+         &                    + (Flw(m)%z(i, j1, k) - Flw(m)%z(i, j0, k))**2)
+         Ice(m)%Up(i) = Flw(m)%u(i, j1, k) - Flw(m)%u(i, j0, k)
+         Ice(m)%Vp(i) = Flw(m)%v(i, j1, k) - Flw(m)%v(i, j0, k)
+         Ice(m)%Wp(i) = Flw(m)%w(i, j1, k) - Flw(m)%w(i, j0, k)
+         Ice(m)%Velp(i) = sqrt(Ice(m)%Up(i)**2 + Ice(m)%Vp(i)**2 + Ice(m)%Wp(i)**2)
+         Ice(m)%Ptp(i) = Flw(m)%p(i, j1, k) + 0.5*Flw(m)%rho(i, j1, k)*Ice(m)%Velp(i)**2
+         Ice(m)%Uimp(i) = Flw(m)%Uimp(i, k)
+         Ice(m)%Vimp(i) = Flw(m)%Vimp(i, k)
+         Ice(m)%SA(i) = Flw(m)%Simp(i, k)
+         Ice(m)%CE(i) = Flw(m)%CE(i, k)
+         Ice(m)%Ue(i) = maxval(sqrt(Flw(m)%u(i, :jb, k)**2 &
+         &                            + Flw(m)%v(i, :jb, k)**2 &
+         &                            + Flw(m)%w(i, :jb, k)**2))                !!! å¢ƒç•Œå±¤å¤–ç«¯ã®é€Ÿåº¦ã«å¤‰æ›´ !!!
+         Ice(m)%Ta(i) = Flw(m)%t(i, jb, k)                                        !!! å‘¨å›²æµä½“ã®æ¸©åº¦ã«å¤‰æ›´ !!!
+         if (Flw(m)%rho(i, j1, k) > 0.0) then
+            Ice(m)%nup(i) = Flw(m)%mu(i, j1, k)/Flw(m)%rho(i, j1, k)
+         else
+            Ice(m)%nup(i) = Flw(m)%mu(i, j1, k)
+            write (*, '(a)') '!!!!! Error : density is negative !!!!!'
+         end if
+      end do
+      ! ç€æ°·è¨ˆç®—é€”ä¸­è§£
+      if (IceStep == 0) then
+         Ice(m)%fRough(:) = 0
+         Ice(m)%nPhase(:) = 0
+         Ice(m)%Mes(:) = 0.0
+         Ice(m)%Mim(:) = 0.0
+         Ice(m)%Mrin(:) = 0.0
+         Ice(m)%Mrout(:) = 0.0
+         Ice(m)%Mst(:) = 0.0
+         Ice(m)%Mac(:) = 0.0
+         Ice(m)%Bi(:) = 0.0
+         Ice(m)%dBi(:) = 0.0
+      else
+         ! è¡¨é¢ç²—ã•ã®ãƒ•ãƒ©ã‚°
+         Ice(m)%fRough(:) = 1
+         ! æ°·å±¤åšã•ãƒ»æ°·å±¤æ¸©åº¦
+         call Input_IceThickTem2D( &
+         &      trim(IceCalInDir)//trim(BlkName(m))//trim(IceThickTemFile), strdat, &
+         &      Ice(m)%is, Ice(m)%ie, &
+         &      Ice(m)%f, Ice(m)%Bi, Ice(m)%dBi, Ice(m)%Ti)
+         ! ç†±åŠ›å­¦ãƒ¢ãƒ‡ãƒ«ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+         select case (ThermoNum)
+         case (1)
+            call Input_OrgMessingerPara2D( &
+            &      trim(IceCalInDir)//trim(BlkName(m))//trim(MessingerFile), strdat, &
+            &      Ice(m)%is, Ice(m)%ie, &
+            &      Ice(m)%Mac, Ice(m)%Mes, Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mrout, Ice(m)%Mst)
+         case (2)
+            call Input_ExtMessingerPara2D( &
+            &      trim(IceCalInDir)//trim(BlkName(m))//trim(ExMessingerFile), strdat, &
+            &      Ice(m)%is, Ice(m)%ie, &
+            &      Ice(m)%nPhase, &
+            &      Ice(m)%Mes, Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mrout, Ice(m)%Mst)
+         end select
+      end if
+      ! ãƒ¡ãƒ¢ãƒªè§£æ”¾ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ! do m = ms, me
- m = me
-  deallocate( Flw(m)%x, Flw(m)%y, Flw(m)%z, Flw(m)%rho, Flw(m)%u, Flw(m)%v, Flw(m)%w, &
-  &           Flw(m)%p, Flw(m)%t, Flw(m)%mu, Flw(m)%kin, Flw(m)%eps, &
-  &           Flw(m)%xix, Flw(m)%xiy, Flw(m)%xiz, &
-  &           Flw(m)%etx, Flw(m)%ety, Flw(m)%etz, &
-  &           Flw(m)%zex, Flw(m)%zey, Flw(m)%zez, &
-  &           Flw(m)%jac, Flw(m)%qh, &
-  &           Flw(m)%Nimp, Flw(m)%Uimp, Flw(m)%Vimp, Flw(m)%Wimp, Flw(m)%Simp, Flw(m)%CE )
+      m = me
+      deallocate (Flw(m)%x, Flw(m)%y, Flw(m)%z, Flw(m)%rho, Flw(m)%u, Flw(m)%v, Flw(m)%w, &
+      &           Flw(m)%p, Flw(m)%t, Flw(m)%mu, Flw(m)%kin, Flw(m)%eps, &
+      &           Flw(m)%xix, Flw(m)%xiy, Flw(m)%xiz, &
+      &           Flw(m)%etx, Flw(m)%ety, Flw(m)%etz, &
+      &           Flw(m)%zex, Flw(m)%zey, Flw(m)%zez, &
+      &           Flw(m)%jac, Flw(m)%qh, &
+      &           Flw(m)%Nimp, Flw(m)%Uimp, Flw(m)%Vimp, Flw(m)%Wimp, Flw(m)%Simp, Flw(m)%CE)
 ! enddo
- ! ˆ—I—¹ ********************************************************************************************
- return
-end subroutine InitialSetting
+      ! å‡¦ç†çµ‚äº† ********************************************************************************************
+      return
+   end subroutine InitialSetting
 !*******************************************************************************************************
-!******** ’…•XŒvZ										********
+!******** ç€æ°·è¨ˆç®—                                                                                ********
 !*******************************************************************************************************
-subroutine CalIceAccretion
- ! •Ï”éŒ¾ ********************************************************************************************
- implicit none
- ! ‹ÇŠ’è” ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- integer, parameter :: nStart   = 0
- integer, parameter :: nIceLog  = 1000
- real   , parameter :: LmtBi    = 2.0
- ! ‹ÇŠ•Ï” ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- real   , pointer :: Utau(:)						! –€C‘¬“x
- real   , pointer :: RH(:)						! •\–Ê‘e‚³
- real   , pointer :: hc(:)						! ”M“`’B—¦ [J/(s*m^2*K)]
- real   , pointer :: ff(:)						! •XŒ‹—¦
- real   , pointer :: Rhoi(:)						! •X‚Ì–§“x
- real   , pointer :: Q(:)						! ”M [J]
- real   , pointer :: Him(:), Hes(:), Hac(:), &
- &                   Hrin(:), Hrout(:)					! ”äƒGƒ“ƒ^ƒ‹ƒs [J/kg]
- real   , pointer :: Bw(:), Tw(:)					! …–ŒŒú‚³‹y‚Ñ‰·“x
- real   , pointer :: Bg(:), tg(:)					! ‰J•X‚ªŒ»‚ê‚é•X‘wŒú‚³‹y‚ÑŠÔ
- real   , pointer :: Q0(:), Q1(:)					! ”M—¬‘©
- real   , pointer :: IceCc(:), IceSc(:), IceAc(:)			! •X‚Éì—p‚·‚é—Í
- real   , pointer :: B0(:)
- integer   :: i, m, n, nn
- integer   :: nCountMax
- real      :: CalTime
- real      :: Ufree, Pfree, Tfree, Rfree				! å—¬‘¬“xEˆ³—ÍE‰·“x
- real      :: GravityX, GravityY
- real      :: IceCt, IceSt, IceAt
- real      :: PhaseRK, timeRK, dtRK
- character :: fname * 50
- ! ˆ—ŠJn ********************************************************************************************
- ! ‰Šúİ’è ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- ! ŒvZ‰ñ” --------------------------------------------------------------------------------------------
- CalTime    = IceTimeMax / real(IceStepMax)
- nCountMax  = nint(CalTime / dti)
- ! ‘ÎÛƒuƒƒbƒN ----------------------------------------------------------------------------------------
- m = mRef
- ! ƒƒ‚ƒŠŠm•Û ------------------------------------------------------------------------------------------
- allocate( Utau ( Ice(m)%is: Ice(m)%ie ), &
- &         RH   ( Ice(m)%is: Ice(m)%ie ), &
- &         hc   ( Ice(m)%is: Ice(m)%ie ), &
- &         FF   ( Ice(m)%is: Ice(m)%ie ), &
- &         B0   ( Ice(m)%is: Ice(m)%ie ) )
- if(IceStep == 0) FF(:) = 0.0
- ! å—¬ ------------------------------------------------------------------------------------------------
+   subroutine CalIceAccretion
+      ! å¤‰æ•°å®£è¨€ ********************************************************************************************
+      implicit none
+      ! å±€æ‰€å®šæ•° ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      integer, parameter :: nStart = 0
+      integer, parameter :: nIceLog = 1000
+      real, parameter :: LmtBi = 2.0
+      ! å±€æ‰€å¤‰æ•° ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      real, pointer :: Utau(:)                                                ! æ‘©æ“¦é€Ÿåº¦
+      real, pointer :: RH(:)                                                ! è¡¨é¢ç²—ã•
+      real, pointer :: hc(:)                                                ! ç†±ä¼é”ç‡ [J/(s*m^2*K)]
+      real, pointer :: ff(:)                                                ! æ°·çµç‡
+      real, pointer :: Rhoi(:)                                                ! æ°·ã®å¯†åº¦
+      real, pointer :: Q(:)                                                ! ç†± [J]
+      real, pointer :: Him(:), Hes(:), Hac(:), &
+      &                   Hrin(:), Hrout(:)                                        ! æ¯”ã‚¨ãƒ³ã‚¿ãƒ«ãƒ” [J/kg]
+      real, pointer :: Bw(:), Tw(:)                                        ! æ°´è†œåšã•åŠã³æ¸©åº¦
+      real, pointer :: Bg(:), tg(:)                                        ! é›¨æ°·ãŒç¾ã‚Œã‚‹æ°·å±¤åšã•åŠã³æ™‚é–“
+      real, pointer :: Q0(:), Q1(:)                                        ! ç†±æµæŸ
+      real, pointer :: IceCc(:), IceSc(:), IceAc(:)                        ! æ°·ã«ä½œç”¨ã™ã‚‹åŠ›
+      real, pointer :: B0(:)
+      integer   :: i, m, n, nn
+      integer   :: nCountMax
+      real      :: CalTime
+      real      :: Ufree, Pfree, Tfree, Rfree                                ! ä¸»æµé€Ÿåº¦ãƒ»åœ§åŠ›ãƒ»æ¸©åº¦
+      real      :: GravityX, GravityY
+      real      :: IceCt, IceSt, IceAt
+      real      :: PhaseRK, timeRK, dtRK
+      character :: fname*50
+      ! å‡¦ç†é–‹å§‹ ********************************************************************************************
+      ! åˆæœŸè¨­å®š ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      ! è¨ˆç®—å›æ•° --------------------------------------------------------------------------------------------
+      CalTime = IceTimeMax/real(IceStepMax)
+      nCountMax = nint(CalTime/dti)
+      ! å¯¾è±¡ãƒ–ãƒ­ãƒƒã‚¯ ----------------------------------------------------------------------------------------
+      m = mRef
+      ! ãƒ¡ãƒ¢ãƒªç¢ºä¿ ------------------------------------------------------------------------------------------
+      allocate (Utau(Ice(m)%is:Ice(m)%ie), &
+      &         RH(Ice(m)%is:Ice(m)%ie), &
+      &         hc(Ice(m)%is:Ice(m)%ie), &
+      &         FF(Ice(m)%is:Ice(m)%ie), &
+      &         B0(Ice(m)%is:Ice(m)%ie))
+      if (IceStep == 0) FF(:) = 0.0
+      ! ä¸»æµ ------------------------------------------------------------------------------------------------
 ! Ufree = VelExp; Pfree = PsExp; Tfree = TsExp
- Ufree = DrpInVel; Pfree = PsExp; Tfree = TsExp
- ! d—Í ------------------------------------------------------------------------------------------------
+      Ufree = DrpInVel; Pfree = PsExp; Tfree = TsExp
+      ! é‡åŠ› ------------------------------------------------------------------------------------------------
 ! GravityX = +9.806650 * sin(AOA)
 ! GravityY = -9.806650 * cos(AOA)
- GravityX = 0.0
- GravityY = 0.0
- ! •\–Ê‘e‚³ --------------------------------------------------------------------------------------------
- select case( RoughNum )
-  case(1)
-   call RoughnessShinBond2D( &
-   &      Ice(m)%is, Ice(m)%ie, Ice(m)%Ts0, LWC, &
-   &      RH )
-  case(2)
-   call RoughnessCIRAMIL2D( &
-   &      Ice(m)%is, Ice(m)%ie, Ice(m)%Ts0, &
-   &      RH )
-  case(3)
-   call WallFrictionVelocity2D( &
-   &      Ice(m)%is, Ice(m)%ie, &
-   &      Ice(m)%fRough, Ice(m)%yp, Ice(m)%Velp, Ice(m)%nup, RH, &
-   &      utau )
-   call RoughnessWright2D( &
-   &      Ice(m)%is, Ice(m)%ie, Ice(m)%x, Ice(m)%y, &
-   &      Ice(m)%SA, Ice(m)%Up, Ice(m)%Vp, Utau, Ice(m)%Rho0, LWC, &
-   &      RH )
-  case default; write(*, '(a)') '!!!!! Error : Rougness model number !!!!!'
- end select
- ! –€C‘¬“x --------------------------------------------------------------------------------------------
- select case(TurbNum)
-  case(4) !’áRe”Œ^ƒ‚ƒfƒ‹
-   call WallFrictionVelocityLRe2D( &
-   &      Ice(m)%is, Ice(m)%ie, &
-   &      Ice(m)%yp, Ice(m)%Velp, Ice(m)%nup, utau )
-  case default
-   call WallFrictionVelocity2D( &
-   &      Ice(m)%is, Ice(m)%ie, &
-   &      Ice(m)%fRough, Ice(m)%yp, Ice(m)%Velp, Ice(m)%nup, RH, &
-   &      utau )
- end select
- ! ”M“`’B—¦ --------------------------------------------------------------------------------------------
- call HeatTransferCoefficient2D( &
- &      Ice(m)%is, Ice(m)%ie, &
- &      Ice(m)%Ue, Ice(m)%mu0, Ice(m)%rho0, utau, RH, &
- &      hc )
- ! ’…•XŒvZ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- select case(ThermoNum)
-  ! Original Messinger ---------------------------------------------------------------------------------
-  case(1)
-   write(*, '(/,a)') '+++ Original Messinger +++'
-!   ! ƒƒ‚ƒŠŠm•Û
+      GravityX = 0.0
+      GravityY = 0.0
+      ! è¡¨é¢ç²—ã• --------------------------------------------------------------------------------------------
+      select case (RoughNum)
+      case (1)
+         call RoughnessShinBond2D( &
+         &      Ice(m)%is, Ice(m)%ie, Ice(m)%Ts0, LWC, &
+         &      RH)
+      case (2)
+         call RoughnessCIRAMIL2D( &
+         &      Ice(m)%is, Ice(m)%ie, Ice(m)%Ts0, &
+         &      RH)
+      case (3)
+         call WallFrictionVelocity2D( &
+         &      Ice(m)%is, Ice(m)%ie, &
+         &      Ice(m)%fRough, Ice(m)%yp, Ice(m)%Velp, Ice(m)%nup, RH, &
+         &      utau)
+         call RoughnessWright2D( &
+         &      Ice(m)%is, Ice(m)%ie, Ice(m)%x, Ice(m)%y, &
+         &      Ice(m)%SA, Ice(m)%Up, Ice(m)%Vp, Utau, Ice(m)%Rho0, LWC, &
+         &      RH)
+      case default; write (*, '(a)') '!!!!! Error : Rougness model number !!!!!'
+      end select
+      ! æ‘©æ“¦é€Ÿåº¦ --------------------------------------------------------------------------------------------
+      select case (TurbNum)
+      case (4) !ä½Reæ•°å‹ãƒ¢ãƒ‡ãƒ«
+         call WallFrictionVelocityLRe2D( &
+         &      Ice(m)%is, Ice(m)%ie, &
+         &      Ice(m)%yp, Ice(m)%Velp, Ice(m)%nup, utau)
+      case default
+         call WallFrictionVelocity2D( &
+         &      Ice(m)%is, Ice(m)%ie, &
+         &      Ice(m)%fRough, Ice(m)%yp, Ice(m)%Velp, Ice(m)%nup, RH, &
+         &      utau)
+      end select
+      ! ç†±ä¼é”ç‡ --------------------------------------------------------------------------------------------
+      call HeatTransferCoefficient2D( &
+      &      Ice(m)%is, Ice(m)%ie, &
+      &      Ice(m)%Ue, Ice(m)%mu0, Ice(m)%rho0, utau, RH, &
+      &      hc)
+      ! ç€æ°·è¨ˆç®— ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      select case (ThermoNum)
+         ! Original Messinger ---------------------------------------------------------------------------------
+      case (1)
+         write (*, '(/,a)') '+++ Original Messinger +++'
+!   ! ãƒ¡ãƒ¢ãƒªç¢ºä¿
 !   allocate( Q    ( Ice(m)%is: Ice(m)%ie ), &
 !   &         Him  ( Ice(m)%is: Ice(m)%ie ), &
 !   &         Hes  ( Ice(m)%is: Ice(m)%ie ), &
@@ -462,76 +462,76 @@ subroutine CalIceAccretion
 !   &         Hrin ( Ice(m)%is: Ice(m)%ie ), &
 !   &         Hrout( Ice(m)%is: Ice(m)%ie ), &
 !   &         Rhoi ( Ice(m)%is: Ice(m)%ie ) )
-!   ! ‰ŠúğŒ
+!   ! åˆæœŸæ¡ä»¶
 !   Him(:) = 0.0; Hes(:) = 0.0; Hac(:) = 0.0; Hrin(:) = 0.0; Hrout(:) = 0.0
-!   ! •X‚Ì–§“x
+!   ! æ°·ã®å¯†åº¦
 !   call IceDensity2D( &
 !   &      Ice(m)%is, Ice(m)%ie, Tfree, Rhoi )
-!   ! Õ“Ë‰t“H‚Ì¿—ÊEƒGƒ“ƒ^ƒ‹ƒs
+!   ! è¡çªæ¶²æ»´ã®è³ªé‡ãƒ»ã‚¨ãƒ³ã‚¿ãƒ«ãƒ”
 !   call DropImpingementOrg2D( &
 !   &      Ice(m)%is, Ice(m)%ie, MVD, Rhod, Tfree, &
 !   &      Ice(m)%SA, Ice(m)%CE, Ice(m)%Uimp, Ice(m)%Vimp, &
 !   &      Ice(m)%Mim, Him )
-!   ! ¸‰ØEö”­‚Ì¿—ÊEƒGƒ“ƒ^ƒ‹ƒs
+!   ! æ˜‡è¯ãƒ»è’¸ç™ºã®è³ªé‡ãƒ»ã‚¨ãƒ³ã‚¿ãƒ«ãƒ”
 !   call EvapolationOrg2D( &
 !   &      Ice(m)%is, Ice(m)%ie, &
 !   &      Tfree, Ice(m)%Ts0, Ice(m)%Ptp, hc, Ice(m)%SA, Ice(m)%dBi, &
 !   &      Ice(m)%Mes, Hes )
-!   ! ”M‚Ìûx
+!   ! ç†±ã®åæ”¯
 !   call HeatBalanceOrg2D( &
 !   &      Ice(m)%is, Ice(m)%ie, &
 !   &      Tfree, Ice(m)%Ts0, hc, Ice(m)%SA, utau, &
 !   &      Q )
-  ! Extended Messinger ---------------------------------------------------------------------------------
-  case(2)
-   write(*, '(/,a)') '+++ Extended Messinger +++'
-   ! ƒƒ‚ƒŠŠm•Û
-   allocate( Bw( Ice(m)%is: Ice(m)%ie ), &
-   &         Tw( Ice(m)%is: Ice(m)%ie ), &
-   &         Bg( Ice(m)%is: Ice(m)%ie ), &
-   &         tg( Ice(m)%is: Ice(m)%ie ), &
-   &         Q0( Ice(m)%is: Ice(m)%ie ), &
-   &         Q1( Ice(m)%is: Ice(m)%ie ) )
-   ! ‰ŠúğŒ
-   Ice(m)%Ti(:) = Ice(m)%Ts0(:); Tw(:) = 273.15
-   Bw(:) = 0.0; Tw(:) = 0.0
-   Bg(:) = 0.0; Tg(:) = 0.0
-   Q0(:) = 0.0; Q1(:) = 0.0
-!   ! •\–Ê‰·“x
+         ! Extended Messinger ---------------------------------------------------------------------------------
+      case (2)
+         write (*, '(/,a)') '+++ Extended Messinger +++'
+         ! ãƒ¡ãƒ¢ãƒªç¢ºä¿
+         allocate (Bw(Ice(m)%is:Ice(m)%ie), &
+         &         Tw(Ice(m)%is:Ice(m)%ie), &
+         &         Bg(Ice(m)%is:Ice(m)%ie), &
+         &         tg(Ice(m)%is:Ice(m)%ie), &
+         &         Q0(Ice(m)%is:Ice(m)%ie), &
+         &         Q1(Ice(m)%is:Ice(m)%ie))
+         ! åˆæœŸæ¡ä»¶
+         Ice(m)%Ti(:) = Ice(m)%Ts0(:); Tw(:) = 273.15
+         Bw(:) = 0.0; Tw(:) = 0.0
+         Bg(:) = 0.0; Tg(:) = 0.0
+         Q0(:) = 0.0; Q1(:) = 0.0
+!   ! è¡¨é¢æ¸©åº¦
 !   call SurfaceTemperature2D( &
 !   &      Ice(m)%is, Ice(m)%ie, Ufree, Tfree, Ice(m)%Ue, &
 !   &      Ice(m)%Ta, Ice(m)%Ts0 )
-   ! Õ“Ë‰t“H‚Ì¿—Ê—¬‘©
-   call DropImpingementExt2D( &
-   &      Ice(m)%is, Ice(m)%ie, &
-   &      MVD, Rhod, Ice(m)%CE, &
-   &      Ice(m)%Mim )
-  case default
-   write(*, '(a)') '!!!!! Error : Thermodynamics model number !!!!!'
-   stop
- end select
- ! ’…•XŠÔis ========================================================================================
- write(*, '(a,e16.8e3)') '* Start icing time = ', IceTime
- B0(:) = Ice(m)%Bi(:)
- do n = nStart, nCountMax
-  ! 1 ƒXƒeƒbƒv‘O‚Ì•X‘wŒú‚³•Û‘¶
-  call SaveIceThickness2D( &
-  &      Ice(m)%is, Ice(m)%ie, &
-  &      Ice(m)%Bi, Ice(m)%Bi0 )
-  select case(ThermoNum)
-   ! Original Messinger --------------------------------------------------------------------------------
-   case(1)
-!    ! •XŒ‹—¦
+         ! è¡çªæ¶²æ»´ã®è³ªé‡æµæŸ
+         call DropImpingementExt2D( &
+         &      Ice(m)%is, Ice(m)%ie, &
+         &      MVD, Rhod, Ice(m)%CE, &
+         &      Ice(m)%Mim)
+      case default
+         write (*, '(a)') '!!!!! Error : Thermodynamics model number !!!!!'
+         stop
+      end select
+      ! ç€æ°·æ™‚é–“é€²è¡Œ ========================================================================================
+      write (*, '(a,e16.8e3)') '* Start icing time = ', IceTime
+      B0(:) = Ice(m)%Bi(:)
+      do n = nStart, nCountMax
+         ! 1 ã‚¹ãƒ†ãƒƒãƒ—å‰ã®æ°·å±¤åšã•ä¿å­˜
+         call SaveIceThickness2D( &
+         &      Ice(m)%is, Ice(m)%ie, &
+         &      Ice(m)%Bi, Ice(m)%Bi0)
+         select case (ThermoNum)
+            ! Original Messinger --------------------------------------------------------------------------------
+         case (1)
+!    ! æ°·çµç‡
 !    call FreezingFractionOrg2D( &
 !    &      Ice(m)%is, Ice(m)%ie, &
 !    &      Ice(m)%Mim, Ice(m)%Mes, Ice(m)%Mrin, Ice(m)%Mst, Him, Hes, Hrin, Hrout, Hac, Q, &
 !    &      FF )
-!    ! Runback-out ‚Ì¿—ÊEƒGƒ“ƒ^ƒ‹ƒs
+!    ! Runback-out ã®è³ªé‡ãƒ»ã‚¨ãƒ³ã‚¿ãƒ«ãƒ”
 !    call RunbackOutOrg2D( &
 !    &      Ice(m)%is, Ice(m)%ie, RunbackNum, dti, &
 !    &      Ice(m)%Ts0, Ice(m)%SA, utau, RH, Ice(m)%Mim, Ice(m)%Mes, Ice(m)%Mrin, FF, &
 !    &      Ice(m)%Mrout, Hrout, Ice(m)%Mst )
-!    ! …–Œ‚Ìˆí’E
+!    ! æ°´è†œã®é€¸è„±
 !    if(DropShedNum == 1) then
 !      call WaterSheddingOrg2D( &
 !      &      Ice(m)%is, Ice(m)%ie, dti, GravityX, GravityY, &
@@ -539,267 +539,267 @@ subroutine CalIceAccretion
 !      &      Ice(m)%SA, utau, &
 !      &      Ice(m)%Mrout, Hrout )
 !    endif
-!    ! Runback-in ‚Ì¿—ÊEƒGƒ“ƒ^ƒ‹ƒs
+!    ! Runback-in ã®è³ªé‡ãƒ»ã‚¨ãƒ³ã‚¿ãƒ«ãƒ”
 !    call RunbackInOrg2D( &
 !    &      Ice(m)%is, Ice(m)%ie, dti, &
 !    &      GravityX, GravityY, &
 !    &      Ice(m)%x, Ice(m)%y, Ice(m)%Rho0, Ice(m)%up, Ice(m)%vp, &
 !    &      Ice(m)%SA, utau, Ice(m)%Mrout, Hrout, &
 !    &      Ice(m)%Mrin, Hrin )
-!    ! •X‘wŒú‚³
+!    ! æ°·å±¤åšã•
 !    call IceThicknessOrg2D( &
 !    &      Ice(m)%is, Ice(m)%ie, &
 !    &      Ice(m)%Ts0, Ice(m)%SA, Rhoi, FF, Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mst, &
 !    &      Ice(m)%Mac, Hac, Ice(m)%dBi )
-!    ! •X¬’·‚ÌŠÔis
+!    ! æ°·æˆé•·ã®æ™‚é–“é€²è¡Œ
 !    call IceTimeGrowth2D( &
 !    &      Ice(m)%is, Ice(m)%ie, dti, &
 !    &      LmtBi, Ice(m)%dBi, Ice(m)%Bi0, &
 !    &      Ice(m)%Bi )
-   ! Extended Messinger ---------------------------------------------------------------------------------
-   case(2)
-    do nn = 1, nRunge
-     PhaseRK = 1.0 / real(nRunge + 1 - nn)
-     dtRK    = PhaseRK * dti
-     timeRK  = IceTime + dtRK
-!     ! ”M‚Ìûx
+            ! Extended Messinger ---------------------------------------------------------------------------------
+         case (2)
+            do nn = 1, nRunge
+               PhaseRK = 1.0/real(nRunge + 1 - nn)
+               dtRK = PhaseRK*dti
+               timeRK = IceTime + dtRK
+!     ! ç†±ã®åæ”¯
 !     call HeatBalanceExt2D( &
 !     &      Ice(m)%is, Ice(m)%ie, Tfree, &
 !     &      Ice(m)%Ta, Ice(m)%Ptp, Ufree, hc, Ice(m)%dBi, &
 !     &      Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mst, Ice(m)%Mes, Ice(m)%nPhase, &
 !     &      Q0, Q1 )
-     ! –¶•X / ‰J•X‚Ì‘Š•Ï‰»
-     call PhaseChangeExt2D( &
-     &      Ice(m)%is, Ice(m)%ie, &
-     &      hc, Tfree, Ice(m)%Ts0, Ice(m)%Ta, Ice(m)%Ptp, Ufree, &
-     &      Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mst, Ice(m)%Mes, timeRK, dtRK, Ice(m)%Bi, &
-     &      Q0, Q1, Bg, tg, Ice(m)%nPhase )
-     ! ”M‚Ìûx
-     call HeatBalanceExt2D( &
-     &      Ice(m)%is, Ice(m)%ie, Tfree, &
-     &      Ice(m)%Ta, Ice(m)%Ptp, Ufree, hc, Ice(m)%dBi, &
-     &      Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mst, Ice(m)%Mes, Ice(m)%nPhase, &
-     &      Q0, Q1 )
-     ! ö”­E¸‰Ø‚Ì¿—Ê—¬‘©
-     call EvapolationExt2D( &
-     &      Ice(m)%is, Ice(m)%ie, &
-     &      Tfree, Pfree, Ice(m)%Ts0, Ice(m)%Ta, Ice(m)%Ti, Tw, Ice(m)%Ptp, hc, Ice(m)%nPhase, &
-     &      Ice(m)%Mes )
+               ! éœ§æ°· / é›¨æ°·ã®ç›¸å¤‰åŒ–
+               call PhaseChangeExt2D( &
+               &      Ice(m)%is, Ice(m)%ie, &
+               &      hc, Tfree, Ice(m)%Ts0, Ice(m)%Ta, Ice(m)%Ptp, Ufree, &
+               &      Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mst, Ice(m)%Mes, timeRK, dtRK, Ice(m)%Bi, &
+               &      Q0, Q1, Bg, tg, Ice(m)%nPhase)
+               ! ç†±ã®åæ”¯
+               call HeatBalanceExt2D( &
+               &      Ice(m)%is, Ice(m)%ie, Tfree, &
+               &      Ice(m)%Ta, Ice(m)%Ptp, Ufree, hc, Ice(m)%dBi, &
+               &      Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mst, Ice(m)%Mes, Ice(m)%nPhase, &
+               &      Q0, Q1)
+               ! è’¸ç™ºãƒ»æ˜‡è¯ã®è³ªé‡æµæŸ
+               call EvapolationExt2D( &
+               &      Ice(m)%is, Ice(m)%ie, &
+               &      Tfree, Pfree, Ice(m)%Ts0, Ice(m)%Ta, Ice(m)%Ti, Tw, Ice(m)%Ptp, hc, Ice(m)%nPhase, &
+               &      Ice(m)%Mes)
 !     call EvapolationExt2D( &
 !     &      Ice(m)%is, Ice(m)%ie, &
 !     &      Ice(m)%Ta, Ice(m)%Ti, Tw, Ice(m)%Ptp, hc, Ice(m)%nPhase, &
 !     &      Ice(m)%Mes )
-!     ! •XŒ‹—¦
+!     ! æ°·çµç‡
 !     call FreezingFractionExt2D( &
 !     &      Ice(m)%is, Ice(m)%ie, TimeRK, &
 !     &      Ice(m)%Mim, Ice(m)%Mes, Ice(m)%Mrin, Ice(m)%Mst, Ice(m)%nPhase, Ice(m)%Bi, Bw, Bg, Ice(m)%dBi, &
 !     &      FF )
-     ! •X‘wŒú‚³E•X‘w‰·“xE…–ŒŒú‚³E…–Œ‰·“x
-     call IceThicknessExt2D( &
-     &      Ice(m)%is, Ice(m)%ie, &
-     &      Ice(m)%Ts0, Ice(m)%Mim, Ice(m)%Mes, Ice(m)%Mrin, Ice(m)%Mst, &
-     &      Q0, Q1, Ice(m)%Bi, Ice(m)%nPhase, timeRK, dtRK, &
-     &      Bg, Tg, &
-     &      Ice(m)%dBi, Bw, Ice(m)%Ti, Tw )
-     ! •XŒ‹—¦
-     call FreezingFractionExt2D( &
-     &      Ice(m)%is, Ice(m)%ie, TimeRK, &
-     &      Ice(m)%Mim, Ice(m)%Mes, Ice(m)%Mrin, Ice(m)%Mst, Ice(m)%nPhase, Ice(m)%Bi, Bw, Bg, Ice(m)%dBi, &
-     &      FF )
-     ! Runback-out ‚Ì¿—Ê—¬‘©
-     call RunbackOutExt2D( &
-     &      Ice(m)%is, Ice(m)%ie, RunbackNum, dtRK, timeRK, &
-     &      RH, Ice(m)%Mim, Ice(m)%Mes, Ice(m)%Mrin, Bw, FF, Ice(m)%nPhase, &
-     &      Ice(m)%Mrout, Ice(m)%Mst )
-     ! …–Œ‚Ìˆí’E
-     if(DropShedNum == 1) then
-       call WaterSheddingExt2D( &
-       &      Ice(m)%is, Ice(m)%ie, dtRK, GravityX, GravityY, &
-       &      Ice(m)%x, Ice(m)%y, Ice(m)%Rho0, &
-       &      Ice(m)%up, Ice(m)%vp, Ice(m)%SA, utau, &
-       &      Ice(m)%Mrout )
-     endif
-     ! Runback-in ‚Ì¿—Ê—¬‘©
-     call RunbackInExt2D( &
-     &      Ice(m)%is, Ice(m)%ie, dtRK, GravityX, GravityY, &
-     &      Ice(m)%x, Ice(m)%y, Ice(m)%Rho0, &
-     &      Ice(m)%up, Ice(m)%vp, Ice(m)%SA, utau, Ice(m)%Mrout, &
-     &      Ice(m)%Mrin )
-     ! •X¬’·‚ÌŠÔis
-     call IceTimeGrowth2D( &
-     &      Ice(m)%is, Ice(m)%ie, dtRK, &
-     &      PhaseRK, Ice(m)%dBi, Ice(m)%Bi0, &
-     &      Ice(m)%Bi )
-    enddo
-  end select
-  ! ‹«ŠEğŒ -------------------------------------------------------------------------------------------
-  Ice(m)%Bi(Ice(m)%is) = 0.0
-  Ice(m)%Bi(Ice(m)%ie) = 0.0
-  ! ŠÔis -------------------------------------------------------------------------------------------
-  IceTime = IceTime + dti
-  ! ƒƒOo—Í -------------------------------------------------------------------------------------------
-  if( mod(n, nIceLog) == 0 .or. n == nStart .or. n == nCountMax ) then
-    write(*, '(/,a)'      ) '// Calculation progress //'
-    write(*, '(2(a,i9))'  ) '* Calculation count      = ', n, ' of ',nCountMax
-    write(*, '(a,e16.8e3)') '* Accretion mass         = ', maxval(Ice(m)%Mac(:))
-    write(*, '(a,e16.8e3)') '* Impingement mass       = ', maxval(Ice(m)%Mim(:))
-    write(*, '(a,e16.8e3)') '* Runback mass           = ', maxval(Ice(m)%Mrin(:))
-    write(*, '(a,e16.8e3)') '* Stay mass              = ', maxval(Ice(m)%Mst(:))
-    write(*, '(a,e16.8e3)') '* Evaporation mass       = ', maxval(Ice(m)%Mes(:))
-    write(*, '(a,e16.8e3)') '* Max. ice layer         = ', maxval(Ice(m)%Bi(:))
-    write(*, '(a,e16.8e3)') '* Ice volume             = ', sum(Ice(m)%Bi(:) * Ice(m)%SA(:))
-    write(*, '(a,e16.8e3)') '* Exposure time          = ', IceTime
-  endif
- enddo
- write(*, '(a,e16.8e3)') '* Finish icing time = ', IceTime
- Ice(m)%dBi(:) = Ice(m)%Bi(:) - B0(:)
- ! ’…•X‰ÓŠ‚Ìƒtƒ‰ƒO +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- ! V‚µ‚­’…•X‚µ‚½“_
- do i = Ice(m)%is, Ice(m)%ie
-  if( Ice(m)%Bi(i) > 1.0e-5 ) then
-    Ice(m)%f(i)      = 1
-    Ice(m)%fRough(i) = 1
-   else
-    Ice(m)%f(i)      = 0
-    Ice(m)%fRough(i) = 0
-  endif
- enddo
- ! ˆ—I—¹ ********************************************************************************************
- return
-end subroutine CalIceAccretion
+               ! æ°·å±¤åšã•ãƒ»æ°·å±¤æ¸©åº¦ãƒ»æ°´è†œåšã•ãƒ»æ°´è†œæ¸©åº¦
+               call IceThicknessExt2D( &
+               &      Ice(m)%is, Ice(m)%ie, &
+               &      Ice(m)%Ts0, Ice(m)%Mim, Ice(m)%Mes, Ice(m)%Mrin, Ice(m)%Mst, &
+               &      Q0, Q1, Ice(m)%Bi, Ice(m)%nPhase, timeRK, dtRK, &
+               &      Bg, Tg, &
+               &      Ice(m)%dBi, Bw, Ice(m)%Ti, Tw)
+               ! æ°·çµç‡
+               call FreezingFractionExt2D( &
+               &      Ice(m)%is, Ice(m)%ie, TimeRK, &
+               &      Ice(m)%Mim, Ice(m)%Mes, Ice(m)%Mrin, Ice(m)%Mst, Ice(m)%nPhase, Ice(m)%Bi, Bw, Bg, Ice(m)%dBi, &
+               &      FF)
+               ! Runback-out ã®è³ªé‡æµæŸ
+               call RunbackOutExt2D( &
+               &      Ice(m)%is, Ice(m)%ie, RunbackNum, dtRK, timeRK, &
+               &      RH, Ice(m)%Mim, Ice(m)%Mes, Ice(m)%Mrin, Bw, FF, Ice(m)%nPhase, &
+               &      Ice(m)%Mrout, Ice(m)%Mst)
+               ! æ°´è†œã®é€¸è„±
+               if (DropShedNum == 1) then
+                  call WaterSheddingExt2D( &
+                  &      Ice(m)%is, Ice(m)%ie, dtRK, GravityX, GravityY, &
+                  &      Ice(m)%x, Ice(m)%y, Ice(m)%Rho0, &
+                  &      Ice(m)%up, Ice(m)%vp, Ice(m)%SA, utau, &
+                  &      Ice(m)%Mrout)
+               end if
+               ! Runback-in ã®è³ªé‡æµæŸ
+               call RunbackInExt2D( &
+               &      Ice(m)%is, Ice(m)%ie, dtRK, GravityX, GravityY, &
+               &      Ice(m)%x, Ice(m)%y, Ice(m)%Rho0, &
+               &      Ice(m)%up, Ice(m)%vp, Ice(m)%SA, utau, Ice(m)%Mrout, &
+               &      Ice(m)%Mrin)
+               ! æ°·æˆé•·ã®æ™‚é–“é€²è¡Œ
+               call IceTimeGrowth2D( &
+               &      Ice(m)%is, Ice(m)%ie, dtRK, &
+               &      PhaseRK, Ice(m)%dBi, Ice(m)%Bi0, &
+               &      Ice(m)%Bi)
+            end do
+         end select
+         ! å¢ƒç•Œæ¡ä»¶ -------------------------------------------------------------------------------------------
+         Ice(m)%Bi(Ice(m)%is) = 0.0
+         Ice(m)%Bi(Ice(m)%ie) = 0.0
+         ! æ™‚é–“é€²è¡Œ -------------------------------------------------------------------------------------------
+         IceTime = IceTime + dti
+         ! ãƒ­ã‚°å‡ºåŠ› -------------------------------------------------------------------------------------------
+         if (mod(n, nIceLog) == 0 .or. n == nStart .or. n == nCountMax) then
+            write (*, '(/,a)') '// Calculation progress //'
+            write (*, '(2(a,i9))') '* Calculation count      = ', n, ' of ', nCountMax
+            write (*, '(a,e16.8e3)') '* Accretion mass         = ', maxval(Ice(m)%Mac(:))
+            write (*, '(a,e16.8e3)') '* Impingement mass       = ', maxval(Ice(m)%Mim(:))
+            write (*, '(a,e16.8e3)') '* Runback mass           = ', maxval(Ice(m)%Mrin(:))
+            write (*, '(a,e16.8e3)') '* Stay mass              = ', maxval(Ice(m)%Mst(:))
+            write (*, '(a,e16.8e3)') '* Evaporation mass       = ', maxval(Ice(m)%Mes(:))
+            write (*, '(a,e16.8e3)') '* Max. ice layer         = ', maxval(Ice(m)%Bi(:))
+            write (*, '(a,e16.8e3)') '* Ice volume             = ', sum(Ice(m)%Bi(:)*Ice(m)%SA(:))
+            write (*, '(a,e16.8e3)') '* Exposure time          = ', IceTime
+         end if
+      end do
+      write (*, '(a,e16.8e3)') '* Finish icing time = ', IceTime
+      Ice(m)%dBi(:) = Ice(m)%Bi(:) - B0(:)
+      ! ç€æ°·ç®‡æ‰€ã®ãƒ•ãƒ©ã‚° +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      ! æ–°ã—ãç€æ°·ã—ãŸç‚¹
+      do i = Ice(m)%is, Ice(m)%ie
+         if (Ice(m)%Bi(i) > 1.0e-5) then
+            Ice(m)%f(i) = 1
+            Ice(m)%fRough(i) = 1
+         else
+            Ice(m)%f(i) = 0
+            Ice(m)%fRough(i) = 0
+         end if
+      end do
+      ! å‡¦ç†çµ‚äº† ********************************************************************************************
+      return
+   end subroutine CalIceAccretion
 !*******************************************************************************************************
-!******** ’…•X—ƒ‚ÌÀ•W										********
+!******** ç€æ°·ç¿¼ã®åº§æ¨™                                                                                ********
 !*******************************************************************************************************
-subroutine CalIcingBlade
- ! •Ï”éŒ¾ ********************************************************************************************
- implicit none
- ! ‹ÇŠ•Ï” ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- integer :: m, i, k
- real    :: ax, ay, az, bx, by, bz, nx, ny, nz, na
- ! ˆ—ŠJn ********************************************************************************************
- m = mRef
- ! ’…•XŒã‚Ì—ƒÀ•W‚ğZo -------------------------------------------------------------------------------
- do k = Flw(m)%ks, Flw(m)%ke
- do i = Ice(m)%is, Ice(m)%ie
-  if( i == Ice(m)%is ) then
-    ax = 1.0 * ( - Ice(m)%x(i  ) + Ice(m)%x(i+1) )
-    ay = 1.0 * ( - Ice(m)%y(i  ) + Ice(m)%y(i+1) )
-    az = 0.0
-   else if( i == Ice(m)%ie ) then
-    ax = 1.0 * ( - Ice(m)%x(i-1) + Ice(m)%x(i  ) )
-    ay = 1.0 * ( - Ice(m)%y(i-1) + Ice(m)%y(i  ) )
-    az = 0.0
-   else
-    ax = 0.5 * ( - Ice(m)%x(i-1) + Ice(m)%x(i+1) )
-    ay = 0.5 * ( - Ice(m)%y(i-1) + Ice(m)%y(i+1) )
-    az = 0.0
-  endif
-  bx =  0.0
-  by =  0.0
-  bz = -1.0
-  nx = ay * bz - az * by
-  ny = az * bx - ax * bz
-  nz = ax * by - ay * bx
-  na = sqrt(nx**2 + ny**2 + nz**2)
-  nx = +1.0 * nx / na
-  ny = +1.0 * ny / na
-  nz = +1.0 * nz / na
-  Ice(m)%xi(i) = Ice(m)%x(i) + nx * Ice(m)%dBi(i)
-  Ice(m)%yi(i) = Ice(m)%y(i) + ny * Ice(m)%dBi(i)
- enddo
- enddo
- ! ˆ—I—¹ ********************************************************************************************
- return
-end subroutine CalIcingBlade
+   subroutine CalIcingBlade
+      ! å¤‰æ•°å®£è¨€ ********************************************************************************************
+      implicit none
+      ! å±€æ‰€å¤‰æ•° ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      integer :: m, i, k
+      real    :: ax, ay, az, bx, by, bz, nx, ny, nz, na
+      ! å‡¦ç†é–‹å§‹ ********************************************************************************************
+      m = mRef
+      ! ç€æ°·å¾Œã®ç¿¼åº§æ¨™ã‚’ç®—å‡º -------------------------------------------------------------------------------
+      do k = Flw(m)%ks, Flw(m)%ke
+      do i = Ice(m)%is, Ice(m)%ie
+         if (i == Ice(m)%is) then
+            ax = 1.0*(-Ice(m)%x(i) + Ice(m)%x(i + 1))
+            ay = 1.0*(-Ice(m)%y(i) + Ice(m)%y(i + 1))
+            az = 0.0
+         else if (i == Ice(m)%ie) then
+            ax = 1.0*(-Ice(m)%x(i - 1) + Ice(m)%x(i))
+            ay = 1.0*(-Ice(m)%y(i - 1) + Ice(m)%y(i))
+            az = 0.0
+         else
+            ax = 0.5*(-Ice(m)%x(i - 1) + Ice(m)%x(i + 1))
+            ay = 0.5*(-Ice(m)%y(i - 1) + Ice(m)%y(i + 1))
+            az = 0.0
+         end if
+         bx = 0.0
+         by = 0.0
+         bz = -1.0
+         nx = ay*bz - az*by
+         ny = az*bx - ax*bz
+         nz = ax*by - ay*bx
+         na = sqrt(nx**2 + ny**2 + nz**2)
+         nx = +1.0*nx/na
+         ny = +1.0*ny/na
+         nz = +1.0*nz/na
+         Ice(m)%xi(i) = Ice(m)%x(i) + nx*Ice(m)%dBi(i)
+         Ice(m)%yi(i) = Ice(m)%y(i) + ny*Ice(m)%dBi(i)
+      end do
+      end do
+      ! å‡¦ç†çµ‚äº† ********************************************************************************************
+      return
+   end subroutine CalIcingBlade
 !*******************************************************************************************************
-!******** ’…•XŒvZŒ‹‰Êƒtƒ@ƒCƒ‹o—Í								********
+!******** ç€æ°·è¨ˆç®—çµæœãƒ•ã‚¡ã‚¤ãƒ«å‡ºåŠ›                                                                ********
 !*******************************************************************************************************
-subroutine OutputFile
- ! •Ï”éŒ¾ ********************************************************************************************
- implicit none
- ! ‹ÇŠ•Ï” ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- integer   :: m, i, k
- character :: fname * 20
- ! ˆ—ŠJn ********************************************************************************************
- ! ŒvZğŒƒtƒ@ƒCƒ‹o—Í
- ! –³ŸŒ³‰» ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- VelIn  = VelIn / aRef
- PtIn   = PtIn / (rhoRef * aRef**2)
- TtIn   = TtIn / aRef**2
- PsOut  = PsOut / (rhoRef * aRef**2)
- TsOut  = TsOut / aRef**2
- LWC    = LWC  / RhoRef
- MVD    = MVD  / LRef
- RhoD   = RhoD / RhoRef
- Span   = Span / LRef
- Chord  = Chord / LRef
- VelExp = VelExp / aRef
- PsExp  = PsExp / (rhoRef * aRef**2)
- TsExp  = TsExp / aRef**2
- call Output_CalSetting( trim(ND_CalSetFile) // strtxt )
- ! ’…•Xƒf[ƒ^ ------------------------------------------------------------------------------------------
- m = mRef
- write(fname, '(a, 2(i2.2,a))') 'IceStep', IceStep, 'of', IceStepMax, '_'
- ! ‘e‚³‚Ìƒtƒ‰ƒO
- allocate( Flw(m)%fRough(Flw(m)%is: Flw(m)%ie, Flw(m)%ks: Flw(m)%ke) )
- Flw(m)%fRough = 0
- do k = Flw(m)%ks, Flw(m)%ke
- do i = Ice(m)%is, Ice(m)%ie
-  Flw(m)%fRough(i,k) = Ice(m)%fRough(i)
- enddo
- enddo
- call Output_ArrayInt2D( &
- &      trim(IceCalOutDir) // trim(BlkName(m)) // trim(RoughFlagFile), strdat, &
- &      Flw(m)%is, Flw(m)%ie, Flw(m)%ks, Flw(m)%ke, &
- &      Flw(m)%fRough )
- call Output_ArrayInt2D( &
- &      trim(IceCalOutDir) // trim(fname) // trim(BlkName(m)) // trim(RoughFlagFile), strdat, &
- &      Flw(m)%is, Flw(m)%ie, Flw(m)%ks, Flw(m)%ke, &
- &      Flw(m)%fRough )
- ! •X‘wŒú‚³E•X‘w‰·“x
- call Output_IceThickTem2D( &
- &      trim(IceCalOutDir) // trim(BlkName(m)) // trim(IceThickTemFile), strdat, &
- &      Ice(m)%is, Ice(m)%ie, &
- &      Ice(m)%f, Ice(m)%Bi, Ice(m)%dBi, Ice(m)%Ti )
- call Output_IceThickTem2D( &
- &      trim(IceCalOutDir) // trim(fname) // trim(BlkName(m)) // trim(IceThickTemFile), strdat, &
- &      Ice(m)%is, Ice(m)%ie, &
- &      Ice(m)%f, Ice(m)%Bi, Ice(m)%dBi, Ice(m)%Ti )
- ! ”M—ÍŠwƒ‚ƒfƒ‹ƒpƒ‰ƒ[ƒ^
- select case(ThermoNum)
-  case(1)
-   call Output_OrgMessingerPara2D( &
-   &      trim(IceCalOutDir) // trim(BlkName(m)) // trim(MessingerFile), strdat, &
-   &      Ice(m)%is, Ice(m)%ie, &
-   &      Ice(m)%Mac, Ice(m)%Mes, Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mrout, Ice(m)%Mst )
-   call Output_OrgMessingerPara2D( &
-   &      trim(IceCalOutDir) // trim(fname) // trim(BlkName(m)) // trim(MessingerFile), strdat, &
-   &      Ice(m)%is, Ice(m)%ie, &
-   &      Ice(m)%Mac, Ice(m)%Mes, Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mrout, Ice(m)%Mst )
-  case(2)
-   call Output_ExtMessingerPara2D( &
-   &      trim(IceCalOutDir) // trim(BlkName(m)) // trim(ExMessingerFile), strdat, &
-   &      Ice(m)%is, Ice(m)%ie, &
-   &      Ice(m)%nPhase, &
-   &      Ice(m)%Mes, Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mrout, Ice(m)%Mst )
-   call Output_ExtMessingerPara2D( &
-   &      trim(IceCalOutDir) // trim(fname) // trim(BlkName(m)) // trim(ExMessingerFile), strdat, &
-   &      Ice(m)%is, Ice(m)%ie, &
-   &      Ice(m)%nPhase, &
-   &      Ice(m)%Mes, Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mrout, Ice(m)%Mst )
- end select
- ! ’…•X—ƒÀ•W
- call Output_IceBladeSurface2D( &
- &      trim(IceCalOutDir) // trim(BlkName(m)) // trim(IceBladeFile), strdat, &
- &      Ice(m)%is, Ice(m)%ie, &
- &      Ice(m)%xi, Ice(m)%yi )
- call Output_IceBladeSurface2D( &
- &      trim(IceCalOutDir) // trim(fname) // trim(BlkName(m)) // trim(IceBladeFile), strdat, &
- &      Ice(m)%is, Ice(m)%ie, &
- &      Ice(m)%xi, Ice(m)%yi )
+   subroutine OutputFile
+      ! å¤‰æ•°å®£è¨€ ********************************************************************************************
+      implicit none
+      ! å±€æ‰€å¤‰æ•° ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      integer   :: m, i, k
+      character :: fname*20
+      ! å‡¦ç†é–‹å§‹ ********************************************************************************************
+      ! è¨ˆç®—æ¡ä»¶ãƒ•ã‚¡ã‚¤ãƒ«å‡ºåŠ›
+      ! ç„¡æ¬¡å…ƒåŒ– ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      VelIn = VelIn/aRef
+      PtIn = PtIn/(rhoRef*aRef**2)
+      TtIn = TtIn/aRef**2
+      PsOut = PsOut/(rhoRef*aRef**2)
+      TsOut = TsOut/aRef**2
+      LWC = LWC/RhoRef
+      MVD = MVD/LRef
+      RhoD = RhoD/RhoRef
+      Span = Span/LRef
+      Chord = Chord/LRef
+      VelExp = VelExp/aRef
+      PsExp = PsExp/(rhoRef*aRef**2)
+      TsExp = TsExp/aRef**2
+      call Output_CalSetting(trim(ND_CalSetFile)//strtxt)
+      ! ç€æ°·ãƒ‡ãƒ¼ã‚¿ ------------------------------------------------------------------------------------------
+      m = mRef
+      write (fname, '(a, 2(i2.2,a))') 'IceStep', IceStep, 'of', IceStepMax, '_'
+      ! ç²—ã•ã®ãƒ•ãƒ©ã‚°
+      allocate (Flw(m)%fRough(Flw(m)%is:Flw(m)%ie, Flw(m)%ks:Flw(m)%ke))
+      Flw(m)%fRough = 0
+      do k = Flw(m)%ks, Flw(m)%ke
+      do i = Ice(m)%is, Ice(m)%ie
+         Flw(m)%fRough(i, k) = Ice(m)%fRough(i)
+      end do
+      end do
+      call Output_ArrayInt2D( &
+      &      trim(IceCalOutDir)//trim(BlkName(m))//trim(RoughFlagFile), strdat, &
+      &      Flw(m)%is, Flw(m)%ie, Flw(m)%ks, Flw(m)%ke, &
+      &      Flw(m)%fRough)
+      call Output_ArrayInt2D( &
+      &      trim(IceCalOutDir)//trim(fname)//trim(BlkName(m))//trim(RoughFlagFile), strdat, &
+      &      Flw(m)%is, Flw(m)%ie, Flw(m)%ks, Flw(m)%ke, &
+      &      Flw(m)%fRough)
+      ! æ°·å±¤åšã•ãƒ»æ°·å±¤æ¸©åº¦
+      call Output_IceThickTem2D( &
+      &      trim(IceCalOutDir)//trim(BlkName(m))//trim(IceThickTemFile), strdat, &
+      &      Ice(m)%is, Ice(m)%ie, &
+      &      Ice(m)%f, Ice(m)%Bi, Ice(m)%dBi, Ice(m)%Ti)
+      call Output_IceThickTem2D( &
+      &      trim(IceCalOutDir)//trim(fname)//trim(BlkName(m))//trim(IceThickTemFile), strdat, &
+      &      Ice(m)%is, Ice(m)%ie, &
+      &      Ice(m)%f, Ice(m)%Bi, Ice(m)%dBi, Ice(m)%Ti)
+      ! ç†±åŠ›å­¦ãƒ¢ãƒ‡ãƒ«ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+      select case (ThermoNum)
+      case (1)
+         call Output_OrgMessingerPara2D( &
+         &      trim(IceCalOutDir)//trim(BlkName(m))//trim(MessingerFile), strdat, &
+         &      Ice(m)%is, Ice(m)%ie, &
+         &      Ice(m)%Mac, Ice(m)%Mes, Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mrout, Ice(m)%Mst)
+         call Output_OrgMessingerPara2D( &
+         &      trim(IceCalOutDir)//trim(fname)//trim(BlkName(m))//trim(MessingerFile), strdat, &
+         &      Ice(m)%is, Ice(m)%ie, &
+         &      Ice(m)%Mac, Ice(m)%Mes, Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mrout, Ice(m)%Mst)
+      case (2)
+         call Output_ExtMessingerPara2D( &
+         &      trim(IceCalOutDir)//trim(BlkName(m))//trim(ExMessingerFile), strdat, &
+         &      Ice(m)%is, Ice(m)%ie, &
+         &      Ice(m)%nPhase, &
+         &      Ice(m)%Mes, Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mrout, Ice(m)%Mst)
+         call Output_ExtMessingerPara2D( &
+         &      trim(IceCalOutDir)//trim(fname)//trim(BlkName(m))//trim(ExMessingerFile), strdat, &
+         &      Ice(m)%is, Ice(m)%ie, &
+         &      Ice(m)%nPhase, &
+         &      Ice(m)%Mes, Ice(m)%Mim, Ice(m)%Mrin, Ice(m)%Mrout, Ice(m)%Mst)
+      end select
+      ! ç€æ°·ç¿¼åº§æ¨™
+      call Output_IceBladeSurface2D( &
+      &      trim(IceCalOutDir)//trim(BlkName(m))//trim(IceBladeFile), strdat, &
+      &      Ice(m)%is, Ice(m)%ie, &
+      &      Ice(m)%xi, Ice(m)%yi)
+      call Output_IceBladeSurface2D( &
+      &      trim(IceCalOutDir)//trim(fname)//trim(BlkName(m))//trim(IceBladeFile), strdat, &
+      &      Ice(m)%is, Ice(m)%ie, &
+      &      Ice(m)%xi, Ice(m)%yi)
 
- ! ˆ—I—¹ ********************************************************************************************
- return
-end subroutine OutputFile
+      ! å‡¦ç†çµ‚äº† ********************************************************************************************
+      return
+   end subroutine OutputFile
 
 end program IceAccretion_NACA

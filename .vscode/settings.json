@@ -143,6 +143,7 @@
     "**/a.exe": true
   }, // 除外するファイル
 
+
   // エクスプローラーの設定
   "explorer.sortOrder": "type", // エクスプローラーのソート順
   "explorer.compactFolders": false, // フォルダを折りたたむ

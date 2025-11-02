@@ -1,0 +1,15 @@
++++++ Select Exp. case complete. +++++
++++++ Initial setting complete. +++++
++++++ Metrics clculation complete. +++++
++++++ Initial condition complete. +++++
++++++ Boundary condition complete. +++++
++++++ Interpolation overset condition complete. +++++
++++++ Smoothing complete. +++++
++++++ Output file complete. +++++
++++++ Nondimensionalized complete. +++++
++++++ Output ND file complete. +++++
++++++ Visualized flow complete. +++++
+
+real	0m0.616s
+user	0m8.139s
+sys	0m0.254s
