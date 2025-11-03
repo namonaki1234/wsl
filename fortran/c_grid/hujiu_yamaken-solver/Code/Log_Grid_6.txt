@@ -1,0 +1,6 @@
+<< Computational Condition >>
+* Select Exp. Case...
+* Select Icing Model...
+<< Initial Setting >>
++++++ C-typr grid generation start. +++++
++++++ Sub grid complete. +++++
