@@ -469,75 +469,95 @@ contains
 !*******************************************************************************************************
 !******** 外部境界 (C-type)                                                                        ********
 !*******************************************************************************************************
-   subroutine CtypeExternalBoundary( &
-   &            is, i1, i2, i3, ie, js, je, dom1, dom2, x, y)
-      ! 変数宣言 ********************************************************************************************
-      implicit none
-      ! 引数変数 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      integer, intent(in)    :: is, i1, i2, i3, ie, js, je
-      real, intent(in)    :: dom1, dom2
-      real, intent(inout) :: x(is:ie, js:je), y(is:ie, js:je)
-      ! 局所変数 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      integer :: i
-      integer :: ic
-      real    :: a1, a2, a3, b1, b2, b3, c1, c2, c3
-      ! 処理開始 ********************************************************************************************
-      ! C 型の湾曲部 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      do i = i1 + 1, i3 - 1
-         ! 翼周り方向ベクトル
-         a1 = 0.5*(-x(i - 1, js) + x(i + 1, js))
-         a2 = 0.5*(-y(i - 1, js) + y(i + 1, js))
-         a3 = 0.0
-         ! スパン方向ベクトル
-         b1 = 0.0
-         b2 = 0.0
-         b3 = -1.0
-         ! 法線方向ベクトル
-         c1 = a2*b3 - a3*b2
-         c2 = a3*b1 - a1*b3
-         c3 = a1*b2 - a2*b1
-         ! 翼周り部外部領域
-         x(i, je) = c1/sqrt(c1**2 + c2**2 + c3**2)*dom1 + x(i, js)
-         y(i, je) = c2/sqrt(c1**2 + c2**2 + c3**2)*dom1 + y(i, js)
-      end do
-      ! C 型の直線部 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      ! x 方向 ----------------------------------------------------------------------------------------------
-      ! 下面
-      do i = i1 + 1, i2
-         if (x(i, je) < x(i1, js)) exit
-      end do
-      ic = i - 1
-      do i = is, ic
-         x(i, je) = x(ic, je) + (x(is, js) - x(ic, je))*real(ic - i)/real(ic)
-      end do
-      ! 上面
-      do i = i2, i3 - 1
-         if (x(i, je) > x(i1, js)) exit
-      end do
-      ic = i
-      do i = ic, ie
-         x(i, je) = x(ic, je) + (x(is, js) - x(ic, je))*real(i - ic)/real(ie - ic)
-      end do
-      ! y 方向 ----------------------------------------------------------------------------------------------
-      ! 下面
-      do i = i1 + 1, i2
-         if (y(i, je) == minval(y(i1 + 1:i2, je))) exit
-      end do
-      ic = i
-      do i = is, ic - 1
-         y(i, je) = minval(y(ic:i2, je))
-      end do
-      ! 上面
-      do i = i2, i3 - 1
-         if (y(i, je) == maxval(y(i2:i3 - 1, je))) exit
-      end do
-      ic = i
-      do i = ic + 1, ie
-         y(i, je) = maxval(y(i2:ic, je))
-      end do
-      ! 処理終了 ********************************************************************************************
-      return
-   end subroutine CtypeExternalBoundary
+  subroutine CtypeExternalBoundary( &
+&  is, i1, i2, i3, ie, js, je, dom1, dom2, x, y)
+  implicit none
+  integer, intent(in)    :: is, i1, i2, i3, ie, js, je
+  real,    intent(in)    :: dom1, dom2
+  real,    intent(inout) :: x(is:ie, js:je), y(is:ie, js:je)
+
+  ! ==== 幾何パラメータ（図面仕様） ====
+  real, parameter :: c_mm    = 60.0       ! 翼弦長 [mm]
+  real, parameter :: H_mm    = 177.0      ! チャンネル高さ [mm]
+  real, parameter :: x_LE    = 0.0        ! 前縁 x=0
+  real, parameter :: x_merge = 60.0       ! C→直線の基準位置（今回は外周式では未使用）
+  real, parameter :: x_out   = 148.0      ! 出口位置 (= 60 + 88)
+  real, parameter :: R_c     = 0.5*H_mm   ! 半円半径 (= H/2)
+
+  ! ==== C外周：左半円 + 右矩形ダクト ====
+  integer :: i, ni
+  integer :: nTop, nRight, nBottom, nArc
+  integer :: iA1, iA2, iB2, iC2, iD2, iEnd
+  real    :: xC, s, th
+
+  ni = ie - is + 1
+  ! 半円中心：前縁の少し左（必要なら調整）
+  xC = x_LE - 0.5*c_mm
+
+  ! 区間配点（比率は調整可）
+  nTop    = max(3, int(0.35*ni))   ! 上壁: xC → x_out, y=+R_c
+  nRight  = max(3, int(0.10*ni))   ! 右壁: x=x_out, y:+R_c → -R_c
+  nBottom = max(3, int(0.35*ni))   ! 下壁: x_out → xC, y=-R_c
+  nArc    = max(3, ni - (nTop + nRight + nBottom)) ! 左半円: θ=-π/2→+π/2
+
+  ! インデックス割当
+  iA1  = is
+  iA2  = iA1 + nTop - 1
+  iB2  = iA2 + nRight
+  iC2  = iB2 + nBottom
+  iD2  = iC2 + nArc - 1
+  iEnd = ie
+
+  ! --- [A] 上壁: y=+R_c, x: xC → x_out ---
+  do i = iA1, iA2
+    if (nTop > 1) then
+      s = real(i - iA1) / real(nTop - 1)
+    else
+      s = 0.0
+    end if
+    x(i, je) = (1.0 - s)*xC + s*x_out
+    y(i, je) = +R_c
+  end do
+
+  ! --- [B] 右壁: x=x_out, y: +R_c → -R_c ---
+  do i = iA2 + 1, iB2
+    if (nRight > 1) then
+      s = real(i - (iA2 + 1)) / real(nRight - 1)
+    else
+      s = 0.0
+    end if
+    x(i, je) = x_out
+    y(i, je) = +R_c + (-2.0*R_c)*s
+  end do
+
+  ! --- [C] 下壁: y=-R_c, x: x_out → xC ---
+  do i = iB2 + 1, iC2
+    if (nBottom > 1) then
+      s = real(i - (iB2 + 1)) / real(nBottom - 1)
+    else
+      s = 0.0
+    end if
+    x(i, je) = (1.0 - s)*x_out + s*xC
+    y(i, je) = -R_c
+  end do
+
+  ! --- [D] 左半円: θ = -π/2 → +π/2 ---
+  do i = iC2 + 1, iD2
+    if (nArc > 1) then
+      s  = real(i - (iC2 + 1)) / real(nArc - 1)
+    else
+      s = 0.0
+    end if
+    th = -1.57079632679 + (3.14159265359)*s
+    x(i, je) = xC + R_c*cos(th)
+    y(i, je) =      R_c*sin(th)
+  end do
+
+  ! 念のため末端一致（丸め誤差対策）
+  x(is, je) = xC;     y(is, je) = +R_c
+  x(ie, je) = x(is, je); y(ie, je) = y(is, je)
+end subroutine CtypeExternalBoundary
+
 !*******************************************************************************************************
 !******** 側部境界 (C-type)                                                                        ********
 !*******************************************************************************************************

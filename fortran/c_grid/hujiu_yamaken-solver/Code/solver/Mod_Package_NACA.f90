@@ -123,6 +123,17 @@ module Package_NACA
  integer, parameter :: le = 7						! 流れ場配列数
  integer, parameter :: ms = 1						! Main Grid 構造体番号
  integer, parameter :: me = 2						! Sub Grid 構造体番号
+
+ ! ==== Rect-duct C-grid parameters (in mm) ====
+real, parameter :: c_mm   = 60.0      ! chord [mm]
+real, parameter :: H_mm   = 177.0     ! channel height [mm]
+real, parameter :: y_half = 0.5*H_mm  ! 88.5
+real, parameter :: x_LE   = 0.0
+real, parameter :: x_TE   = c_mm
+real, parameter :: x_merge= 60.0
+real, parameter :: x_out  = 148.0     ! 60 + 88
+real, parameter :: R_c    = y_half    ! 半円半径 (= 上下壁まで)
+
  ! 共有変数 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  integer, pointer :: IceIn(:, :, :)					! 氷の中の点
  integer :: BCNum, TurbNum						! 流れ場モデルの選択
@@ -577,5 +588,12 @@ subroutine SmoothingFlux3D( &
  ! 処理終了 ********************************************************************************************
  return
 end subroutine SmoothingFlux3D
+
+pure real function blend_smooth(s)
+  implicit none
+  real, intent(in) :: s
+  blend_smooth = s*s*(3.0 - 2.0*s)   ! C2連続のスムースステップ
+end function blend_smooth
+
 ! 定義終了 *********************************************************************************************
 end module Package_NACA
