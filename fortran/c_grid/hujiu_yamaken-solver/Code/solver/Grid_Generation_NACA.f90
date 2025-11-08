@@ -19,7 +19,7 @@ program GridGeneration_NACA
    ! 共有定数 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    integer, parameter :: NACA1 = 0                                        ! NACA 翼の反り比
    integer, parameter :: NACA2 = 0                                        ! NACA 翼の最大反り位置
-   integer, parameter :: NACA34 = 12                                        ! NACA 翼の最大翼厚
+   integer, parameter :: NACA34 = 18                                        ! NACA 翼の最大翼厚
    real, parameter :: a0 = 0.2969                                        ! 翼厚分布式の定数
    real, parameter :: a1 = -0.1260                                        ! 翼厚分布式の定数
    real, parameter :: a2 = -0.3516                                        ! 翼厚分布式の定数
@@ -467,97 +467,94 @@ contains
       return
    end subroutine CtypeInternalBoundary
 !*******************************************************************************************************
-!******** 外部境界 (C-type)                                                                        ********
+!******** 外部境界 (C-type) : 修正版 — 図面の通り（左半円＋右直線ダクト）                       ********
 !*******************************************************************************************************
-  subroutine CtypeExternalBoundary( &
-&  is, i1, i2, i3, ie, js, je, dom1, dom2, x, y)
-  implicit none
-  integer, intent(in)    :: is, i1, i2, i3, ie, js, je
-  real,    intent(in)    :: dom1, dom2
-  real,    intent(inout) :: x(is:ie, js:je), y(is:ie, js:je)
+subroutine CtypeExternalBoundary( &
+&            is, i1, i2, i3, ie, js, je, dom1, dom2, x, y)
+   implicit none
+   integer, intent(in)    :: is, i1, i2, i3, ie, js, je
+   real,    intent(in)    :: dom1, dom2
+   real,    intent(inout) :: x(is:ie, js:je), y(is:ie, js:je)
 
-  ! ==== 幾何パラメータ（図面仕様） ====
-  real, parameter :: c_mm    = 60.0       ! 翼弦長 [mm]
-  real, parameter :: H_mm    = 177.0      ! チャンネル高さ [mm]
-  real, parameter :: x_LE    = 0.0        ! 前縁 x=0
-  real, parameter :: x_merge = 60.0       ! C→直線の基準位置（今回は外周式では未使用）
-  real, parameter :: x_out   = 148.0      ! 出口位置 (= 60 + 88)
-  real, parameter :: R_c     = 0.5*H_mm   ! 半円半径 (= H/2)
+   ! 幾何パラメータ ----------------------------------------------------------
+   real :: H_mm, R_c, x_LE, xC, x_merge, x_out
+   real :: th, s
+   integer :: i, ni, nArc, nTop, nRight, nBottom
+   integer :: iA1, iA2, iB1, iB2, iC1, iC2, iD1, iD2
 
-  ! ==== C外周：左半円 + 右矩形ダクト ====
-  integer :: i, ni
-  integer :: nTop, nRight, nBottom, nArc
-  integer :: iA1, iA2, iB2, iC2, iD2, iEnd
-  real    :: xC, s, th
+   integer :: i1s, i2s, i3s, i4s, i5s
 
-  ni = ie - is + 1
-  ! 半円中心：前縁の少し左（必要なら調整）
-  xC = x_LE - 0.5*c_mm
+   ! ==== 外周を図面どおりに上書き：左半円（中心 = x_merge）＋右ストレート ====
+   ! 寸法・位置（あなたのパラメタ）
+   H_mm    = 177.0
+   R_c     = 88.5
+   x_LE    = 0.0
+   x_merge = 0.0                  ! 半円とストレートの合流 x
+   x_out   = x_merge + 148.0      ! 右端
+   xC      = x_merge              ! ★半円の中心は x_merge 上
 
-  ! 区間配点（比率は調整可）
-  nTop    = max(3, int(0.35*ni))   ! 上壁: xC → x_out, y=+R_c
-  nRight  = max(3, int(0.10*ni))   ! 右壁: x=x_out, y:+R_c → -R_c
-  nBottom = max(3, int(0.35*ni))   ! 下壁: x_out → xC, y=-R_c
-  nArc    = max(3, ni - (nTop + nRight + nBottom)) ! 左半円: θ=-π/2→+π/2
+   ! ノード総数と区間配分（必要なら割合は調整可）
+   ni  = ie - is + 1
+   nTop    = max(3, int(0.35*ni))                  ! 上壁：(-R_c→+R_c)の x : xC→x_out
+   nRight  = max(3, int(0.10*ni))                  ! 右壁：y : +R_c→-R_c
+   nBottom = max(3, int(0.35*ni))                  ! 下壁：x : x_out→x_merge(=xC)
+   nArc    = max(3, ni - (nTop + nRight + nBottom))! 左半円：θ=-π/2→+π/2
 
-  ! インデックス割当
-  iA1  = is
-  iA2  = iA1 + nTop - 1
-  iB2  = iA2 + nRight
-  iC2  = iB2 + nBottom
-  iD2  = iC2 + nArc - 1
-  iEnd = ie
+   ! 端点インデックス
+   i1s = is
+   i2s = i1s + nTop - 1
+   i3s = i2s + nRight
+   i4s = i3s + nBottom
+   i5s = ie
 
-  ! --- [A] 上壁: y=+R_c, x: xC → x_out ---
-  do i = iA1, iA2
-    if (nTop > 1) then
-      s = real(i - iA1) / real(nTop - 1)
-    else
-      s = 0.0
-    end if
-    x(i, je) = (1.0 - s)*xC + s*x_out
-    y(i, je) = +R_c
-  end do
+   ! [A] 上壁: y = +R_c, x: xC -> x_out  （単調増加）
+   do i = i1s, i2s
+      if (nTop > 1) then
+         s = real(i - i1s) / real(nTop - 1)
+      else
+         s = 0.0
+      end if
+      x(i, je) = (1.0 - s)*xC + s*x_out
+      y(i, je) = +R_c
+   end do
 
-  ! --- [B] 右壁: x=x_out, y: +R_c → -R_c ---
-  do i = iA2 + 1, iB2
-    if (nRight > 1) then
-      s = real(i - (iA2 + 1)) / real(nRight - 1)
-    else
-      s = 0.0
-    end if
-    x(i, je) = x_out
-    y(i, je) = +R_c + (-2.0*R_c)*s
-  end do
+   ! [B] 右壁: x = x_out, y: +R_c -> -R_c  （単調減少）
+   do i = i2s+1, i3s
+      if (nRight > 1) then
+         s = real(i - (i2s + 1)) / real(nRight - 1)
+      else
+         s = 0.0
+      end if
+      x(i, je) = x_out
+      y(i, je) = +R_c + (-2.0*R_c)*s
+   end do
 
-  ! --- [C] 下壁: y=-R_c, x: x_out → xC ---
-  do i = iB2 + 1, iC2
-    if (nBottom > 1) then
-      s = real(i - (iB2 + 1)) / real(nBottom - 1)
-    else
-      s = 0.0
-    end if
-    x(i, je) = (1.0 - s)*x_out + s*xC
-    y(i, je) = -R_c
-  end do
+   ! [C] 下壁: y = -R_c, x: x_out -> xC  （単調減少）
+   do i = i3s+1, i4s
+      if (nBottom > 1) then
+         s = real(i - (i3s + 1)) / real(nBottom - 1)
+      else
+         s = 0.0
+      end if
+      x(i, je) = (1.0 - s)*x_out + s*xC
+      y(i, je) = -R_c
+   end do
 
-  ! --- [D] 左半円: θ = -π/2 → +π/2 ---
-  do i = iC2 + 1, iD2
-    if (nArc > 1) then
-      s  = real(i - (iC2 + 1)) / real(nArc - 1)
-    else
-      s = 0.0
-    end if
-    th = -1.57079632679 + (3.14159265359)*s
-    x(i, je) = xC + R_c*cos(th)
-    y(i, je) =      R_c*sin(th)
-  end do
+   ! [D] 左半円: θ = -π/2 -> +π/2  （(x,y) = (xC + R_c cosθ, R_c sinθ)）
+   do i = i4s+1, i5s
+      if (nArc > 1) then
+         s = real(i - (i4s + 1)) / real(nArc - 1)
+      else
+         s = 0.0
+      end if
+      th = -1.57079632679 + 3.14159265359*s
+      x(i, je) = xC + R_c * cos(th)
+      y(i, je) =       R_c * sin(th)
+   end do
+   ! ==== 外周上書き ここまで ====
 
-  ! 念のため末端一致（丸め誤差対策）
-  x(is, je) = xC;     y(is, je) = +R_c
-  x(ie, je) = x(is, je); y(ie, je) = y(is, je)
+   return
 end subroutine CtypeExternalBoundary
-
 !*******************************************************************************************************
 !******** 側部境界 (C-type)                                                                        ********
 !*******************************************************************************************************
