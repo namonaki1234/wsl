@@ -5,3 +5,7 @@ phys.q
 fortran/itr_50000/phys.q
 fortran/itr_50000/grid.g
 fortran/c_grid/hujiu_yamaken-solver/grid/clean/*.vtk
+fortran/itr_50000/grid.g
+*.o
+*.mod
+*.exe

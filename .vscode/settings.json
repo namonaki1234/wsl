@@ -145,6 +145,7 @@
   "files.eol": "\n", // 改行コードをLFに設定
 
 
+
   // エクスプローラーの設定
   "explorer.sortOrder": "type", // エクスプローラーのソート順
   "explorer.compactFolders": false, // フォルダを折りたたむ
