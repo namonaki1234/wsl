@@ -11,7 +11,6 @@ _INPUT = """\
 2 3
 2 4
 3 4
-
 """
 sys.stdin = io.StringIO(_INPUT)
 # ここからコードを記載

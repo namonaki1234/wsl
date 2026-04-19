@@ -20,6 +20,8 @@ sys.stdin = io.StringIO(_InPUT)
 #高橋にはM人と友達がいる。i人目の友達にアイテムA_iを渡すと、アイテムB_iをもらうことができる
 #高橋が手に入れることのできるアイテムはアイテム1を含めて何種類
 
+#今回は1-indexだから入力変数もn+1で、初期値も1
+#もし0-indexなら入力変数をn、初期値を0としなくてはいけない
 n,m = map(int, input().split())
 
 ab = []
@@ -42,7 +44,7 @@ for a,b in edges:
     gragh[a].append(b)
 
 visited = [False] * (n+1)
-visited[0] = True
+visited[1] = True
 
 dfs(1)
 
