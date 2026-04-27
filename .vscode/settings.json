@@ -103,7 +103,7 @@
   "debug.showVariableTypes": true,
 
   // 見た目の設定
-  "workbench.colorTheme": "Default Dark Modern", // テーマの色
+  "workbench.colorTheme": "Dark Modern", // テーマの色
   "workbench.colorCustomizations": {
     "editor.foreground": "#ffffff", // エディタのテキストの色
     "editor.background": "#000000", // エディタの背景色
