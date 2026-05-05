@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/root/wsl/c++/build",
+  "command": "/usr/bin/g++ -DSFML_STATIC -isystem /root/vcpkg/installed/x64-linux/include -g -std=gnu++20 -o CMakeFiles/FallingGame.dir/main.cpp.o -c /root/wsl/c++/falling_game/main.cpp",
+  "file": "/root/wsl/c++/falling_game/main.cpp"
+}
+]
