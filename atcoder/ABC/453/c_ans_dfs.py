@@ -34,4 +34,4 @@ def get_max_crossings(index, current_pos):
 
     return max(total_l,total_r)
 # 最初の自分をスタートさせる
-print(get_max_crossings(0, 0.5))
+print(get_max_crossings(0, start_pos))
